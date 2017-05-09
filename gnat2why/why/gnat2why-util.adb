@@ -176,7 +176,7 @@ package body Gnat2Why.Util is
 
                --  If there was already an entry for the entity, we need to
                --  store in the undo stack the fact that this info must be
-               --  reinserted.
+               --  reinserted
 
                M.Undo_Stack.Append
                  (Action'(Kind       => Insert_Ent,
