@@ -53,7 +53,8 @@ package Gnat2Why.Util is
       type Map is private;
       type Cursor is private;
 
-      Empty_Map : constant Map;
+      Empty_Map  : constant Map;
+      No_Element : constant Cursor;
 
       procedure Insert (M : in out Map;
                         E : Entity_Id;
@@ -142,7 +143,7 @@ package Gnat2Why.Util is
          Undo_Stack   : Undo_Stacks.List;
       end record;
 
-      Empty_Map : constant Map :=
+      Empty_Map  : constant Map :=
         Map'(Entity_Ids   => Ent_To_Why.Empty_Map,
              Entity_Names => Name_To_Why_Map.Empty_Map,
              Undo_Stack   => Undo_Stacks.Empty_List);
@@ -160,6 +161,11 @@ package Gnat2Why.Util is
          Ent_Cursor  : Ent_To_Why.Cursor;
          Name_Cursor : Name_To_Why_Map.Cursor;
       end record;
+
+      No_Element : constant Cursor :=
+        Cursor'(Kind        => CK_Ent,
+                Ent_Cursor  => Ent_To_Why.No_Element,
+                Name_Cursor => Name_To_Why_Map.No_Element);
 
    end Ada_Ent_To_Why;
 
@@ -191,12 +197,14 @@ package Gnat2Why.Util is
       Phase       : Transformation_Phase;
       --  Current transformation phase, which impacts the way code is
       --  transformed from Ada to Why3.
-      Gen_Marker   : Boolean;
+      Gen_Marker  : Boolean;
       --  Flag that is True when the transformation should include in the
       --  generated Why3 node a special label, to be used to show which part
       --  of a possibly large assertion is not proved.
       Ref_Allowed : Boolean;
       --  Flag that is True if references are allowed
+      Old_Allowed : Boolean;
+      --  Flag that is True if accesses to 'old' values are allowed
    end record;
    --  Set of parameters for the transformation phase
 
@@ -228,8 +236,9 @@ package Gnat2Why.Util is
      (Transformation_Params'
         (File        => Kind,
          Phase       => Phase,
-         Gen_Marker   => False,
-         Ref_Allowed => (if Phase = Generate_Logic then False else True)));
+         Gen_Marker  => False,
+         Ref_Allowed => (if Phase = Generate_Logic then False else True),
+         Old_Allowed => (if Phase = Generate_Logic then False else True)));
    --  Usual set of transformation parameters for a given phase
 
    ---------------------------------------------
@@ -444,12 +453,6 @@ package Gnat2Why.Util is
    --  be treated as having constants bounds, because translation of the loop
    --  in Why may lead to having two coexisting versions of the type.
 
-   function Use_Base_Type_For_Type (E : Entity_Id) return Boolean with
-     Pre => Is_Type (E);
-   --  Decide whether for function declarations, the Why base type should be
-   --  used instead of the Ada type.
-   --  This function should be used on entities denoting a type
-
    function Use_Guard_For_Function (E : Entity_Id) return Boolean with
      Pre => Ekind (E) = E_Function;
    --  Decide wether we need a guard for the axiom specifying the contract of
@@ -460,12 +463,6 @@ package Gnat2Why.Util is
    --  Decide whether we should use a split form for expressions of a given
    --  type.
    --  This function should be used on entities denoting a type
-
-   function Use_Why_Base_Type (E : Entity_Id) return Boolean with
-     Pre => Is_Object (E);
-   --  Decide whether for function declarations, the Why base type should be
-   --  used instead of the Ada type.
-   --  This function should be used on entities denoting an object.
 
    ------------------------------
    -- Symbol table subprograms --

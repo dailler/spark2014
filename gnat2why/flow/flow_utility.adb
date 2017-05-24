@@ -691,20 +691,26 @@ package body Flow_Utility is
 
                      --  Include classwide types and privates with
                      --  discriminants.
-
-                     for Ptr of Components (T) loop
-                        if Is_Visible (Get_Root_Component (Ptr), Scope) then
-                           --  Here we union disjoint sets, so possibly we
-                           --  could optimize this.
-                           Results.Union (Flatten_Variable
-                                          ((if Is_Concurrent_Type (T)
-                                             then Direct_Mapping_Id (Ptr)
-                                             else Add_Component (F, Ptr)),
-                                             Scope));
-                        else
-                           Contains_Non_Visible := True;
-                        end if;
-                     end loop;
+                     if Components (T).Is_Empty then
+                        --  If the record has an empty component list then we
+                        --  add the variable itself...
+                        Results.Insert (F);
+                     else
+                        --  ...else we add each visible component
+                        for Ptr of Components (T) loop
+                           if Is_Visible (Get_Root_Component (Ptr), Scope) then
+                              --  Here we union disjoint sets, so possibly we
+                              --  could optimize this.
+                              Results.Union (Flatten_Variable
+                                             ((if Is_Concurrent_Type (T)
+                                                then Direct_Mapping_Id (Ptr)
+                                                else Add_Component (F, Ptr)),
+                                                Scope));
+                           else
+                              Contains_Non_Visible := True;
+                           end if;
+                        end loop;
+                     end if;
 
                      if Ekind (T) in Private_Kind then
                         Contains_Non_Visible := True;
@@ -2883,15 +2889,20 @@ package body Flow_Utility is
                      if Nkind (N) = N_Object_Declaration
                        and then Is_Action (N)
                      then
-                        case Nkind (Expression (N)) is
-                           when N_Identifier | N_Expanded_Name =>
-                              S.Include
-                                (F'Update
-                                   (Node => Unique_Entity
-                                      (Entity (Expression (N)))));
+                        declare
+                           Expr : constant Node_Id := Expression (N);
+                        begin
+                           case Nkind (Expr) is
+                              when N_Identifier | N_Expanded_Name =>
+                                 S.Include
+                                   (F'Update
+                                      (Node =>
+                                         Unique_Entity (Entity (Expr))));
+
                            when others =>
-                              S.Union (Recurse (Expression (N)));
-                        end case;
+                              S.Union (Recurse (Expr));
+                           end case;
+                        end;
                      else
                         S.Include (F);
                      end if;
@@ -2903,7 +2914,7 @@ package body Flow_Utility is
          end loop;
 
          --  And finally, we remove all local constants
-         Remove_Constants (S, Ctx.Local_Constants);
+         Remove_Constants (S, Skip => Ctx.Local_Constants);
       end return;
    end Get_Variables_Internal;
 
@@ -2995,36 +3006,12 @@ package body Flow_Utility is
    -- Has_Variable_Input --
    ------------------------
 
-   function Has_Variable_Input (V : Entity_Id) return Boolean is
-      E    : Entity_Id := V;
+   function Has_Variable_Input (C : Entity_Id) return Boolean is
+      E    : Entity_Id := C;
       Decl : Node_Id;
       FS   : Flow_Id_Sets.Set;
 
    begin
-      pragma Assert (Nkind (E) = N_Defining_Identifier);
-
-      if not Is_Constant_Object (E) then
-         --  If we are not dealing with a constant object then we do
-         --  not care whether it has variable input or not.
-         return False;
-      end if;
-
-      if Ekind (E) in E_In_Parameter | E_Loop_Parameter then
-         --  If we are dealing with a formal IN parameter or a loop parameter
-         --  then we consider this to be a variable.
-         return True;
-      end if;
-
-      pragma Assert (Ekind (E) = E_Constant);
-
-      if In_Generic_Actual (E)
-        and then Nkind (Parent (E)) = N_Object_Renaming_Declaration
-      then
-         --  Actuals of generics that are in out formal parameters have
-         --  variable input.
-         return True;
-      end if;
-
       if Is_Imported (E) then
          --  If we are dealing with an imported constant, we consider this to
          --  have potentially variable input.
@@ -3045,11 +3032,12 @@ package body Flow_Utility is
          return False;
       end if;
 
-      FS := Get_Variables (Expression (Decl),
-                           Scope                => Get_Flow_Scope (E),
-                           Local_Constants      => Node_Sets.Empty_Set,
-                           Fold_Functions       => True,
-                           Use_Computed_Globals => GG_Has_Been_Generated);
+      FS := Get_Variables
+        (Expression (Decl),
+         Scope                => Get_Flow_Scope (E),
+         Local_Constants      => Node_Sets.Empty_Set,
+         Fold_Functions       => True,
+         Use_Computed_Globals => GG_Has_Been_Generated);
       --  Note that Get_Variables calls Has_Variable_Input when it finds a
       --  constant. This means that there might be some mutual recursion here
       --  (but this should be fine).
@@ -3059,18 +3047,20 @@ package body Flow_Utility is
          return True;
       end if;
 
-      if not GG_Has_Been_Generated
-        and then not Get_Functions (Expression (Decl),
-                                    Include_Predicates => False).Is_Empty
+      if GG_Has_Been_Generated
+        or else
+        Get_Functions (Expression (Decl),
+                       Include_Predicates => False).Is_Empty
       then
+         --  If we reach this point then the constant does not have variable
+         --  input.
+         return False;
+      else
          --  Globals have not yet been computed. If we find any function calls
          --  we consider the constant to have variable inputs (this is the safe
          --  thing to do).
          return True;
       end if;
-
-      --  If we reach this point then the constant does not have variable input
-      return False;
    end Has_Variable_Input;
 
    ----------------
@@ -3281,6 +3271,26 @@ package body Flow_Utility is
       Init_Done := True;
    end Initialize;
 
+   ---------------------
+   -- Is_Ghost_Object --
+   ---------------------
+
+   function Is_Ghost_Object (F : Flow_Id) return Boolean is
+   begin
+      case F.Kind is
+         when Direct_Mapping | Record_Field =>
+            declare
+               E : constant Entity_Id := Get_Direct_Mapping_Id (F);
+            begin
+               return Is_Object (E)
+                 and then Is_Ghost_Entity (E);
+            end;
+
+         when others =>
+            return False;
+      end case;
+   end Is_Ghost_Object;
+
    -----------------------------------
    -- Is_Initialized_At_Elaboration --
    -----------------------------------
@@ -3415,8 +3425,11 @@ package body Flow_Utility is
             declare
                E : constant Entity_Id := Get_Direct_Mapping_Id (F);
             begin
-               return not Is_Constant_Object (E)
-                 or else Has_Variable_Input (E);
+               if Ekind (E) = E_Constant then
+                  return Has_Variable_Input (E);
+               else
+                  return True;
+               end if;
             end;
 
          when Magic_String =>

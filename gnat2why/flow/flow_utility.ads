@@ -338,8 +338,7 @@ is
    --  For magic strings and the null export, we simply return a singleton set
    --  with just that.
    --
-   --  For null records we return the empty set (but otherwise you should get
-   --  a result with at least one element).
+   --  For null records we return the variable itself.
    --
    --  For private types we just return F. For private types with discriminant
    --  C we return F.C and F'Private_Part.
@@ -677,6 +676,7 @@ is
                                          | E_Abstract_State
                                          | E_Constant
                                          | E_Function
+                                         | E_Protected_Type
                                          | E_Task_Type
                 and then (if Present (Input)
                           then Ekind (Input) in E_Abstract_State
@@ -719,12 +719,18 @@ is
    --  ??? this function is inefficient and its uses should be probably
    --  replaced with a call to Ada.Containers.Hashed_Sets.Replace_Element
 
-   function Has_Variable_Input (V : Entity_Id) return Boolean;
+   function Has_Variable_Input (C : Entity_Id) return Boolean
+   with Pre => Ekind (C) = E_Constant;
    --  Returns True if V is a constant with variable input.
    --
    --  If called before the globals graph has been generated then the results
    --  might not be accurate (this means that some constant that might not
    --  actually have variable input will be reported as having variable input).
+
+   function Is_Ghost_Object (F : Flow_Id) return Boolean;
+   --  Returns True iff F represents a ghost object
+   --  ??? returns False if F.Kind = Magic_String, which is wrong; should be
+   --  fixed by recording the ghost status in the ALI file.
 
    function Is_Variable (F : Flow_Id) return Boolean
    with Pre => Present (F);
@@ -735,8 +741,7 @@ is
    --     which Has_Variable_Input
 
    function Is_Empty_Record_Type (T : Entity_Id) return Boolean with
-     Pre => No (T) or else Is_Type (T),
-     Ghost;
+     Pre => No (T) or else Is_Type (T);
    --  Similar to Is_Null_Record_Type, but also returns true if this is a null
    --  extension of a null record type (or extension).
 

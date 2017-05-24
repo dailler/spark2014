@@ -1,10 +1,11 @@
 from test_support import *
 
-prove_all(level=4,
-          steps=None,
-          prover=["cvc4", "z3"],
+prove_all(steps=10000,
+          prover=["cvc4_alt", "z3"],
           no_fail=True,
-          opt=["-u",
+          opt=["--no-axiom-guard",
+               "--why3-conf=why3.conf",
+               "-u",
                "simple_allocator.adb",
                "list_allocator.adb",
                "list_mod_allocator.adb"])

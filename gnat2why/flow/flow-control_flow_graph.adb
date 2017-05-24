@@ -1186,15 +1186,13 @@ package body Flow.Control_Flow_Graph is
 
          Initial_Atr : constant V_Attributes :=
            Make_Variable_Attributes
-             (FA    => FA,
-              F_Ent => F_Initial,
+             (F_Ent => F_Initial,
               Mode  => PM,
               E_Loc => E);
 
          Final_Atr : constant V_Attributes :=
            Make_Variable_Attributes
-             (FA    => FA,
-              F_Ent => F_Final,
+             (F_Ent => F_Final,
               Mode  => PM,
               E_Loc => E);
 
@@ -1321,15 +1319,13 @@ package body Flow.Control_Flow_Graph is
 
          Initial_Atr : constant V_Attributes :=
            Make_Global_Variable_Attributes
-             (FA     => FA,
-              F      => F_Initial,
+             (F      => F_Initial,
               Mode   => Mode,
               Uninit => Uninitialized);
 
          Final_Atr : constant V_Attributes :=
            Make_Global_Variable_Attributes
-             (FA   => FA,
-              F    => F_Final,
+             (F    => F_Final,
               Mode => Mode);
 
          Initial_V, Final_V : Flow_Graphs.Vertex_Id;
@@ -1463,8 +1459,7 @@ package body Flow.Control_Flow_Graph is
                   Add_Vertex
                     (FA,
                      Make_Basic_Attributes
-                       (FA         => FA,
-                        Var_Def    => Flow_Id_Sets.To_Set (Output),
+                       (Var_Def    => Flow_Id_Sets.To_Set (Output),
                         Var_Ex_Use => Inputs,
                         Sub_Called => Funcs,
                         Loops      => Ctx.Current_Loops,
@@ -1485,8 +1480,7 @@ package body Flow.Control_Flow_Graph is
                   Add_Vertex
                     (FA,
                      Make_Basic_Attributes
-                       (FA         => FA,
-                        Var_Def    => Flow_Id_Sets.To_Set (F),
+                       (Var_Def    => Flow_Id_Sets.To_Set (F),
                         Var_Ex_Use => Flow_Id_Sets.Empty_Set,
                         Sub_Called => Node_Sets.Empty_Set,
                         Loops      => Ctx.Current_Loops,
@@ -1552,8 +1546,7 @@ package body Flow.Control_Flow_Graph is
               (FA,
                Direct_Mapping_Id (N),
                Make_Basic_Attributes
-                 (FA         => FA,
-                  Var_Def    => Vars_Defined,
+                 (Var_Def    => Vars_Defined,
                   Var_Ex_Use => Vars_Used,
                   Var_Im_Use => (if Partial
                                  then Vars_Defined
@@ -1619,8 +1612,7 @@ package body Flow.Control_Flow_Graph is
         (FA,
          Direct_Mapping_Id (N),
          Make_Basic_Attributes
-           (FA         => FA,
-            Var_Ex_Use => Get_Variables
+           (Var_Ex_Use => Get_Variables
               (Expression (N),
                Scope                => FA.B_Scope,
                Local_Constants      => FA.Local_Constants,
@@ -1725,8 +1717,7 @@ package body Flow.Control_Flow_Graph is
         (FA,
          Direct_Mapping_Id (N),
          Make_Basic_Attributes
-           (FA,
-            Var_Def    => Flow_Id_Sets.To_Set (Null_Export_Flow_Id),
+           (Var_Def    => Flow_Id_Sets.To_Set (Null_Export_Flow_Id),
             Var_Ex_Use => Vars_Used,
             Sub_Called => Funcs,
             Loops      => Ctx.Current_Loops,
@@ -1788,8 +1779,7 @@ package body Flow.Control_Flow_Graph is
            (FA,
             Direct_Mapping_Id (N),
             Make_Basic_Attributes
-              (FA         => FA,
-               Var_Ex_Use => Get_Variables
+              (Var_Ex_Use => Get_Variables
                  (Condition (N),
                   Scope                => FA.B_Scope,
                   Local_Constants      => FA.Local_Constants,
@@ -1862,8 +1852,7 @@ package body Flow.Control_Flow_Graph is
         (FA,
          Direct_Mapping_Id (Ret_Entity),
          Make_Extended_Return_Attributes
-           (FA              => FA,
-            Var_Def         => Flatten_Variable (FA.Analyzed_Entity,
+           (Var_Def         => Flatten_Variable (FA.Analyzed_Entity,
                                                  FA.B_Scope),
             Var_Use         => Flatten_Variable (Ret_Object,
                                                  FA.B_Scope),
@@ -1952,8 +1941,7 @@ package body Flow.Control_Flow_Graph is
         (FA,
          Direct_Mapping_Id (N),
          Make_Basic_Attributes
-           (FA         => FA,
-            Var_Ex_Use => Get_Variables
+           (Var_Ex_Use => Get_Variables
               (Condition (N),
                Scope                => FA.B_Scope,
                Local_Constants      => FA.Local_Constants,
@@ -2019,8 +2007,7 @@ package body Flow.Control_Flow_Graph is
                  (FA,
                   Direct_Mapping_Id (Elsif_Statement),
                   Make_Basic_Attributes
-                    (FA         => FA,
-                     Var_Ex_Use => Get_Variables
+                    (Var_Ex_Use => Get_Variables
                        (Condition (Elsif_Statement),
                         Scope                => FA.B_Scope,
                         Local_Constants      => FA.Local_Constants,
@@ -2359,8 +2346,7 @@ package body Flow.Control_Flow_Graph is
            (FA,
             Direct_Mapping_Id (N),
             Make_Basic_Attributes
-              (FA         => FA,
-               Var_Ex_Use => Get_Variables
+              (Var_Ex_Use => Get_Variables
                  (Condition (Iteration_Scheme (N)),
                   Scope                => FA.B_Scope,
                   Local_Constants      => FA.Local_Constants,
@@ -2411,8 +2397,7 @@ package body Flow.Control_Flow_Graph is
               (FA,
                Direct_Mapping_Id (N),
                Make_Basic_Attributes
-                 (FA      => FA,
-                  Var_Def => Flatten_Variable (LP, FA.B_Scope),
+                 (Var_Def => Flatten_Variable (LP, FA.B_Scope),
                   Loops   => Ctx.Current_Loops,
                   E_Loc   => N),
                V);
@@ -2431,8 +2416,7 @@ package body Flow.Control_Flow_Graph is
               (FA,
                Direct_Mapping_Id (N),
                Make_Basic_Attributes
-                 (FA      => FA,
-                  Var_Def => Flatten_Variable (LP, FA.B_Scope),
+                 (Var_Def => Flatten_Variable (LP, FA.B_Scope),
                   Loops   => Ctx.Current_Loops,
                   E_Loc   => N),
                V);
@@ -2460,8 +2444,7 @@ package body Flow.Control_Flow_Graph is
               (FA,
                Direct_Mapping_Id (N),
                Make_Basic_Attributes
-                 (FA         => FA,
-                  Var_Def    => Flatten_Variable (LP, FA.B_Scope),
+                 (Var_Def    => Flatten_Variable (LP, FA.B_Scope),
                   Var_Ex_Use => Get_Variables
                     (DSD,
                      Scope                => FA.B_Scope,
@@ -2879,8 +2862,7 @@ package body Flow.Control_Flow_Graph is
            (FA,
             Direct_Mapping_Id (N),
             Make_Basic_Attributes
-              (FA         => FA,
-               Var_Def    => Flatten_Variable (Param, FA.B_Scope),
+              (Var_Def    => Flatten_Variable (Param, FA.B_Scope),
                Var_Ex_Use => Get_Variables
                  (Cont,
                   Scope                => FA.B_Scope,
@@ -2975,8 +2957,7 @@ package body Flow.Control_Flow_Graph is
             Add_Vertex
               (FA,
                Make_Basic_Attributes
-                 (FA         => FA,
-                  Var_Def    => Fully_Initialized,
+                 (Var_Def    => Fully_Initialized,
                   Loops      => Ctx.Current_Loops,
                   E_Loc      => Loop_Id,
                   Print_Hint => Pretty_Print_Loop_Init)'
@@ -3000,8 +2981,7 @@ package body Flow.Control_Flow_Graph is
               (FA,
                Direct_Mapping_Id (Reference),
                Make_Sink_Vertex_Attributes
-                 (FA            => FA,
-                  Var_Use       => Get_Variables
+                 (Var_Use       => Get_Variables
                     (Prefix (Reference),
                      Scope                => FA.B_Scope,
                      Local_Constants      => FA.Local_Constants,
@@ -3350,36 +3330,9 @@ package body Flow.Control_Flow_Graph is
                                          Variable_Kind,
                                          FA);
 
-      if No (Expr) then
-         --  We have no initializing expression so we fall back to the default
-         --  initialization (if any).
+      --  We have a declaration with an explicit initialization
 
-         for F of Flatten_Variable (E, FA.B_Scope) loop
-            if Is_Default_Initialized (F) then
-               Add_Vertex
-                 (FA,
-                  Make_Default_Initialization_Attributes
-                    (FA    => FA,
-                     Scope => FA.B_Scope,
-                     F     => F,
-                     Loops => Ctx.Current_Loops),
-                  V);
-               Inits.Append (V);
-            end if;
-         end loop;
-
-         if Inits.Is_Empty then
-            --  We did not have anything with a default initial value,
-            --  so we just create a null vertex here.
-            Add_Vertex (FA,
-                        Direct_Mapping_Id (N),
-                        Null_Node_Attributes,
-                        V);
-            Inits.Append (V);
-         end if;
-
-      else
-         --  We have a variable declaration with an initialization
+      if Present (Expr) then
          declare
             Var_Def : Flow_Id_Sets.Set;
             Funcs   : Node_Sets.Set;
@@ -3401,6 +3354,12 @@ package body Flow.Control_Flow_Graph is
                end if;
             end loop;
 
+            Collect_Functions_And_Read_Locked_POs
+              (Expr,
+               Functions_Called   => Funcs,
+               Tasking            => FA.Tasking,
+               Include_Predicates => FA.Generating_Globals);
+
             if RHS_Split_Useful (N, FA.B_Scope) then
 
                declare
@@ -3416,13 +3375,8 @@ package body Flow.Control_Flow_Graph is
 
                   All_Vertices : Vertex_Sets.Set  := Vertex_Sets.Empty_Set;
                   Missing      : Flow_Id_Sets.Set := Var_Def;
-               begin
-                  Collect_Functions_And_Read_Locked_POs
-                    (Expr,
-                     Functions_Called   => Funcs,
-                     Tasking            => FA.Tasking,
-                     Include_Predicates => FA.Generating_Globals);
 
+               begin
                   for C in M.Iterate loop
                      declare
                         Output : Flow_Id          renames Flow_Id_Maps.Key (C);
@@ -3435,8 +3389,7 @@ package body Flow.Control_Flow_Graph is
                         Add_Vertex
                           (FA,
                            Make_Basic_Attributes
-                             (FA         => FA,
-                              Var_Def    => Flow_Id_Sets.To_Set (Output),
+                             (Var_Def    => Flow_Id_Sets.To_Set (Output),
                               Var_Ex_Use => Inputs,
                               Sub_Called => Funcs,
                               Loops      => Ctx.Current_Loops,
@@ -3458,8 +3411,7 @@ package body Flow.Control_Flow_Graph is
                      Add_Vertex
                        (FA,
                         Make_Basic_Attributes
-                          (FA         => FA,
-                           Var_Def    => Flow_Id_Sets.To_Set (F),
+                          (Var_Def    => Flow_Id_Sets.To_Set (F),
                            Var_Ex_Use => Flow_Id_Sets.Empty_Set,
                            Sub_Called => Node_Sets.Empty_Set,
                            Loops      => Ctx.Current_Loops,
@@ -3486,18 +3438,11 @@ package body Flow.Control_Flow_Graph is
                end;
 
             else
-               Collect_Functions_And_Read_Locked_POs
-                 (Expr,
-                  Functions_Called   => Funcs,
-                  Tasking            => FA.Tasking,
-                  Include_Predicates => FA.Generating_Globals);
-
                Add_Vertex
                  (FA,
                   Direct_Mapping_Id (N),
                   Make_Basic_Attributes
-                    (FA         => FA,
-                     Var_Def    => Var_Def,
+                    (Var_Def    => Var_Def,
                      Var_Ex_Use => Get_Variables
                        (Expr,
                         Scope                => FA.B_Scope,
@@ -3515,14 +3460,44 @@ package body Flow.Control_Flow_Graph is
 
             Ctx.Folded_Function_Checks (N).Include (Expr);
          end;
+
+      --  We have no initializing expression so we fall back to the default
+      --  initialization (if any).
+
+      else
+         for F of Flatten_Variable (E, FA.B_Scope) loop
+            if Is_Default_Initialized (F) then
+               Add_Vertex
+                 (FA,
+                  Make_Default_Initialization_Attributes
+                    (FA    => FA,
+                     Scope => FA.B_Scope,
+                     F     => F,
+                     Loops => Ctx.Current_Loops),
+                  V);
+               Inits.Append (V);
+            end if;
+         end loop;
+
+         if Inits.Is_Empty then
+            --  We did not have anything with a default initial value,
+            --  so we just create a null vertex here.
+            Add_Vertex (FA,
+                        Direct_Mapping_Id (N),
+                        Null_Node_Attributes,
+                        V);
+            Inits.Append (V);
+         end if;
+
       end if;
 
       --  If this type has a Default_Initial_Condition then we need to
       --  create a vertex to check for uninitialized variables within the
       --  Default_Initial_Condition's expression.
       declare
-         Typ  : constant Node_Id := Etype (E);
-         Expr : Node_Id;
+         Typ : constant Node_Id := Etype (E);
+
+         DIC_Expr : Node_Id;
 
          Variables_Used       : Flow_Id_Sets.Set := Flow_Id_Sets.Empty_Set;
          Components_Of_Type   : Flow_Id_Sets.Set := Flow_Id_Sets.Empty_Set;
@@ -3534,9 +3509,9 @@ package body Flow.Control_Flow_Graph is
                or else Has_Inherited_DIC (Typ))
            and then Present (DIC_Procedure (Typ))
          then
-            Expr := Get_Expr_From_Check_Only_Proc (DIC_Procedure (Typ));
+            DIC_Expr := Get_Expr_From_Check_Only_Proc (DIC_Procedure (Typ));
 
-            if Present (Expr) then
+            if Present (DIC_Expr) then
                --  Note that default initial conditions can make use of
                --  the type mark. For example
                --
@@ -3551,7 +3526,7 @@ package body Flow.Control_Flow_Graph is
                --  all components of T with all components of X)
                --  to produce the correct default initial condition.
                Variables_Used := Get_Variables
-                 (Expr,
+                 (DIC_Expr,
                   Scope                => FA.B_Scope,
                   Local_Constants      => FA.Local_Constants,
                   Fold_Functions       => True,
@@ -3573,7 +3548,7 @@ package body Flow.Control_Flow_Graph is
                end if;
 
                Collect_Functions_And_Read_Locked_POs
-                 (Expr,
+                 (DIC_Expr,
                   Functions_Called   => Funcs,
                   Tasking            => FA.Tasking,
                   Include_Predicates => FA.Generating_Globals);
@@ -3581,21 +3556,20 @@ package body Flow.Control_Flow_Graph is
                Add_Vertex
                  (FA,
                   Make_Sink_Vertex_Attributes
-                    (FA         => FA,
-                     Var_Use    => Replace_Flow_Ids
+                    (Var_Use      => Replace_Flow_Ids
                        (Of_This   => First_Entity
                                        (DIC_Procedure (Typ)),
                         With_This => E,
                         The_Set   => Variables_Used),
-                     Sub_Called => Funcs,
-                     Is_Proof   => True,
-                     Is_DIC     => True,
-                     E_Loc      => N),
+                     Sub_Called   => Funcs,
+                     Is_Assertion => True,
+                     Is_DIC       => True,
+                     E_Loc        => N),
                   V);
                Inits.Append (V);
 
                --  Check for folded functions
-               Ctx.Folded_Function_Checks (N).Include (Expr);
+               Ctx.Folded_Function_Checks (N).Include (DIC_Expr);
             end if;
          end if;
       end;
@@ -3857,8 +3831,7 @@ package body Flow.Control_Flow_Graph is
                        (FA,
                         The_Out,
                         Make_Package_Initialization_Attributes
-                          (FA        => FA,
-                           The_State => The_Out,
+                          (The_State => The_Out,
                            Inputs    => The_Ins,
                            Scope     => FA.B_Scope,
                            Loops     => Ctx.Current_Loops,
@@ -4053,17 +4026,16 @@ package body Flow.Control_Flow_Graph is
                  (FA,
                   Direct_Mapping_Id (N),
                   Make_Sink_Vertex_Attributes
-                    (FA         => FA,
-                     Var_Use    => Get_Variables
+                    (Var_Use      => Get_Variables
                        (Pragma_Argument_Associations (N),
                         Scope                => FA.B_Scope,
                         Local_Constants      => FA.Local_Constants,
                         Fold_Functions       => False,
                         Use_Computed_Globals => not FA.Generating_Globals),
-                     Sub_Called => Funcs,
-                     Is_Proof   => True,
-                     E_Loc      => N,
-                     Execution  => Find_Execution_Kind),
+                     Sub_Called   => Funcs,
+                     Is_Assertion => True,
+                     E_Loc        => N,
+                     Execution    => Find_Execution_Kind),
                   V);
          end case;
 
@@ -4126,8 +4098,7 @@ package body Flow.Control_Flow_Graph is
         (FA,
          Direct_Mapping_Id (N),
          Make_Call_Attributes
-           (FA         => FA,
-            Callsite   => N,
+           (Callsite   => N,
             Sub_Called => Node_Sets.To_Set (Called_Thing),
             Loops      => Ctx.Current_Loops,
             E_Loc      => N),
@@ -4221,8 +4192,7 @@ package body Flow.Control_Flow_Graph is
                Add_Vertex
                  (FA,
                   Make_Global_Attributes
-                    (FA                           => FA,
-                     Call_Vertex                  => N,
+                    (Call_Vertex                  => N,
                      Global                       => Change_Variant
                        (Null_Export_Flow_Id, Out_View),
                      Discriminants_Or_Bounds_Only => False,
@@ -4240,8 +4210,7 @@ package body Flow.Control_Flow_Graph is
             Add_Vertex
               (FA,
                Make_Global_Attributes
-                 (FA                           => FA,
-                  Call_Vertex                  => N,
+                 (Call_Vertex                  => N,
                   Global                       => Change_Variant
                     (Null_Export_Flow_Id, Out_View),
                   Discriminants_Or_Bounds_Only => False,
@@ -4316,16 +4285,14 @@ package body Flow.Control_Flow_Graph is
         (FA,
          Direct_Mapping_Id (N),
          Make_Sink_Vertex_Attributes
-           (FA              => FA,
-            Var_Use         => Get_Variables
+           (Var_Use         => Get_Variables
               (N,
                Scope                => FA.B_Scope,
                Local_Constants      => FA.Local_Constants,
                Fold_Functions       => False,
                Use_Computed_Globals => not FA.Generating_Globals),
             Sub_Called      => Funcs,
-            Is_Proof        => True,
-            Is_Precondition => True,
+            Is_Assertion    => True,
             E_Loc           => N),
          V);
 
@@ -4349,7 +4316,7 @@ package body Flow.Control_Flow_Graph is
 
    begin
       if No (Expr) then
-         --  We have a return for a procedure
+         --  We have a return for a procedure or entry
          Add_Vertex (FA,
                      Direct_Mapping_Id (N),
                      Make_Aux_Vertex_Attributes (E_Loc => N),
@@ -4366,8 +4333,7 @@ package body Flow.Control_Flow_Graph is
            (FA,
             Direct_Mapping_Id (N),
             Make_Basic_Attributes
-              (FA         => FA,
-               Var_Def    => Flatten_Variable (FA.Analyzed_Entity,
+              (Var_Def    => Flatten_Variable (FA.Analyzed_Entity,
                                                FA.B_Scope),
                Var_Ex_Use => Get_Variables
                  (Expr,
@@ -4438,8 +4404,7 @@ package body Flow.Control_Flow_Graph is
               (FA,
                Direct_Mapping_Id (Cond),
                Make_Basic_Attributes
-                 (FA         => FA,
-                  Var_Ex_Use => Get_Variables
+                 (Var_Ex_Use => Get_Variables
                     (Cond,
                      Scope                => FA.B_Scope,
                      Local_Constants      => FA.Local_Constants,
@@ -4548,13 +4513,24 @@ package body Flow.Control_Flow_Graph is
                    Reads               => Reads,
                    Writes              => Writes,
                    Use_Deduced_Globals => not FA.Generating_Globals);
-      Reads.Union (Proof_Reads);
+
+      for R of Proof_Reads loop
+         Add_Vertex (FA,
+                     Make_Global_Attributes
+                       (Call_Vertex                  => Callsite,
+                        Global                       => R,
+                        Discriminants_Or_Bounds_Only => False,
+                        Loops                        => Ctx.Current_Loops,
+                        E_Loc                        => Callsite,
+                        Is_Assertion                 => True),
+                     V);
+         Ins.Append (V);
+      end loop;
 
       for R of Reads loop
          Add_Vertex (FA,
                      Make_Global_Attributes
-                       (FA                           => FA,
-                        Call_Vertex                  => Callsite,
+                       (Call_Vertex                  => Callsite,
                         Global                       => R,
                         Discriminants_Or_Bounds_Only => False,
                         Loops                        => Ctx.Current_Loops,
@@ -4568,8 +4544,7 @@ package body Flow.Control_Flow_Graph is
             Add_Vertex
               (FA,
                Make_Global_Attributes
-                 (FA                           => FA,
-                  Call_Vertex                  => Callsite,
+                 (Call_Vertex                  => Callsite,
                   Global                       => Change_Variant (W, In_View),
                   Discriminants_Or_Bounds_Only => True,
                   Loops                        => Ctx.Current_Loops,
@@ -4579,8 +4554,7 @@ package body Flow.Control_Flow_Graph is
          end if;
          Add_Vertex (FA,
                      Make_Global_Attributes
-                       (FA                           => FA,
-                        Call_Vertex                  => Callsite,
+                       (Call_Vertex                  => Callsite,
                         Global                       => W,
                         Discriminants_Or_Bounds_Only => False,
                         Loops                        => Ctx.Current_Loops,
@@ -4685,8 +4659,7 @@ package body Flow.Control_Flow_Graph is
             Add_Vertex
               (FA,
                Make_Implicit_Parameter_Attributes
-                 (FA          => FA,
-                  Call_Vertex => Callsite,
+                 (Call_Vertex => Callsite,
                   Implicit    => Change_Variant (The_PO, In_View),
                   Loops       => Ctx.Current_Loops,
                   E_Loc       => Callsite),
@@ -4698,8 +4671,7 @@ package body Flow.Control_Flow_Graph is
                Add_Vertex
                  (FA,
                   Make_Implicit_Parameter_Attributes
-                    (FA          => FA,
-                     Call_Vertex => Callsite,
+                    (Call_Vertex => Callsite,
                      Implicit    => Change_Variant (The_PO, Out_View),
                      Loops       => Ctx.Current_Loops,
                      E_Loc       => Callsite),
@@ -4874,8 +4846,7 @@ package body Flow.Control_Flow_Graph is
             if not Unchecked.Is_Empty then
                Add_Vertex
                  (FA,
-                  Make_Sink_Vertex_Attributes (FA            => FA,
-                                               Var_Use       => Unchecked,
+                  Make_Sink_Vertex_Attributes (Var_Use       => Unchecked,
                                                Is_Fold_Check => True,
                                                E_Loc         => Expr),
                   V);
@@ -6255,8 +6226,7 @@ package body Flow.Control_Flow_Graph is
                   --  then we create them.
 
                   --  Setup the n'initial vertex
-                  A := Make_Variable_Attributes (FA    => FA,
-                                                 F_Ent => Change_Variant
+                  A := Make_Variable_Attributes (F_Ent => Change_Variant
                                                            (F, Initial_Value),
                                                  Mode  => Mode_In_Out,
                                                  E_Loc => E);
@@ -6276,8 +6246,7 @@ package body Flow.Control_Flow_Graph is
                   Add_Vertex
                     (FA,
                      Change_Variant (F, Final_Value),
-                     Make_Variable_Attributes (FA    => FA,
-                                               F_Ent => Change_Variant
+                     Make_Variable_Attributes (F_Ent => Change_Variant
                                                  (F, Final_Value),
                                                Mode  => Mode_In_Out,
                                                E_Loc => E),

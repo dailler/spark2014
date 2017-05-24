@@ -2524,7 +2524,7 @@ package body Why.Gen.Expr is
 
       if Is_Scalar_Type (Ty)
         and then (Type_Is_Modeled_As_Base (Ty)
-                  or else Use_Base_Type_For_Type (Ty))
+                  or else Use_Split_Form_For_Type (Ty))
       then
 
          pragma Assert (not Depends_On_Discriminant (Get_Range (Ty)));
@@ -3424,9 +3424,9 @@ package body Why.Gen.Expr is
                             (Base_Name => "result", Typ => Typ);
             Pred_Enum : constant Why_Name_Enum :=
                           (case Selector is
-                              when Dispatch => WNE_Dispatch_Post_Pred,
-                              when Refine   => WNE_Refined_Post_Pred,
-                              when others   => WNE_Post_Pred);
+                              when Dispatch => WNE_Dispatch_Func_Guard,
+                              when Refine   => WNE_Refined_Func_Guard,
+                              when others   => WNE_Func_Guard);
          begin
             return New_Epsilon
               (Name   => Result_Id,

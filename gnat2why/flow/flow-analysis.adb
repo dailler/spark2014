@@ -471,8 +471,7 @@ package body Flow.Analysis is
          --  We want to deal only with program statements and procedure calls.
 
          if (Atr.Is_Program_Node
-               or Atr.Is_Precondition
-               or Atr.Is_Postcondition) and
+               or Atr.Is_Assertion) and
            not Atr.Is_Callsite
          then
             if Present (FA.CFG.Get_Key (V)) then
@@ -978,9 +977,7 @@ package body Flow.Analysis is
                 when Final_Value => Atr.Is_Export,
                 when Normal_Use  => Atr.Is_Exceptional_Branch,
                 when others      => False)
-              or else Atr.Is_Precondition
-              or else Atr.Is_Postcondition
-              or else Atr.Is_Proof;
+              or else Atr.Is_Assertion;
       end Is_Final_Use;
 
       Suppressed         : Flow_Id_Sets.Set;
@@ -1177,33 +1174,43 @@ package body Flow.Analysis is
                   end;
                end if;
             else
-               --  We suppress this warning when we are dealing with a
-               --  concurrent type or a component of a concurrent type. Also
-               --  when the variable has been marked either as Unreferenced
-               --  or Unmodified or Unused or if it is a formal parameter of a
-               --  null subprogram of a generic unit.
-               if F.Kind = Direct_Mapping
-                   and then
-                  (Is_Concurrent_Type (Etype (Get_Direct_Mapping_Id (F)))
-                     or else
-                   Belongs_To_Concurrent_Type (F)
-                     or else
-                   Has_Pragma_Un (Get_Direct_Mapping_Id (F))
-                     or else
-                   Is_Param_Of_Null_Subp_Of_Generic
-                     (Get_Direct_Mapping_Id (F)))
-               then
-                  null;
+               --  We suppress this warning when:
+               --  * we are dealing with a concurrent type or a component of a
+               --    concurrent type
+               --  * we are dealing with a null record
+               --  * the variable has been marked either as Unreferenced or
+               --    Unmodified or Unused
+               --  * the variable is a formal parameter of a null subprogram of
+               --    a generic unit.
+               declare
+                  E : constant Entity_Id := Get_Direct_Mapping_Id (F);
 
-               else
-                  Error_Msg_Flow
-                    (FA       => FA,
-                     Msg      => "unused variable &",
-                     N        => Error_Location (FA.PDG, FA.Atr, V),
-                     F1       => F,
-                     Tag      => VC_Kinds.Unused,
-                     Severity => Warning_Kind);
-               end if;
+                  Msg : constant String :=
+                    (if Ekind (Scope (E)) = E_Function
+                     and then Is_Predicate_Function (Scope (E))
+                     then "& is not used in its predicate"
+                     else "unused variable &");
+
+               begin
+                  if Is_Concurrent_Type (Etype (E))
+                    or else Belongs_To_Concurrent_Type (F)
+                    or else (Is_Type (Etype (E))
+                             and then Is_Empty_Record_Type (Etype (E)))
+                    or else Has_Pragma_Un (E)
+                    or else Is_Param_Of_Null_Subp_Of_Generic (E)
+                  then
+                     null;
+
+                  else
+                     Error_Msg_Flow
+                       (FA       => FA,
+                        Msg      => Msg,
+                        N        => Error_Location (FA.PDG, FA.Atr, V),
+                        F1       => F,
+                        Tag      => VC_Kinds.Unused,
+                        Severity => Warning_Kind);
+                  end if;
+               end;
             end if;
          end;
       end loop;
@@ -1258,14 +1265,19 @@ package body Flow.Analysis is
                      Vertex   => V);
                end if;
             else
-               --  Suppress this warning when dealing with a concurrent type or
-               --  its component.
-
+               --  We suppress this warning when we are dealing with a
+               --  concurrent type or a component of a concurrent type or a
+               --  null record.
                if F.Kind = Direct_Mapping
                    and then
                   (Is_Concurrent_Type (Etype (Get_Direct_Mapping_Id (F)))
                      or else
-                   Belongs_To_Concurrent_Type (F))
+                   Belongs_To_Concurrent_Type (F)
+                     or else
+                   (Is_Type (Etype (Get_Direct_Mapping_Id (F)))
+                      and then
+                      Is_Empty_Record_Type
+                        (Etype (Get_Direct_Mapping_Id (F)))))
                then
                   null;
 
@@ -1749,8 +1761,16 @@ package body Flow.Analysis is
                  --  that has Async_Readers set.
                  not Defines_Async_Reader_Var (V) and then
 
-                 --  Suppression for vertices that relate to proof
-                 not Atr.Is_Proof
+                 --  Suppression for vertices with assertion expressions
+                 not Atr.Is_Assertion and then
+
+                 --  Suppression for vertices that write to ghost variables
+                 --  ??? Probably we want remove this suppression
+                 not (for some Var of Atr.Variables_Defined =>
+                         Is_Ghost_Object (Var)) and then
+
+                 --  Suppression for ghost entities
+                 not Is_Ghost_Entity (FA.Spec_Entity)
                then
                   Mask := Find_Masking_Code (V);
                   N    := Error_Location (FA.PDG, FA.Atr, V);
@@ -1988,6 +2008,11 @@ package body Flow.Analysis is
       --  Sets Found when the variable corresponding to V_Initial is defined on
       --  a path that leads to V_Use. V_Error is the vertex where the message
       --  should be emitted.
+
+      function Has_Only_Infinite_Execution (V_Final : Flow_Graphs.Vertex_Id)
+                                            return Boolean;
+      --  Returns True iff every path from V_Final going backwards in the CFG
+      --  contains an infinite loop.
 
       procedure Emit_Message (Var              : Flow_Id;
                               Vertex           : Flow_Graphs.Vertex_Id;
@@ -2388,6 +2413,57 @@ package body Flow.Analysis is
          end if;
       end Might_Be_Defined_In_Other_Path;
 
+      ---------------------------------
+      -- Has_Only_Infinite_Execution --
+      ---------------------------------
+
+      function Has_Only_Infinite_Execution (V_Final : Flow_Graphs.Vertex_Id)
+                                            return Boolean
+      is
+         Only_Inf_Exec : Boolean := True;
+
+         procedure Vertex_Has_Inf_Execution
+           (V  : Flow_Graphs.Vertex_Id;
+            TV :  out Flow_Graphs.Simple_Traversal_Instruction);
+
+         ------------------------------
+         -- Vertex_Has_Inf_Execution --
+         ------------------------------
+
+         procedure Vertex_Has_Inf_Execution
+           (V  : Flow_Graphs.Vertex_Id;
+            TV : out Flow_Graphs.Simple_Traversal_Instruction)
+         is
+         begin
+            if V = FA.Start_Vertex then
+               --  If we reach the start vertex (remember that we are going
+               --  backwards) it means that there is at least one path without
+               --  an infinite loop and we can set Only_Inf_Exec to false and
+               --  abort the traversal.
+               Only_Inf_Exec := False;
+               TV := Flow_Graphs.Abort_Traversal;
+
+            elsif FA.Atr (V).Execution = Infinite_Loop then
+               --  If we find a vertex with Infinite_Loop execution then we set
+               --  Only_Inf_Exec to true and jump to another path.
+               TV := Flow_Graphs.Skip_Children;
+
+            else
+               TV := Flow_Graphs.Continue;
+            end if;
+         end Vertex_Has_Inf_Execution;
+
+      --  Start of processing for Has_Only_Infinite_Execution
+
+      begin
+         FA.CFG.DFS (Start         => V_Final,
+                     Include_Start => True,
+                     Visitor       => Vertex_Has_Inf_Execution'Access,
+                     Reversed      => True);
+
+         return Only_Inf_Exec;
+      end Has_Only_Infinite_Execution;
+
       ------------------
       -- Emit_Message --
       ------------------
@@ -2399,26 +2475,27 @@ package body Flow.Analysis is
       is
          type Msg_Kind is (Init, Unknown, Err);
 
-         V_Key        : Flow_Id renames FA.PDG.Get_Key (Vertex);
+         V_Key         : Flow_Id renames FA.PDG.Get_Key (Vertex);
 
-         V_Initial    : constant Flow_Graphs.Vertex_Id :=
+         V_Initial     : constant Flow_Graphs.Vertex_Id :=
            FA.PDG.Get_Vertex (Change_Variant (Var, Initial_Value));
 
-         Kind         : Msg_Kind :=
+         Kind          : Msg_Kind :=
            (if Is_Initialized and Is_Uninitialized then Unknown
             elsif Is_Initialized                   then Init
             else                                        Err);
 
-         N            : Node_Or_Entity_Id := FA.Atr (Vertex).Error_Location;
-         Msg          : Unbounded_String;
+         N             : Node_Or_Entity_Id := FA.Atr (Vertex).Error_Location;
+         Msg           : Unbounded_String;
 
-         V_Error      : Flow_Graphs.Vertex_Id;
-         V_Goal       : Flow_Graphs.Vertex_Id;
-         V_Allowed    : Flow_Graphs.Vertex_Id := Flow_Graphs.Null_Vertex;
+         V_Error       : Flow_Graphs.Vertex_Id;
+         V_Goal        : Flow_Graphs.Vertex_Id;
+         V_Allowed     : Flow_Graphs.Vertex_Id := Flow_Graphs.Null_Vertex;
 
-         Is_Final_Use : constant Boolean := V_Key.Variant = Final_Value;
-         Is_Global    : constant Boolean := FA.Atr (V_Initial).Is_Global;
-         Default_Init : constant Boolean := Is_Default_Initialized (Var);
+         Is_Final_Use  : constant Boolean := V_Key.Variant = Final_Value;
+         Is_Global     : constant Boolean := FA.Atr (V_Initial).Is_Global;
+         Default_Init  : constant Boolean := Is_Default_Initialized (Var);
+         Is_Function   : constant Boolean := Is_Function_Entity (Var);
 
       begin
          case Kind is
@@ -2444,27 +2521,32 @@ package body Flow.Analysis is
          Msg :=
            To_Unbounded_String
              ((case Kind is
-                  when Init =>
-                     "initialization of & proved",
-                  when Unknown =>
-                     (if Default_Init
-                      then "input value of & might be used"
-                      else "& might not be "),
-                  when Err =>
-                     (if Default_Init
-                      then "input value of & will be used"
-                      else "& is not ")));
+                 when Init =>
+                    "initialization of & proved",
+                 when Unknown =>
+                   (if Default_Init
+                    then "input value of & might be used"
+                    elsif Is_Function
+                    then
+                      (if Has_Only_Infinite_Execution (Vertex)
+                       then "function & does not return on any path"
+                       else "function & does not return on some paths")
+                    else "& might not be "),
+                 when Err =>
+                   (if Default_Init
+                    then "input value of & will be used"
+                    else "& is not ")));
 
          case Kind is
             when Unknown | Err =>
-               if not Default_Init then
+               if not (Default_Init or Is_Function) then
                   if Has_Async_Readers (Var) then
                      Append (Msg, "written");
                   else
                      Append (Msg, "initialized");
                   end if;
                end if;
-               if Is_Final_Use and not Is_Global then
+               if Is_Final_Use and not (Is_Global or Is_Function) then
                   Append (Msg, " in &");
                end if;
 
@@ -2630,7 +2712,23 @@ package body Flow.Analysis is
                     or else
                       (Var_Used.Kind in Direct_Mapping | Record_Field
                        and then
-                         Is_Constant_Object (Get_Direct_Mapping_Id (Var_Used)))
+                         (Is_Constant_Object (Get_Direct_Mapping_Id (Var_Used))
+                          or else
+                            (Is_Type (Etype (Get_Direct_Mapping_Id (Var_Used)))
+                             and then
+                               (Is_Empty_Record_Type
+                                  (Etype
+                                     (Get_Direct_Mapping_Id (Var_Used)))))
+                          or else
+                            (Var_Used.Kind = Record_Field
+                             and then Var_Used.Facet = Normal_Part
+                             and then
+                             Is_Empty_Record_Type
+                               (Get_Type
+                                  (Var_Used,
+                                   Get_Flow_Scope
+                                     (Get_Direct_Mapping_Id (Var_Used)))))))
+
                   then
                      --  ... we either do nothing because it is safe, or...
                      null;
@@ -2961,10 +3059,12 @@ package body Flow.Analysis is
       --  Returns True if there is an enclosing package of E (not
       --  necessarily direcly) which has a state abstraction.
 
-      procedure Warn_About_Hidden_States (E : Entity_Id);
+      procedure Warn_About_Hidden_States (E : Entity_Id)
+      with Pre => Ekind (E) = E_Package;
       --  Issues a medium check per hidden state found in package E
 
-      procedure Warn_About_Unreferenced_Constants (E : Entity_Id);
+      procedure Warn_About_Unreferenced_Constants (E : Entity_Id)
+      with Pre => Ekind (E) = E_Package;
       --  Issues a high check for every constant with variable input
       --  which is not exposed through a state abstraction.
 
@@ -3024,7 +3124,7 @@ package body Flow.Analysis is
          begin
             Hidden_State := First_Ent;
             while Present (Hidden_State) loop
-               if Ekind (Hidden_State) in Object_Kind
+               if Is_Object (Hidden_State)
                  and then Is_Variable (Direct_Mapping_Id (Hidden_State))
                then
                   Error_Msg_Flow
@@ -3059,11 +3159,9 @@ package body Flow.Analysis is
 
       procedure Warn_About_Unreferenced_Constants (E : Entity_Id) is
          Refined_State_N  : constant Node_Id :=
-           Get_Pragma (Body_Entity (E),
-                       Pragma_Refined_State);
+           Get_Pragma (Body_Entity (E), Pragma_Refined_State);
 
-         DM               : Dependency_Maps.Map;
-         All_Constituents : Flow_Id_Sets.Set := Flow_Id_Sets.Empty_Set;
+         All_Constituents : Flow_Id_Sets.Set;
 
          procedure Warn_On_Unexposed_Constant (First_Ent : Entity_Id);
          --  Goes through a list of entities and issues medium checks
@@ -3105,19 +3203,14 @@ package body Flow.Analysis is
          --  Sanity check that we do have a Refined_State aspect
          pragma Assert (Present (Refined_State_N));
 
-         --  Gather up all constituents mentioned in the Refined_State
-         --  aspect.
-         DM := Parse_Refined_State (Refined_State_N);
-         for State of DM loop
-            All_Constituents.Union (State);
+         --  Collect constituents mentioned in the Refined_State aspect
+         for Constituents of Parse_Refined_State (Refined_State_N) loop
+            All_Constituents.Union (Constituents);
          end loop;
 
-         --  Warn about hidden unexposed constants with variable input
-         --  that lie in the private part.
+         --  Detect unexposed constants with variable input hidden in the
+         --  private part of the package spec and in package body declarations.
          Warn_On_Unexposed_Constant (First_Private_Entity (E));
-
-         --  Warn about hidden unexposed constants with variable input
-         --  that lie in the body.
          Warn_On_Unexposed_Constant (First_Entity (Body_Entity (E)));
       end Warn_About_Unreferenced_Constants;
 
@@ -3135,8 +3228,8 @@ package body Flow.Analysis is
 
       else
          --  If the package does not have an abstract state aspect and an
-         --  enclosing package does introduces a state abstraction then issue
-         --  a medium check per hidden state.
+         --  enclosing package introduces a state abstraction then issue a
+         --  medium check per hidden state.
 
          if Enclosing_Package_Has_State (FA.Spec_Entity) then
             Warn_About_Hidden_States (FA.Spec_Entity);
@@ -4060,7 +4153,7 @@ package body Flow.Analysis is
                        Get_Direct_Mapping_Id (Constituent);
 
                   begin
-                     if Is_Constant (Constituent)
+                     if Ekind (Constituent_E) = E_Constant
                        and then not Has_Variable_Input (Constituent_E)
                      then
                         Error_Msg_Flow

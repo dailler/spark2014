@@ -26,7 +26,7 @@ prime_and_coprime_numbers.adb:65:65: info: initialization of "R" proved, in inst
 prime_and_coprime_numbers.adb:67:18: info: initialization of "B" proved, in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:68:18: info: initialization of "R" proved, in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:68:18: info: range check proved (CVC4: 1 VC), in instantiation at test_prime_and_coprime_numbers.adb:6
-prime_and_coprime_numbers.adb:71:25: info: assertion proved (altergo: 1 VC), in instantiation at test_prime_and_coprime_numbers.adb:6
+prime_and_coprime_numbers.adb:71:25: info: assertion proved (CVC4: 1 VC), in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:71:30: info: initialization of "A" proved, in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:71:40: info: initialization of "B" proved, in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:73:17: info: initialization of "B" proved, in instantiation at test_prime_and_coprime_numbers.adb:6
@@ -91,6 +91,7 @@ prime_and_coprime_numbers.adb:198:16: medium: postcondition might fail, cannot p
 prime_and_coprime_numbers.adb:205:23: info: length check proved (CVC4: 1 VC), in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:206:24: info: initialization of "Is_Prime" constituent of "P.Prime_Data" proved, in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:207:24: info: initialization of "Is_Prime" constituent of "P.Prime_Data" proved, in instantiation at test_prime_and_coprime_numbers.adb:6
+prime_and_coprime_numbers.adb:209:39: info: precondition proved (CVC4: 1 VC), in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:209:39: medium: range check might fail, in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:211:33: info: loop invariant initialization proved (CVC4: 2 VC), in instantiation at test_prime_and_coprime_numbers.adb:6
 prime_and_coprime_numbers.adb:211:33: medium: loop invariant might fail after first iteration, cannot prove Index_2 in 2 .. Max_Value, in instantiation at test_prime_and_coprime_numbers.adb:6
