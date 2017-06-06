@@ -53,6 +53,7 @@ package body Gnat2Why_Args is
    Flow_Generate_Contracts_Name : constant String :=
      "flow_generate_contracts";
    Flow_Termination_Name        : constant String := "flow_termination_proof";
+   Flow_Show_GG_Name            : constant String := "flow_show_gg";
    Proof_Generate_Guards_Name   : constant String :=
      "proof_generate_axiom_guards";
    Limit_Subp_Name              : constant String := "limit_subp";
@@ -63,7 +64,6 @@ package body Gnat2Why_Args is
    Why3_Args_Name               : constant String := "why3_args";
    Why3_Dir_Name                : constant String := "why3_dir";
    CP_Dir_Name                  : constant String := "codepeer_dir";
-   Prove_Only_Name              : constant String := "debug_prove_only";
 
    ----------
    -- Init --
@@ -106,11 +106,11 @@ package body Gnat2Why_Args is
       Flow_Analysis_Mode      := Get_Opt_Bool (V, Flow_Analysis_Mode_Name);
       Prove_Mode              := Get_Opt_Bool (V, Prove_Mode_Name);
       Debug_Mode              := Get_Opt_Bool (V, Debug_Mode_Name);
-      Debug_Proof_Only        := Get_Opt_Bool (V, Prove_Only_Name);
       Flow_Advanced_Debug     := Get_Opt_Bool (V, Flow_Advanced_Debug_Name);
       Flow_Generate_Contracts := Get_Opt_Bool (V,
                                                Flow_Generate_Contracts_Name);
       Flow_Termination_Proof  := Get_Opt_Bool (V, Flow_Termination_Name);
+      Flow_Show_GG            := Get_Opt_Bool (V, Flow_Show_GG_Name);
       Proof_Generate_Guards   := Get_Opt_Bool (V, Proof_Generate_Guards_Name);
       Pedantic                := Get_Opt_Bool (V, Pedantic_Name);
       Ide_Mode                := Get_Opt_Bool (V, Ide_Mode_Name);
@@ -197,11 +197,11 @@ package body Gnat2Why_Args is
       Set_Field (Obj, Check_All_Mode_Name, Check_All_Mode);
       Set_Field (Obj, Flow_Analysis_Mode_Name, Flow_Analysis_Mode);
       Set_Field (Obj, Prove_Mode_Name, Prove_Mode);
-      Set_Field (Obj, Prove_Only_Name, Debug_Proof_Only);
       Set_Field (Obj, Debug_Mode_Name, Debug_Mode);
       Set_Field (Obj, Flow_Advanced_Debug_Name, Flow_Advanced_Debug);
       Set_Field (Obj, Flow_Generate_Contracts_Name, Flow_Generate_Contracts);
       Set_Field (Obj, Flow_Termination_Name, Flow_Termination_Proof);
+      Set_Field (Obj, Flow_Show_GG_Name, Flow_Show_GG);
       Set_Field (Obj, Proof_Generate_Guards_Name, Proof_Generate_Guards);
       Set_Field (Obj, Pedantic_Name, Pedantic);
       Set_Field (Obj, Ide_Mode_Name, Ide_Mode);

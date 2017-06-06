@@ -89,11 +89,6 @@ package Gnat2Why_Args is
 
    Prove_Mode : Boolean := False;
 
-   --  For debug purposes, flow analysis can be disabled entirely with the
-   --  following switch.
-
-   Debug_Proof_Only : Boolean := False;
-
    --  Enable basic debugging for gnat2why. This will dump the CFG and PDG is
    --  dot format, and print the gnatwhy3 command line.
 
@@ -116,6 +111,12 @@ package Gnat2Why_Args is
    --  subprogram with a warning or info message.
 
    Flow_Termination_Proof : Boolean := False;
+
+   --  This debug flag will show all generated contracts in a human-readable
+   --  form. The main use are a few tests where we want to observe that GG is
+   --  working correctly.
+
+   Flow_Show_GG : Boolean := False;
 
    --  Generate guards for axioms of functions to avoid having an unsound axiom
    --  when a function has an inconsistent contract.

@@ -29,7 +29,6 @@ with Errout;                             use Errout;
 with Fname;                              use Fname;
 with Output;
 with Pprint;                             use Pprint;
-with Sem_Aux;                            use Sem_Aux;
 with Sem_Ch12;                           use Sem_Ch12;
 with Sem_Eval;                           use Sem_Eval;
 with SPARK_Definition;                   use SPARK_Definition;
@@ -897,9 +896,9 @@ package body SPARK_Util is
       return Flat_Stmts;
    end Get_Flat_Statement_And_Declaration_List;
 
-   ---------------------------------
-   -- Get_Formal_Type_From_Actual --
-   ---------------------------------
+   ----------------------------
+   -- Get_Formal_From_Actual --
+   ----------------------------
 
    function Get_Formal_From_Actual (Actual : Node_Id) return Entity_Id is
       Formal : Entity_Id := Empty;
@@ -1161,9 +1160,9 @@ package body SPARK_Util is
         and then Present (Parent (Parent (N)))
         and then Is_Predicate_Function_Call (Parent (Parent (N))));
 
-   -------------------------------------
+   --------------------------------------
    -- Is_Concurrent_Component_Or_Discr --
-   -------------------------------------
+   --------------------------------------
 
    function Is_Concurrent_Component_Or_Discr (E : Entity_Id) return Boolean is
    begin
@@ -1297,7 +1296,7 @@ package body SPARK_Util is
         and then Get_Pragma_Id (Pragma_Name (N)) = Name);
 
    ----------------------------------
-   -- Is_Pragma_Annotate_Gnatprove --
+   -- Is_Pragma_Annotate_GNATprove --
    ----------------------------------
 
    function Is_Pragma_Annotate_GNATprove (N : Node_Id) return Boolean is
@@ -1447,12 +1446,13 @@ package body SPARK_Util is
 
    procedure Iterate_Generic_Parameters (E : Entity_Id)
    is
-      Instance : constant Node_Id := Get_Package_Instantiation_Node (E);
+      Instance : constant Node_Id := Get_Unit_Instantiation_Node (E);
 
-      pragma Assert (Nkind (Instance) = N_Package_Instantiation);
+      pragma Assert (Nkind (Instance) in N_Generic_Instantiation);
 
       function Get_Label_List (E : Entity_Id) return List_Id;
-      --  Use Parent field to reach N_Generic_Package_Declaration
+      --  Use Parent field to reach N_Generic_Package_Declaration or
+      --  N_Generic_Subprogram_Declaration.
       --  ??? See Gnat2Why.External_Axioms.Get_Label_List
 
       --------------------
@@ -1460,9 +1460,11 @@ package body SPARK_Util is
       --------------------
 
       function Get_Label_List (E : Entity_Id) return List_Id is
-         P : Node_Id := Generic_Parent (Package_Specification (E));
+         P : Node_Id := Get_Generic_Entity (E);
       begin
-         while Nkind (P) /= N_Generic_Package_Declaration loop
+         while Nkind (P) not in N_Generic_Package_Declaration
+                              | N_Generic_Subprogram_Declaration
+         loop
             P := Parent (P);
          end loop;
 
@@ -1470,7 +1472,7 @@ package body SPARK_Util is
       end Get_Label_List;
 
       Params  : constant List_Id := Generic_Associations (Instance);
-      Formals : constant List_Id := Get_Label_List (E);
+      Formals : constant List_Id := Get_Label_List (Instance);
 
       Param  : Node_Id := First (Params);
       Formal : Node_Id := First (Formals);

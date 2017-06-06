@@ -174,9 +174,9 @@ package body Why.Atree.Modules is
       end if;
    end E_Axiom_Module;
 
-   --------------------
+   ------------------
    -- E_Rep_Module --
-   --------------------
+   ------------------
 
    function E_Rep_Module (E : Entity_Id) return W_Module_Id is
       use Ada_To_Why;
@@ -567,9 +567,9 @@ package body Why.Atree.Modules is
                        Name => NID ("Array__4")));
    end Initialize;
 
-   ------------------------
-   -- Init_Array_Modules --
-   ------------------------
+   -----------------------
+   -- Init_Array_Module --
+   -----------------------
 
    function Init_Array_Module (Module : W_Module_Id) return M_Array_Type
    is
@@ -1306,7 +1306,7 @@ package body Why.Atree.Modules is
          M_Floats (Fl).Of_Int :=
            New_Identifier (Module => M_Floats (Fl).Module,
                            Domain => EW_Term,
-                           Symbol => NID ("of_int_rna"),
+                           Symbol => NID ("of_int_rne"),
                            Typ    => M_Floats (Fl).T);
          M_Floats (Fl).Truncate :=
            New_Identifier (Module => M_Floats (Fl).Module,

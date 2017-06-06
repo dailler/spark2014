@@ -1486,7 +1486,12 @@ package body Flow_Utility is
       then
          declare
             D_Map  : Dependency_Maps.Map;
-            Params : Node_Sets.Set;
+            Params : constant Node_Sets.Set := Get_Formals (Subprogram);
+            --  We need to make sure not to include our own parameters in the
+            --  globals we produce here. Note that the formal parameters that
+            --  we collect here will also include implicit formal parameters of
+            --  subprograms that belong to concurrent types.
+
          begin
             Debug ("reversing depends annotation");
 
@@ -1496,49 +1501,47 @@ package body Flow_Utility is
                          Depends              => D_Map,
                          Use_Computed_Globals => Use_Deduced_Globals);
 
-            --  We need to make sure not to include our own parameters in the
-            --  globals we produce here. Note that the formal parameters that
-            --  we collect here will also include implicit formal parameters of
-            --  subprograms that belong to concurrent types.
-            Params.Union (Get_Formals (Subprogram));
-
             --  Always OK to call direct_mapping here since you can't refer
             --  to hidden state in user-written depends contracts.
 
             for C in D_Map.Iterate loop
                declare
-                  E      : Entity_Id;
                   Output : Flow_Id          renames Dependency_Maps.Key (C);
                   Inputs : Flow_Id_Sets.Set renames D_Map (C);
                begin
-                  E := (if Present (Output)
-                        then Get_Direct_Mapping_Id (Output)
-                        else Empty);
-
-                  if Present (E)
-                    and then E /= Subprogram
-                    and then not Params.Contains (E)
-                  then
-                     --  Note we also filter out the function'result construct
-                     --  here.
-                     Writes.Include (Change_Variant (Output, Out_View));
+                  --  Filter function'Result and parameters
+                  if Present (Output) then
+                     declare
+                        E : constant Entity_Id :=
+                          Get_Direct_Mapping_Id (Output);
+                     begin
+                        if E /= Subprogram
+                          and then not Params.Contains (E)
+                        then
+                           Writes.Include (Change_Variant (Output, Out_View));
+                        end if;
+                     end;
                   end if;
 
-                  for R of Inputs loop
-                     E := (if Present (R)
-                           then Get_Direct_Mapping_Id (R)
-                           else Empty);
+                  for Input of Inputs loop
+                     if Present (Input) then
+                        declare
+                           E : constant Entity_Id :=
+                             Get_Direct_Mapping_Id (Input);
+                        begin
+                           if not Params.Contains (E) then
+                              Reads.Include (Change_Variant (Input, In_View));
 
-                     if Present (E) and then not Params.Contains (E) then
-                        Reads.Include (Change_Variant (R, In_View));
-
-                        if Has_Effective_Reads (R) then
-                           --  A volatile with effective reads is always an
-                           --  output as well (this should be recorded in the
-                           --  depends, but the front-end does not enforce
-                           --  this).
-                           Writes.Include (Change_Variant (R, Out_View));
-                        end if;
+                              --  A volatile with effective reads is always
+                              --  an output as well (this should be recorded
+                              --  in the depends, but the front-end does not
+                              --  enforce this).
+                              if Has_Effective_Reads (Input) then
+                                 Writes.Include
+                                   (Change_Variant (Input, Out_View));
+                              end if;
+                           end if;
+                        end;
                      end if;
                   end loop;
                end;
@@ -1552,64 +1555,12 @@ package body Flow_Utility is
         and then Use_Deduced_Globals
       then
 
-         if GG_Exist (Subprogram) then
-            --  We don't have a global or a depends aspect so we look at the
-            --  generated globals.
+         --  We don't have a global or a depends aspect so we look at the
+         --  generated globals.
 
-            Debug ("using Pavlos globals");
+         Debug ("using generated globals");
 
-            GG_Get_Globals (Subprogram, Scope,
-                            Proof_Ins, Reads, Writes);
-
-            Debug ("proof ins", Proof_Ins);
-            Debug ("reads",     Reads);
-            Debug ("writes",    Writes);
-
-         --  We don't have a global or a depends aspect and we don't have
-         --  generated globals, so we should look at the computed globals...
-
-         else
-            Debug ("using Yannick globals");
-
-            --  ??? we should not enter here, Yannick's globals should be
-            --  captured in phase 1 and never touched later; we should also
-            --  do not compute their transitive closure in both phases.
-
-            declare
-               ALI_Reads  : constant Name_Sets.Set :=
-                 Computed_Reads (Subprogram,
-                                 Include_Constants => True);
-               ALI_Writes : constant Name_Sets.Set :=
-                 Computed_Writes (Subprogram);
-
-               F : Flow_Id;
-            begin
-               for R of ALI_Reads loop
-                  F := Get_Flow_Id (R, In_View);
-
-                  if Is_Variable (F) then
-                     Reads.Include (F);
-                  end if;
-               end loop;
-
-               Debug ("reads", Reads);
-
-               for W of ALI_Writes loop
-                  --  This is not a mistake, we must assume that all values
-                  --  written may also not change or that they are only
-                  --  partially updated.
-                  --
-                  --  This also takes care of discriminants as every out is
-                  --  really an in out.
-                  F := Get_Flow_Id (W, Out_View);
-
-                  Reads.Include (Change_Variant (F, In_View));
-                  Writes.Include (F);
-               end loop;
-
-               Debug ("writes", Writes);
-            end;
-         end if;
+         GG_Get_Globals (Subprogram, Scope, Proof_Ins, Reads, Writes);
 
       --  We don't have user globals and we're not allowed to use computed
       --  globals (i.e. we're trying to compute globals).
@@ -2210,6 +2161,7 @@ package body Flow_Utility is
                          Reads               => Global_Reads,
                          Writes              => Global_Writes,
                          Use_Deduced_Globals => Ctx.Use_Computed_Globals);
+
             if not Ctx.Fold_Functions then
                --  If we fold functions we're interested in real world,
                --  otherwise (this case) we're interested in the proof world
@@ -3012,6 +2964,10 @@ package body Flow_Utility is
       FS   : Flow_Id_Sets.Set;
 
    begin
+      --  This routine is mirrored in Variable_Inputs_Of_Constants;
+      --  any change here should be reflected there.
+      --  ??? ideally, this should be refactored
+
       if Is_Imported (E) then
          --  If we are dealing with an imported constant, we consider this to
          --  have potentially variable input.
@@ -4947,5 +4903,16 @@ package body Flow_Utility is
 
       return False;
    end Is_Empty_Record_Type;
+
+   ------------------
+   -- Parent_State --
+   ------------------
+
+   function Parent_State (E : Entity_Id) return Entity_Id is
+     (if Ekind (E) in E_Abstract_State |
+                      E_Constant       |
+                      E_Variable
+      then Encapsulating_State (E)
+      else Empty);
 
 end Flow_Utility;

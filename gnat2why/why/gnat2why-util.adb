@@ -300,14 +300,8 @@ package body Gnat2Why.Util is
       --  behavior is to print private types as if they were public.
 
    begin
-      --  Currently generate non-empty set of labels values only for variables
-      --  of scalar, record, and array types. For variables of other types,
-      --  getting counterexample values is not supported.
-
-      if (not Comes_From_Source (E)
-            and then not Comes_From_Source (Parent (E)))
-        or else
-          Is_Floating_Point_Type (Etype (E))
+      if not Comes_From_Source (E)
+            and then not Comes_From_Source (Parent (E))
       then
          Labels := Name_Id_Sets.Empty_Set;
 
@@ -995,9 +989,9 @@ package body Gnat2Why.Util is
         and then not Is_Tagged_Type (Ty);
    end Is_Simple_Private_Type;
 
-   -------------------------
-   -- Make_Empty_Why_File --
-   -------------------------
+   ----------------------------
+   -- Make_Empty_Why_Section --
+   ----------------------------
 
    procedure Make_Empty_Why_Section
      (Kind : W_Section_Id; Section : out Why_Section) is
@@ -1281,7 +1275,7 @@ package body Gnat2Why.Util is
    end Use_Guard_For_Function;
 
    -----------------------------
-   -- Use_Split_From_For_Type --
+   -- Use_Split_Form_For_Type --
    -----------------------------
 
    function Use_Split_Form_For_Type (E : Entity_Id) return Boolean is

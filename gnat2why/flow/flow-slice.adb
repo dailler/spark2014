@@ -291,7 +291,6 @@ package body Flow.Slice is
       Conditional_Calls     : out Node_Sets.Set;
       Local_Variables       : out Node_Sets.Set;
       Local_Ghost_Variables : out Node_Sets.Set;
-      Local_Subprograms     : out Node_Sets.Set;
       Local_Definite_Writes : out Node_Sets.Set)
    is
       --  The "Get_" functions that follow collect nodes that are purely of the
@@ -309,10 +308,8 @@ package body Flow.Slice is
       with Global => (Input => Unresolved);
       --  Get subprograms that are definitely called
 
-      procedure Get_Local_Variables_And_Subprograms
-      with Global => (Output => (Local_Variables,
-                                 Local_Ghost_Variables,
-                                 Local_Subprograms));
+      procedure Get_Local_Variables
+      with Global => (Output => (Local_Variables, Local_Ghost_Variables));
       --  Traverses the tree under FA.Analyzed_Entity and gathers all object
       --  and subprogram declarations and puts them in Local_Variables,
       --  Local_Ghost_Variables and Local_Subprograms, respectively.
@@ -346,25 +343,22 @@ package body Flow.Slice is
          end loop;
       end Get_Definite_Calls;
 
-      -----------------------------------------
-      -- Get_Local_Variables_And_Subprograms --
-      -----------------------------------------
+      -------------------------
+      -- Get_Local_Variables --
+      -------------------------
 
-      procedure Get_Local_Variables_And_Subprograms is
-         function Get_Object_Or_Subprogram_Declaration
-           (N : Node_Id)
-            return Traverse_Result;
+      procedure Get_Local_Variables is
+         function Get_Object_Declaration (N : Node_Id) return Traverse_Result;
+
          --  Pick entities coming from object and subprogram declarations and
          --  add them respectively to Local_Variables and Local_Subprograms.
          --  ??? respect SPARK_Mode => Off
 
-         ------------------------------------------
-         -- Get_Object_Or_Subprogram_Declaration --
-         ------------------------------------------
+         ----------------------------
+         -- Get_Object_Declaration --
+         ----------------------------
 
-         function Get_Object_Or_Subprogram_Declaration
-           (N : Node_Id)
-            return Traverse_Result
+         function Get_Object_Declaration (N : Node_Id) return Traverse_Result
          is
             function Exposed_As_State (E : Entity_Id) return Boolean
             with Pre => Ekind (E) in E_Constant
@@ -383,9 +377,9 @@ package body Flow.Slice is
             --  Insert E to either Local_Variables or Local_Ghost_Variables
             --  depending on its Ghost status.
 
-            -----------------------
+            ----------------------
             -- Exposed_As_State --
-            -----------------------
+            ----------------------
 
             function Exposed_As_State (E : Entity_Id) return Boolean is
                S : constant Entity_Id := Scope (E);
@@ -434,57 +428,22 @@ package body Flow.Slice is
 
          begin
             case Nkind (N) is
-               when N_Entry_Body      |
-                    N_Subprogram_Body |
-                    N_Task_Body       =>
-                  if Unique_Defining_Entity (N) /= FA.Spec_Entity then
-                     return Skip;
-                  end if;
-
-               when N_Entry_Declaration      |
-                    N_Subprogram_Declaration |
-                    N_Task_Type_Declaration  =>
-                  declare
-                     E : constant Entity_Id := Defining_Entity (N);
-                  begin
-                     if E /= FA.Spec_Entity then
-                        Local_Subprograms.Insert (E);
-                        return Skip;
-                     end if;
-                  end;
-
-               when N_Subprogram_Body_Stub =>
-                  if Is_Subprogram_Stub_Without_Prior_Declaration (N) then
-                     Local_Subprograms.Insert (Defining_Entity (N));
-                     return Skip;
-                  end if;
-
-               when N_Generic_Package_Declaration    |
-                    N_Generic_Subprogram_Declaration =>
-                  --  Skip generic declarations
+               when N_Entry_Body
+                  | N_Entry_Declaration
+                  | N_Generic_Package_Declaration
+                  | N_Generic_Subprogram_Declaration
+                  | N_Subprogram_Body
+                  | N_Subprogram_Body_Stub
+                  | N_Subprogram_Declaration
+                  | N_Task_Type_Declaration
+                  | N_Task_Body
+               =>
                   return Skip;
 
+               --  Skip statements of a nested package's body
+
                when N_Handled_Sequence_Of_Statements =>
-                  --  Skip statements of a nested package's body
-                  --  ???
-                  if Nkind (Parent (N)) = N_Package_Body then
-                     return Skip;
-                  end if;
-
-               when N_Loop_Parameter_Specification =>
-                  --  Add variable introduced by FOR loop, but ignore variable
-                  --  introduced by quantified expression (because that
-                  --  expressions cannot define new callable entities for
-                  --  which the variable would act as a global).
-                  if Nkind (Parent (N)) = N_Iteration_Scheme then
-                     declare
-                        E : constant Entity_Id := Defining_Identifier (N);
-                     begin
-                        pragma Assert (Exposed_As_State (E));
-                        Insert_Local_Variable (E);
-                     end;
-                  end if;
-
+                  pragma Assert (Nkind (Parent (N)) = N_Package_Body);
                   return Skip;
 
                when N_Object_Declaration =>
@@ -578,43 +537,29 @@ package body Flow.Slice is
             end case;
 
             return OK;
-         end Get_Object_Or_Subprogram_Declaration;
+         end Get_Object_Declaration;
 
-         procedure Gather_Local_Variables_And_Subprograms is
-            new Traverse_Proc (Get_Object_Or_Subprogram_Declaration);
+         procedure Gather_Local_Variables is
+            new Traverse_Proc (Get_Object_Declaration);
 
-      --  Start of processing for Get_Local_Variables_And_Subprograms
+      --  Start of processing for Get_Local_Variables
 
       begin
-         --  Initialize Local_Variables and Local_Subprograms: collect formal
-         --  parameters of the entry/subprogram/task.
-         if FA.Kind in Kind_Subprogram | Kind_Task then
-            if Is_Ghost_Entity (FA.Analyzed_Entity) then
-               Local_Ghost_Variables := Get_Formals (FA.Analyzed_Entity);
-            else
-               Local_Variables := Get_Formals (FA.Analyzed_Entity);
+         --  Initialize Local_Variables and Local_Subprograms
+
+         Local_Variables       := Node_Sets.Empty_Set;
+         Local_Ghost_Variables := Node_Sets.Empty_Set;
+
+         --  Gather local variables and subprograms
+         if Ekind (FA.Spec_Entity) = E_Package then
+            Gather_Local_Variables (Package_Spec (FA.Spec_Entity));
+
+            if FA.Kind = Kind_Package_Body then
+               Gather_Local_Variables (Package_Body (FA.Analyzed_Entity));
             end if;
          end if;
 
-         Local_Subprograms := Node_Sets.Empty_Set;
-
-         --  Gather local variables and subprograms
-         case FA.Kind is
-            when Kind_Subprogram | Kind_Task =>
-               Gather_Local_Variables_And_Subprograms
-                 (Get_Body (FA.Analyzed_Entity));
-
-            when Kind_Package | Kind_Package_Body =>
-               Gather_Local_Variables_And_Subprograms
-                 (Package_Spec (FA.Spec_Entity));
-
-               if FA.Kind = Kind_Package_Body then
-                  Gather_Local_Variables_And_Subprograms
-                    (Package_Body (FA.Analyzed_Entity));
-               end if;
-         end case;
-
-      end Get_Local_Variables_And_Subprograms;
+      end Get_Local_Variables;
 
       -------------------------------
       -- Get_Local_Definite_Writes --
@@ -681,16 +626,27 @@ package body Flow.Slice is
                --  see the call to Process_Subprogram_Globals in
                --  Do_Call_Statement.
                --  ??? refactor those to using a common routine
-               if Ekind (E) /= E_Package
-                 and then (not Has_User_Supplied_Globals (E)
-                           or else Rely_On_Generated_Global (E, FA.B_Scope))
-               then
-                  if A.Is_Assertion then
-                     Proof_Calls.Include (E);
-                  else
-                     Unresolved.Include (E);
-                  end if;
-               end if;
+               case Ekind (E) is
+                  when Entry_Kind
+                     | E_Function
+                     | E_Procedure
+                  =>
+                     if not Has_User_Supplied_Globals (E)
+                       or else Rely_On_Generated_Global (E, FA.B_Scope)
+                     then
+                        if A.Is_Assertion then
+                           Proof_Calls.Include (E);
+                        else
+                           Unresolved.Include (E);
+                        end if;
+                     end if;
+
+                  when E_Package =>
+                     null;
+
+                  when others =>
+                     raise Program_Error;
+               end case;
             end loop;
          end;
       end loop;
@@ -775,10 +731,9 @@ package body Flow.Slice is
          end;
       end loop;
 
-      Get_Local_Variables_And_Subprograms;
-
       --  Only needed for packages
       if FA.Kind in Kind_Package | Kind_Package_Body then
+         Get_Local_Variables;
          Get_Local_Definite_Writes;
       end if;
    end Compute_Globals;

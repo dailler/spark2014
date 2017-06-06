@@ -3632,9 +3632,9 @@ package body Gnat2Why.Subprograms is
                     Defined_Entity => E);
    end Generate_VCs_For_Subprogram;
 
-   ---------------------------
-   -- Generate_VCs_For_Task --
-   ---------------------------
+   --------------------------------
+   -- Generate_VCs_For_Task_Type --
+   --------------------------------
 
    procedure Generate_VCs_For_Task_Type
      (File : W_Section_Id;
@@ -3967,10 +3967,30 @@ package body Gnat2Why.Subprograms is
                            B_Ent     => Null_Entity_Name,
                            Mutable   => False)
                 & Tag_B & Logic_Why_Binders;
+            Tag_Comp      : constant W_Pred_Id :=
+              (if Is_Tagged_Type (Retysp (Etype (E)))
+               and then not Is_Class_Wide_Type (Etype (E))
+               then
+                 +New_Comparison
+                   (Symbol => Why_Eq,
+                    Left   => New_Tag_Access
+                      (Domain   => EW_Term,
+                       Name     => +New_Result_Ident (Why_Type),
+                       Ty       => Retysp (Etype (E))),
+                    Right  => (if Dispatch and then Has_Controlling_Result (E)
+                               then +Tag_Binder.B_Name
+                               else +E_Symb (Etype (E), WNE_Tag)),
+                    Domain => EW_Pred)
+               else True_Pred);
+            --  For functions with tagged results, assume the value of the tag
+            --  of the result.
+
             Complete_Post : constant W_Pred_Id :=
-              +New_And_Expr (Left   => +Post,
-                             Right  => +Dynamic_Prop_Result,
-                             Domain => EW_Pred);
+              +New_And_Expr (Conjuncts =>
+                               (1 => +Post,
+                                2 => +Dynamic_Prop_Result,
+                                3 => +Tag_Comp),
+                             Domain    => EW_Pred);
             Guarded_Post  : constant W_Pred_Id :=
               (if not Use_Guard_For_Function (E) then Complete_Post
                else New_Conditional
@@ -4062,6 +4082,10 @@ package body Gnat2Why.Subprograms is
       --  @params D a descendant of the dispatching type of E
       --  @return the primitive of D that corresponds to E
 
+      function Same_Globals (E, D : Entity_Id) return Boolean;
+      --  @params D a descendant of the dispatching type of E
+      --  @return True if E and D access the same set of global variables
+
       -----------------------------
       -- Corresponding_Primitive --
       -----------------------------
@@ -4087,6 +4111,34 @@ package body Gnat2Why.Subprograms is
          end loop;
          raise Program_Error;
       end Corresponding_Primitive;
+
+      ------------------
+      -- Same_Globals --
+      ------------------
+
+      function Same_Globals (E, D : Entity_Id) return Boolean is
+         use type Flow_Types.Flow_Id_Sets.Set;
+
+         E_Read_Ids  : Flow_Types.Flow_Id_Sets.Set;
+         D_Read_Ids  : Flow_Types.Flow_Id_Sets.Set;
+         E_Write_Ids : Flow_Types.Flow_Id_Sets.Set;
+         D_Write_Ids : Flow_Types.Flow_Id_Sets.Set;
+      begin
+         --  Collect global variables potentially read and written
+
+         Flow_Utility.Get_Proof_Globals (Subprogram => E,
+                                         Classwide  => True,
+                                         Reads      => E_Read_Ids,
+                                         Writes     => E_Write_Ids);
+
+         Flow_Utility.Get_Proof_Globals (Subprogram => D,
+                                         Classwide  => True,
+                                         Reads      => D_Read_Ids,
+                                         Writes     => D_Write_Ids);
+
+         return E_Read_Ids.Union (E_Write_Ids) =
+           D_Read_Ids.Union (D_Write_Ids);
+      end Same_Globals;
 
       Ty            : constant Entity_Id := Retysp (Find_Dispatching_Type (E));
       Descendants   : Node_Sets.Set := Get_Descendant_Set (Ty);
@@ -4129,6 +4181,13 @@ package body Gnat2Why.Subprograms is
                         Args   => Dispatch_Args,
                         Typ    => Anc_Ty);
          begin
+            --  If Descendant_E has has not the same globals as E, there
+            --  should be an error in flow analysis. Do not attempt to
+            --  generate a compatibility axiom.
+
+            if not Same_Globals (E, Descendant_E) then
+               return;
+            end if;
 
             --  If E is a function, emit:
             --    for all x1 ... [<E>__dispatch Descendant.tag x1 ...].
@@ -4151,7 +4210,6 @@ package body Gnat2Why.Subprograms is
                   --  of E.
 
                begin
-
                   pragma Assert (Anc_Binders'First = Desc_Binders'First
                                  and Anc_Binders'Last = Desc_Binders'Last);
 
@@ -4530,9 +4588,9 @@ package body Gnat2Why.Subprograms is
                     Defined_Entity => E);
    end Generate_Subprogram_Completion;
 
-   --------------------------------------
+   -------------------------------------
    -- Generate_Subprogram_Program_Fun --
-   --------------------------------------
+   -------------------------------------
 
    procedure Generate_Subprogram_Program_Fun
      (File : W_Section_Id;

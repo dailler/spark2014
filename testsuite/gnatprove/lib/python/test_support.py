@@ -233,18 +233,13 @@ def check_fail(strlist, no_failures_allowed):
 
     failures = frozenset(["low", "medium", "high"])
 
-    has_failure = False
-
-    for m in map(is_msg.match, strlist):
-        if m is not None:
-            kind = m.group(3)
-            if kind in failures:
-                has_failure = True
-                if no_failures_allowed:
+    if no_failures_allowed:
+        for m in map(is_msg.match, strlist):
+            if m is not None:
+                kind = m.group(3)
+                if kind in failures:
                     print "FAILED CHECK UNEXPECTED at %s:%s" % (m.group(1),
                                                                 m.group(2))
-            elif m.group(3) is None and m.group(4) is None:
-                has_failure = True
 
 
 def check_marks(strlist):
@@ -564,7 +559,8 @@ def strip_provers_output_from_testout():
 
 
 def gnatprove(opt=["-P", "test.gpr"], no_fail=False, no_output=False,
-              filter_output=None, cache_allowed=True, subdue_flow=False):
+              filter_output=None, cache_allowed=True, subdue_flow=False,
+              sort_output=True):
     """Invoke gnatprove, and in case of success return list of output lines
 
     PARAMETERS
@@ -635,7 +631,11 @@ def gnatprove(opt=["-P", "test.gpr"], no_fail=False, no_output=False,
         strlist = grep(filter_output, strlist, invert=True)
 
     if not no_output:
-        print_sorted(strlist)
+        if sort_output:
+            print_sorted(strlist)
+        else:
+            for line in strlist:
+                print line
 
 
 def prove_all(opt=None, steps=max_steps, procs=parallel_procs,
@@ -646,6 +646,7 @@ def prove_all(opt=None, steps=max_steps, procs=parallel_procs,
               level=None,
               no_fail=False,
               no_output=False,
+              sort_output=True,
               filter_output=None,
               subdue_flow=False,
               codepeer=False):
@@ -695,13 +696,14 @@ def prove_all(opt=None, steps=max_steps, procs=parallel_procs,
     gnatprove(fullopt,
               no_fail=no_fail,
               no_output=no_output,
+              sort_output=sort_output,
               cache_allowed=cache_allowed,
               subdue_flow=subdue_flow,
               filter_output=filter_output)
 
 
 def do_flow(opt=None, procs=parallel_procs, no_fail=False, mode="all",
-            gg=True):
+            gg=True, sort_output=True):
     """
     Call gnatprove with standard options for flow. We do generate
     verification conditions, but we don't actually try very hard to
@@ -714,7 +716,8 @@ def do_flow(opt=None, procs=parallel_procs, no_fail=False, mode="all",
         opt.append("--no-global-generation")
 
     prove_all(opt, procs=procs, steps=1, counterexample=False,
-              prover=["cvc4"], no_fail=no_fail, mode=mode)
+              prover=["cvc4"], no_fail=no_fail, mode=mode,
+              sort_output=sort_output)
 
 
 def do_flow_only(opt=None, procs=parallel_procs, no_fail=False):

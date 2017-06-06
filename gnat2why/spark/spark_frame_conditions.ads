@@ -33,6 +33,7 @@
 
 with Ada.Containers;             use Ada.Containers;
 with Ada.Containers.Hashed_Sets;
+with ALI;                             use ALI;
 with Atree;                      use Atree;
 with Common_Containers;          use Common_Containers;
 with Einfo;                      use Einfo;
@@ -90,14 +91,13 @@ package SPARK_Frame_Conditions is
    function File_Of_Entity (E : Entity_Name) return Entity_Name;
    --  Return the name of the file defining the entity E
 
-   procedure Load_SPARK_Xrefs (ALI_Filename : String);
+   procedure Load_SPARK_Xrefs (ALI_File : ALI_Id);
    --  Extract xref information from an ALI file
 
    procedure Collect_Direct_Computed_Globals
-     (E                  : Entity_Id;
-      Inputs             : out Name_Sets.Set;
-      Outputs            : out Name_Sets.Set;
-      Called_Subprograms : out Name_Sets.Set)
+     (E       :     Entity_Id;
+      Inputs  : out Name_Sets.Set;
+      Outputs : out Name_Sets.Set)
    with Pre  => Ekind (E) in Entry_Kind
                            | E_Function
                            | E_Procedure
@@ -113,17 +113,11 @@ package SPARK_Frame_Conditions is
    --  The Inputs set will contain both variables that are either read or
    --  written (since the Computed Globals are an over-approximation).
 
-   procedure Propagate_Through_Call_Graph
-     (Ignore_Errors     : Boolean;
-      Current_Unit_Only : Boolean := False);
+   procedure Propagate_Through_Call_Graph;
    --  Propagate reads and writes through the call-graph defined by calls and
-   --  callers. If Ignore_Errors is true, then ignore failures to find some
-   --  scope that should have been present in some ALI file. This mode is used
-   --  in simpler modes of operation that do not lead to translation into Why.
-   --  It also determines which subprograms are (mutually) recursive.
-   --
-   --  If Current_Unit_Only is set then we only want the direct calls and
-   --  globals.
+   --  callers.
+   --  ??? This procedure only initializes maps and doesn't propagate anything;
+   --  the name comes from the the previous design of the generated globals.
 
    function Is_Protected_Operation (E_Name : Entity_Name) return Boolean;
    --  Return True if E_Name refers to entry or protected subprogram

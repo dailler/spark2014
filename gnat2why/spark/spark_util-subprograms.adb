@@ -34,6 +34,7 @@ with Flow_Utility;                       use Flow_Utility;
 with Gnat2Why_Args;
 with Gnat2Why.Assumptions;               use Gnat2Why.Assumptions;
 with GNATCOLL.Utils;                     use GNATCOLL.Utils;
+with Rtsfind;                            use Rtsfind;
 with Sem_Aux;                            use Sem_Aux;
 with Sem_Ch12;                           use Sem_Ch12;
 with Sem_Prag;                           use Sem_Prag;
@@ -572,6 +573,13 @@ package body SPARK_Util.Subprograms is
       return Empty;
    end Get_Priority_Or_Interrupt_Priority;
 
+   ---------------------------
+   -- Includes_Current_Task --
+   ---------------------------
+
+   function Includes_Current_Task (Calls : Node_Sets.Set) return Boolean is
+      (for some Call of Calls => Is_RTE (Call, RE_Current_Task));
+
    -------------------
    -- Has_Contracts --
    -------------------
@@ -712,7 +720,7 @@ package body SPARK_Util.Subprograms is
             then
                Parent_Scope :=
                  Entity
-                   (Name (Get_Package_Instantiation_Node (Parent_Scope)));
+                   (Name (Get_Unit_Instantiation_Node (Parent_Scope)));
             end if;
 
             Scope_Id := Scope_Id - 1;
@@ -1050,9 +1058,9 @@ package body SPARK_Util.Subprograms is
       end;
    end Is_Simple_Shift_Or_Rotate;
 
-   ---------------------------------------
+   ------------------------------------
    -- Is_Volatile_For_Internal_Calls --
-   ---------------------------------------
+   ------------------------------------
 
    function Is_Volatile_For_Internal_Calls (E : Entity_Id) return Boolean is
    begin

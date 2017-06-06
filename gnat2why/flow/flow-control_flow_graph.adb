@@ -3785,6 +3785,7 @@ package body Flow.Control_Flow_Graph is
 
       DM : constant Dependency_Maps.Map :=
         Parse_Initializes (Package_Spec, Initializes_Scope);
+      --  ??? This needs to take into account initializes from gg
 
       V : Flow_Graphs.Vertex_Id;
 
@@ -4513,6 +4514,13 @@ package body Flow.Control_Flow_Graph is
                    Reads               => Reads,
                    Writes              => Writes,
                    Use_Deduced_Globals => not FA.Generating_Globals);
+
+      --  User-written Inputs and Proof_Ins may include constants without
+      --  variable input and we will complain about this when analyzying such
+      --  contracts. Here we filter such constants to not propagate the user's
+      --  mistake.
+      Remove_Constants (Proof_Reads, Skip => FA.Local_Constants);
+      Remove_Constants (Reads,       Skip => FA.Local_Constants);
 
       for R of Proof_Reads loop
          Add_Vertex (FA,
@@ -5763,6 +5771,7 @@ package body Flow.Control_Flow_Graph is
                   Reads     : Flow_Id_Sets.Set;
                   Writes    : Flow_Id_Sets.Set;
                   Globals   : Global_Maps.Map := Global_Maps.Empty_Map;
+
                begin
                   Get_Globals (Subprogram => FA.Analyzed_Entity,
                                Scope      => FA.B_Scope,

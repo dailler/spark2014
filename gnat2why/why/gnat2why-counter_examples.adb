@@ -197,6 +197,11 @@ package body Gnat2Why.Counter_Examples is
       --  Mutually recursive function with the local Refine, which does the
       --  actual conversion.
 
+      function Replace_Question_Mark (S : Unbounded_String)
+                                      return Unbounded_String;
+      --  This replaces empty string by question mark in some cases where it is
+      --  needed.
+
       -------------------------------------
       -- Compile_Time_Known_And_Constant --
       -------------------------------------
@@ -216,6 +221,10 @@ package body Gnat2Why.Counter_Examples is
 
          return False;
       end Compile_Time_Known_And_Constant;
+
+      function Print_Float (Cnt_Value : Cntexmp_Value)
+                            return Unbounded_String;
+      --  ??? Used to print float counterex. This version is temporary.
 
       --------------
       -- Contains --
@@ -309,9 +318,6 @@ package body Gnat2Why.Counter_Examples is
                   return Cnt_Value.I;
                end if;
 
-            when Cnt_Float =>
-               return Cnt_Value.F;
-
             when Cnt_Boolean =>
                return To_Unbounded_String (Cnt_Value.Bo);
 
@@ -327,10 +333,32 @@ package body Gnat2Why.Counter_Examples is
 
                return Cnt_Value.B;
 
+            when Cnt_Decimal =>
+               return Cnt_Value.D;
+
+            when Cnt_Float =>
+
+               if Is_Floating_Point_Type (AST_Type) then
+                  return Print_Float (Cnt_Value.all);
+               else
+                  --  ??? only float types are expected here
+                  return Print_Float (Cnt_Value.all);
+               end if;
+
             when Cnt_Unparsed =>
                return Cnt_Value.U;
 
             when Cnt_Record =>
+
+               --  In some cases, we have a mismatch between types of record
+               --  as given back by why3 and the record that the entity should
+               --  have. We encountered this only once in a private type so
+               --  this should be fine to not print this.
+               if not (Is_Record_Type (AST_Type)) then
+                  return Null_Unbounded_String;
+               end if;
+
+               --  AST_Type is of record type
                declare
                   Mdiscrs       : constant Cntexmp_Value_Array.Map :=
                                     Cnt_Value.Di;
@@ -388,7 +416,8 @@ package body Gnat2Why.Counter_Examples is
                               Check_Count := Check_Count + 1;
                               Append (S,
                                       Field_Name & " => " &
-                                      Refine (Mdiscr, Field_Type));
+                                        Replace_Question_Mark (
+                                          Refine (Mdiscr, Field_Type)));
                            end if;
                         end;
 
@@ -408,6 +437,9 @@ package body Gnat2Why.Counter_Examples is
                                           Retysp (Etype (Current_Field));
                            Field_Name : constant String :=
                                           Source_Name (Current_Field);
+                           --  ??? Here, we should check that Field_Name
+                           --  is actually the same as the name of the
+                           --  Mfield.
                         begin
                            if Contains (AST_Type, Field_Name) then
                               if Check_Count > 0 then
@@ -417,7 +449,8 @@ package body Gnat2Why.Counter_Examples is
                               Check_Count := Check_Count + 1;
 
                               Append (S, Field_Name & " => " &
-                                         Refine (Mfield, Field_Type));
+                                         Replace_Question_Mark
+                                           (Refine (Mfield, Field_Type)));
                            end if;
                         end;
 
@@ -517,6 +550,55 @@ package body Gnat2Why.Counter_Examples is
       begin
          return Trim (Res, Both);
       end Refine_Value;
+
+      -----------------
+      -- Print_Float --
+      -----------------
+
+      function Print_Float (Cnt_Value : Cntexmp_Value)
+                            return Unbounded_String
+      is
+         F : Float_Value renames Cnt_Value.F.all;
+      begin
+         case F.F_Type is
+         when Float_Plus_Infinity  =>
+            return To_Unbounded_String ("+oo");
+
+         when Float_Minus_Infinity =>
+            return To_Unbounded_String ("-oo");
+
+         when Float_Plus_Zero      =>
+            return To_Unbounded_String ("+zero");
+
+         when Float_Minus_Zero     =>
+            return To_Unbounded_String ("-zero");
+
+         when Float_NaN            =>
+            return To_Unbounded_String ("NaN");
+
+         when Float_Val =>
+            declare
+            begin
+               return "(fp " & F.F_Sign & ", " & F.F_Exponent & ", "
+                 & F.F_Significand & ")";
+            end;
+         end case;
+      end Print_Float;
+
+      ---------------------------
+      -- Replace_Question_Mark --
+      ---------------------------
+
+      function Replace_Question_Mark (S : Unbounded_String)
+                                      return Unbounded_String
+      is
+      begin
+         if S = "" then
+            return To_Unbounded_String ("?");
+         else
+            return (S);
+         end if;
+      end Replace_Question_Mark;
 
    --  Start of processing for Refine
 
@@ -969,9 +1051,9 @@ package body Gnat2Why.Counter_Examples is
       --  it has already been inserted, return the existing; if not, create new
       --  entry, store it in the map, and return it.
 
-      -------------------------
+      ------------------------
       -- Insert_CNT_Element --
-      -------------------------
+      ------------------------
 
       function Insert_CNT_Element
         (Name   : String;

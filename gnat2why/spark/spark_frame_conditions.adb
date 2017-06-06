@@ -24,16 +24,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Hashed_Maps;
-with Ada.Containers.Vectors;
 with Ada.Text_IO;                    use Ada.Text_IO;
 with Flow_Generated_Globals.Phase_2; use Flow_Generated_Globals.Phase_2;
-with Flow_Types;                     use Flow_Types;
-with Flow_Utility;                   use Flow_Utility;
 with Get_SPARK_Xrefs;
 with Lib.Xref;                       use Lib.Xref;
+with Osint;                          use Osint;
 with Sem_Aux;                        use Sem_Aux;
 with Snames;                         use Snames;
-with SPARK_Util.Subprograms;         use SPARK_Util.Subprograms;
 with SPARK_Xrefs;                    use SPARK_Xrefs;
 
 package body SPARK_Frame_Conditions is
@@ -50,30 +47,6 @@ package body SPARK_Frame_Conditions is
       "="             => "=");
 
    Name_To_Entity : Name_To_Entity_Map.Map := Name_To_Entity_Map.Empty_Map;
-
-   package Entity_Name_Vectors is new
-     Ada.Containers.Vectors (Index_Type   => Positive,
-                             Element_Type => Entity_Name);
-
-   subtype SCC is Entity_Name_Vectors.Vector;
-   --  Ordered list of subprograms in a strongly connected component, roughly
-   --  ordered so as to follow call chains for better propagation.
-
-   package SCC_Vectors is new
-     Ada.Containers.Vectors (Index_Type   => Positive,
-                             Element_Type => SCC,
-                             "="          => Entity_Name_Vectors."=");
-
-   subtype SCCs is SCC_Vectors.Vector;
-   --  Ordered list of strongly connected components in call-graph, with the
-   --  "leaf" SCCs coming first.
-   --
-   --  ??? originally this code was using arrays, which was difficult to follow
-   --  and required manual memory allocation and freeing; now it uses vectors,
-   --  which makes it easier to understand; perhaps with lists it would be even
-   --  cleaner, but I suspect that vectors give slightly better performance
-   --  because of data locality. Lastly, the transitive closure algorithm
-   --  that is used in flow analysis should give even better performance.
 
    ---------------------
    -- Local Variables --
@@ -104,26 +77,18 @@ package body SPARK_Frame_Conditions is
    procedure Add_To_Map (Map : in out Name_Graphs.Map; From, To : Entity_Name);
    --  Add the relation From -> To in map Map
 
-   function Compute_Strongly_Connected_Components
-     (Nodes : Name_Sets.Set) return SCCs;
-   --  Compute of strongly connected components using Tarjan's algorithm.
-   --  Individual components are dynamically allocated.
-
-   function Count_In_Map
-     (Map : Name_Graphs.Map;
-      Ent : Entity_Name) return Count_Type;
-   --  Return the number of elements in the set associated to Ent in Map, or
-   --  else 0.
+   procedure Load_SPARK_Xrefs (ALI_Filename : String);
 
    function Make_Entity_Name (Name : String_Ptr) return Entity_Name
    with Pre => Name /= null and then Name.all /= "";
    --  Build a name for an entity, making sure the name is not empty
 
    procedure Set_Default_To_Empty
-     (Map : in out Name_Graphs.Map;
-      Set : Name_Sets.Set);
-   --  Make sure each element in Set has an entry in Map. If not already
-   --  present, add one which maps the element to the empty set.
+     (Map  : in out Name_Graphs.Map;
+      Name : Entity_Name)
+   with Post => Map.Contains (Name);
+   --  Make sure that element Name has an entry in Map. If not already present,
+   --  add one which maps the element to the empty set.
 
    ----------------
    -- Add_To_Map --
@@ -141,180 +106,6 @@ package body SPARK_Frame_Conditions is
                   Inserted => Ignored);
       Map (Position).Include (To);
    end Add_To_Map;
-
-   -------------------------------------------
-   -- Compute_Strongly_Connected_Components --
-   -------------------------------------------
-
-   function Compute_Strongly_Connected_Components
-     (Nodes : Name_Sets.Set) return SCCs
-   is
-      Cur_SCCs : SCCs;
-
-      package Value_Map is new Hashed_Maps
-        (Key_Type        => Entity_Name,
-         Element_Type    => Positive,
-         Hash            => Name_Hash,
-         Equivalent_Keys => "=",
-         "="             => "=");
-      --  Map used internally in strongly connected component computation. Not
-      --  to be confused with map over ids.
-
-      Indexes  : Value_Map.Map;
-      Lowlinks : Value_Map.Map;
-
-      Index : Positive := 1;
-
-      -----------------------
-      -- Local Subprograms --
-      -----------------------
-
-      procedure Strong_Connect (V : Entity_Name);
-      --  Compute SCC for V, possibly generating other reachable SCCs before
-      --  returning.
-
-      --------------------
-      -- Stack of nodes --
-      --------------------
-
-      type Stack is record
-         Data    : Entity_Name_Vectors.Vector;
-         Content : Name_Sets.Set;
-      end record;
-
-      S : Stack;
-
-      procedure Push (E : Entity_Name);
-      function Pop return Entity_Name;
-      function Has (E : Entity_Name) return Boolean;
-
-      ----------
-      -- Push --
-      ----------
-
-      procedure Push (E : Entity_Name) is
-      begin
-         S.Content.Insert (E);
-         S.Data.Append (E);
-      end Push;
-
-      ---------
-      -- Pop --
-      ---------
-
-      function Pop return Entity_Name is
-         E : constant Entity_Name := S.Data.Last_Element;
-      begin
-         S.Content.Delete (E);
-         S.Data.Delete_Last;
-         return E;
-      end Pop;
-
-      ---------
-      -- Has --
-      ---------
-
-      function Has (E : Entity_Name) return Boolean
-        renames S.Content.Contains;
-
-      --------------------
-      -- Strong_Connect --
-      --------------------
-
-      procedure Strong_Connect (V : Entity_Name) is
-      begin
-         --  Set the depth index for V to the smallest unused index
-
-         Indexes.Include (V, Index);
-         Lowlinks.Include (V, Index);
-         Index := Index + 1;
-         Push (V);
-
-         --  Consider successors of V
-
-         for W of Calls (V) loop
-            --  Ignore leaf nodes in call-graph as no treatment is needed
-            --  for them.
-
-            if not Nodes.Contains (W) then
-               null;
-
-            --  Successor W has not yet been visited; recurse on it
-
-            elsif not Indexes.Contains (W) then
-               Strong_Connect (W);
-               Lowlinks.Include
-                 (V, Natural'Min
-                    (Lowlinks.Element (V), Lowlinks.Element (W)));
-
-            --  Successor W is in stack S and hence in the current SCC
-
-            elsif Has (W) then
-               Lowlinks.Include
-                 (V, Natural'Min
-                    (Lowlinks.Element (V), Indexes.Element (W)));
-            end if;
-
-         end loop;
-
-         --  If V is a root node, pop the stack and generate an SCC
-
-         if Lowlinks (V) = Indexes (V) then
-            declare
-               Size_Of_Current_SCC : constant Positive :=
-                 S.Data.Last_Index - S.Data.Reverse_Find_Index (V) + 1;
-               --  Size of the current SCC sitting on the stack
-
-               Cur_SCC : SCC;
-               --  A new strongly connected component
-
-            begin
-               Cur_SCC.Reserve_Capacity (Count_Type (Size_Of_Current_SCC));
-
-               for J in 1 .. Size_Of_Current_SCC loop
-                  Cur_SCC.Append (Pop);
-               end loop;
-
-               pragma Assert (Cur_SCC.Last_Element = V);
-
-               --  Output the current strongly connected component
-
-               Cur_SCCs.Append (Entity_Name_Vectors.Empty_Vector);
-               Entity_Name_Vectors.Move (Target => Cur_SCCs (Cur_SCCs.Last),
-                                         Source => Cur_SCC);
-            end;
-         end if;
-      end Strong_Connect;
-
-   --  Start of processing for Compute_Strongly_Connected_Components
-
-   begin
-      --  There are at most as many SCCs as nodes (if no recursion at all)
-      Cur_SCCs.Reserve_Capacity (Nodes.Length);
-
-      for V of Nodes loop
-         if not Indexes.Contains (V) then
-            Strong_Connect (V);
-         end if;
-      end loop;
-
-      return Cur_SCCs;
-   end Compute_Strongly_Connected_Components;
-
-   ------------------
-   -- Count_In_Map --
-   ------------------
-
-   function Count_In_Map
-     (Map : Name_Graphs.Map;
-      Ent : Entity_Name) return Count_Type
-   is
-      C : constant Name_Graphs.Cursor := Map.Find (Ent);
-   begin
-      return (if Name_Graphs.Has_Element (C)
-              then Map (C).Length
-              else 0);
-   end Count_In_Map;
 
    ------------------
    -- Display_Maps --
@@ -471,6 +262,7 @@ package body SPARK_Frame_Conditions is
       --  those, instead return empty sets.
 
       if Is_Subprogram_Or_Entry (E)
+        and then Ekind (E) /= E_Entry_Family
         and then Is_Abstract_Subprogram (E_Alias)
       then
          return Name_Sets.Empty_Set;
@@ -515,6 +307,7 @@ package body SPARK_Frame_Conditions is
       --  those, which do not have effects, instead return the empty set.
 
       if Is_Subprogram_Or_Entry (E)
+        and then Ekind (E) /= E_Entry_Family
         and then Is_Abstract_Subprogram (E_Alias)
       then
          return Name_Sets.Empty_Set;
@@ -523,7 +316,8 @@ package body SPARK_Frame_Conditions is
       --  Go through the reads and check if the entities corresponding to
       --  variables (not constants) have pragma Effective_Reads set. If so,
       --  then these entities are also writes.
-
+      --  ??? call to Computed_Reads repeats what is already done here; this
+      --  should be refactored.
       for E_N of Computed_Reads (E, Include_Constants => False) loop
          declare
             Read : constant Entity_Id := Find_Entity (E_N);
@@ -575,6 +369,15 @@ package body SPARK_Frame_Conditions is
    ----------------------
    -- Load_SPARK_Xrefs --
    ----------------------
+
+   procedure Load_SPARK_Xrefs (ALI_File : ALI_Id) is
+      ALI_File_Name : constant File_Name_Type :=
+        ALIs.Table (ALI_File).Afile;
+      ALI_File_Name_Str : constant String :=
+        Get_Name_String (Full_Lib_File_Name (ALI_File_Name));
+   begin
+      Load_SPARK_Xrefs (ALI_File_Name_Str);
+   end Load_SPARK_Xrefs;
 
    procedure Load_SPARK_Xrefs (ALI_Filename : String)
    is
@@ -867,112 +670,13 @@ package body SPARK_Frame_Conditions is
    ----------------------------------
 
    procedure Propagate_Through_Call_Graph
-     (Ignore_Errors     : Boolean;
-      Current_Unit_Only : Boolean := False)
    is
-
-      procedure Propagate_On_Call (Caller, Callee : Entity_Name);
-      --  Update reads and writes of subprogram Caller from Callee
-
-      procedure Update_Subprogram (Subp : Entity_Name; Updated : out Boolean);
-      --  Update reads and writes of subprogram Subp from its callees
-
-      -----------------------
-      -- Propagate_On_Call --
-      -----------------------
-
-      procedure Propagate_On_Call (Caller, Callee : Entity_Name) is
-         Prop_Reads  : Name_Sets.Set;
-         Prop_Writes : Name_Sets.Set;
-
-      begin
-         declare
-            E : constant Entity_Id := Find_Entity (Callee);
-         begin
-            --  If Callee has a user-provided Global contract then we use
-            --  Get_Proof_Global to work out the Globals from that. Otherwise,
-            --  we use the Globals that we gathered from the ALI files.
-
-            if Present (E)
-              and then Has_User_Supplied_Globals (E)
-            then
-               declare
-                  Read_Ids  : Flow_Types.Flow_Id_Sets.Set;
-                  Write_Ids : Flow_Types.Flow_Id_Sets.Set;
-               begin
-                  Get_Proof_Globals (Subprogram          => E,
-                                     Classwide           => True,
-                                     Reads               => Read_Ids,
-                                     Writes              => Write_Ids,
-                                     Use_Deduced_Globals => False);
-                  Prop_Reads  := Flow_Types.To_Name_Set (Read_Ids);
-                  Prop_Writes := Flow_Types.To_Name_Set (Write_Ids);
-               end;
-            else
-               Prop_Reads  := Reads (Callee) - Defines (Callee);
-               Prop_Writes := Writes (Callee) - Defines (Callee);
-            end if;
-         end;
-
-         Reads (Caller).Union (Prop_Reads);
-         Writes (Caller).Union (Prop_Writes);
-      exception
-         when Constraint_Error =>
-            if Propagate_Error_For_Missing_Scope then
-               raise Constraint_Error with
-                 ("missing effects for subprogram " &
-                     To_String (Callee) &
-                     " or subprogram " &
-                     To_String (Caller));
-            end if;
-      end Propagate_On_Call;
-
-      -----------------------
-      -- Update_Subprogram --
-      -----------------------
-
-      procedure Update_Subprogram (Subp : Entity_Name; Updated : out Boolean)
-      is
-         Num_Reads   : constant Count_Type := Count_In_Map (Reads, Subp);
-         Num_Writes  : constant Count_Type := Count_In_Map (Writes, Subp);
-         Called_Subp : Name_Sets.Set renames Calls (Subp);
-
-      begin
-         Updated := False;
-
-         --  If Current_Unit_Only is set then we only want the direct
-         --  calls and globals.
-         if Current_Unit_Only then
-            return;
-         end if;
-
-         for S of Called_Subp loop
-            Propagate_On_Call (Caller => Subp, Callee => S);
-         end loop;
-
-         if Num_Reads /= Count_In_Map (Reads, Subp)
-           or else Num_Writes /= Count_In_Map (Writes, Subp)
-         then
-            Updated := True;
-         end if;
-      exception
-         when Constraint_Error =>
-            if Propagate_Error_For_Missing_Scope then
-               raise Constraint_Error with
-                 ("missing effects for subprogram " & To_String (Subp));
-            end if;
-      end Update_Subprogram;
-
-      Subp_Rest : Name_Sets.Set;
-
       use Name_Graphs;
-
-   --  Start of processing for Propagate_Through_Call_Graph
 
    begin
       --  Set error propagation mode for missing scopes
 
-      Propagate_Error_For_Missing_Scope := not Ignore_Errors;
+      Propagate_Error_For_Missing_Scope := False;
 
       --  Declare missing scopes, which occurs for generic instantiations (see
       --  K523-007) until a proper treatment of generics. We take into account
@@ -982,45 +686,16 @@ package body SPARK_Frame_Conditions is
          Scopes.Include (Key (C));
       end loop;
 
-      --  Initialize the work-set
+      --  Initialize all maps so that each subprogram has an entry in each map.
+      --  This is not needed for File_Defines.
 
-      for C in Calls.Iterate loop
-         Subp_Rest.Insert (Key (C));
+      for Scope of Scopes loop
+         Set_Default_To_Empty (Defines, Scope);
+         Set_Default_To_Empty (Writes,  Scope);
+         Set_Default_To_Empty (Reads,   Scope);
+         Set_Default_To_Empty (Callers, Scope);
+         Set_Default_To_Empty (Calls,   Scope);
       end loop;
-
-      declare
-         Cur_SCCs : constant SCCs :=
-                      Compute_Strongly_Connected_Components (Subp_Rest);
-
-      begin
-         --  Initialize all maps so that each subprogram has an entry in each
-         --  map. This is not needed for File_Defines.
-
-         Set_Default_To_Empty (Defines, Scopes);
-         Set_Default_To_Empty (Writes,  Scopes);
-         Set_Default_To_Empty (Reads,   Scopes);
-         Set_Default_To_Empty (Callers, Scopes);
-         Set_Default_To_Empty (Calls,   Scopes);
-
-         --  Iterate on SCCs
-
-         for Component of Cur_SCCs loop
-            declare
-               Continue : Boolean;
-               Updated  : Boolean;
-            begin
-               loop
-                  Continue := False;
-
-                  for Node of Component loop
-                     Update_Subprogram (Node, Updated);
-                     Continue := Continue or else Updated;
-                  end loop;
-                  exit when not Continue;
-               end loop;
-            end;
-         end loop;
-      end;
    end Propagate_Through_Call_Graph;
 
    ---------------------
@@ -1038,20 +713,18 @@ package body SPARK_Frame_Conditions is
    --------------------------
 
    procedure Set_Default_To_Empty
-     (Map : in out Name_Graphs.Map;
-      Set : Name_Sets.Set)
+     (Map  : in out Name_Graphs.Map;
+      Name : Entity_Name)
    is
       Inserted : Boolean;
       Position : Name_Graphs.Cursor;
       --  Dummy variables required by the container API
 
    begin
-      for Ent of Set loop
-         Map.Insert (Key      => Ent,
-                     Position => Position,
-                     Inserted => Inserted);
-         --  Attempt to map entity Ent to a default element (i.e. empty set)
-      end loop;
+      Map.Insert (Key      => Name,
+                  Position => Position,
+                  Inserted => Inserted);
+      --  Attempt to map entity Ent to a default element (i.e. empty set)
    end Set_Default_To_Empty;
 
    -------------------------------------
@@ -1059,10 +732,9 @@ package body SPARK_Frame_Conditions is
    -------------------------------------
 
    procedure Collect_Direct_Computed_Globals
-     (E                  : Entity_Id;
-      Inputs             : out Name_Sets.Set;
-      Outputs            : out Name_Sets.Set;
-      Called_Subprograms : out Name_Sets.Set)
+     (E       :     Entity_Id;
+      Inputs  : out Name_Sets.Set;
+      Outputs : out Name_Sets.Set)
    is
       pragma Assert (if Ekind (E) = E_Entry then No (Alias (E)));
       --  Alias is empty for entries and meaningless for entry families
@@ -1073,28 +745,23 @@ package body SPARK_Frame_Conditions is
          then Ultimate_Alias (E)
          else E);
 
-      E_Name : Entity_Name;
-
    begin
       --  ??? Abstract subprograms not yet supported. Avoid issuing an error on
       --  those, instead return empty sets.
 
       if Is_Subprogram_Or_Entry (E)
+        and then Ekind (E) /= E_Entry_Family
         and then Is_Abstract_Subprogram (E_Alias)
       then
          --  Initialize to empty sets and return
-         Inputs             := Name_Sets.Empty_Set;
-         Outputs            := Name_Sets.Empty_Set;
-         Called_Subprograms := Name_Sets.Empty_Set;
+         Inputs  := Name_Sets.Empty_Set;
+         Outputs := Name_Sets.Empty_Set;
 
          return;
       end if;
 
-      E_Name := To_Entity_Name (E_Alias);
-
-      Called_Subprograms := Calls (E_Name);
-      Inputs             := Computed_Reads (E, Include_Constants => False);
-      Outputs            := Computed_Writes (E);
+      Inputs  := Computed_Reads (E, Include_Constants => False);
+      Outputs := Computed_Writes (E);
 
       --  Add variables written to variables read
       --  ??? for composite variables fine, but why for simple ones?

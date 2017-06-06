@@ -574,7 +574,16 @@ procedure Gnatprove with SPARK_Mode is
 
          Args.Append ("-cargs:Ada");
          Args.Append ("-gnatc");              --  No object file generation
-         Args.Prepend ("--complete-output");  --  Replay results if up-to-date
+
+         --  Replay results if up-to-date. We disable this in debug mode to
+         --  be able to see gnat2why output "as it happens", and not only
+         --  when gnat2why is finished.
+
+         if Debug then
+            Args.Prepend ("--no-complete-output");
+         else
+            Args.Prepend ("--complete-output");
+         end if;
 
          Args.Append ("-gnates=" & Opt_File);
 
@@ -741,7 +750,6 @@ procedure Gnatprove with SPARK_Mode is
 
       Gnat2Why_Args.Debug_Mode := Debug;
       Gnat2Why_Args.Flow_Advanced_Debug := Flow_Extra_Debug;
-      Gnat2Why_Args.Debug_Proof_Only := Configuration.Debug_Proof_Only;
       Gnat2Why_Args.Flow_Generate_Contracts :=
         not Configuration.No_Global_Generation;
 
@@ -755,6 +763,7 @@ procedure Gnatprove with SPARK_Mode is
          Gnat2Why_Args.Flow_Analysis_Mode := Configuration.Mode = GPM_Flow;
          Gnat2Why_Args.Prove_Mode := Configuration.Mode = GPM_Prove;
          Gnat2Why_Args.Flow_Termination_Proof := Flow_Termination;
+         Gnat2Why_Args.Flow_Show_GG := Flow_Show_GG;
          Gnat2Why_Args.Proof_Generate_Guards :=
            not Configuration.No_Axiom_Guard;
          Gnat2Why_Args.Ide_Mode := IDE_Mode;

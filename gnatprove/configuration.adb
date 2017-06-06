@@ -654,9 +654,9 @@ package body Configuration is
          --  Remove prover from Provers list
          --  @param Name prover name to be removed
 
-         ------------------
-         -- Limit_Prover --
-         ------------------
+         -------------------
+         -- Remove_Prover --
+         -------------------
 
          procedure Remove_Prover (Name : String) is
             C : String_Lists.Cursor := Case_Insensitive_Find (Provers, Name);
@@ -722,7 +722,7 @@ package body Configuration is
          Minimal_Compile   := CL_Switches.M;
          Flow_Extra_Debug  := CL_Switches.Flow_Debug;
          Flow_Termination  := CL_Switches.Flow_Termination;
-         Debug_Proof_Only  := CL_Switches.Dbg_Proof_Only;
+         Flow_Show_GG      := CL_Switches.Flow_Show_GG;
          Continue_On_Error := CL_Switches.K;
          All_Projects      := CL_Switches.UU;
          IDE_Mode          := CL_Switches.IDE_Progress_Bar;
@@ -890,9 +890,9 @@ package body Configuration is
          end if;
       end Sanity_Checking;
 
-      -------------------------------------
-      -- Set_Level_Timeout_Steps_Provers --
-      -------------------------------------
+      ------------------------------------------------
+      -- Set_Level_Timeout_Steps_Provers_Proof_Mode --
+      ------------------------------------------------
 
       procedure Set_Level_Timeout_Steps_Provers_Proof_Mode is
       begin
@@ -1359,6 +1359,11 @@ package body Configuration is
          (Config,
           CL_Switches.Flow_Termination'Access,
           Long_Switch => "--flow-termination");
+
+      Define_Switch
+         (Config,
+          CL_Switches.Flow_Show_GG'Access,
+          Long_Switch => "--flow-show-gg");
 
       Define_Switch
          (Config,

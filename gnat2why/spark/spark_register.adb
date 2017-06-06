@@ -53,7 +53,9 @@ package body SPARK_Register is
          subtype Rewriten_Call is Node_Kind with
            Static_Predicate => Rewriten_Call in N_Block_Statement
                                               | N_Identifier
+                                              | N_Integer_Literal
                                               | N_Null_Statement
+                                              | N_Qualified_Expression
                                               | N_Unchecked_Type_Conversion;
          --  Type with kinds of nodes that may represent rewritten subprogram
          --  calls.
@@ -160,9 +162,11 @@ package body SPARK_Register is
             end;
          end if;
 
-         --  Explicitly traverse rewritten subprogram calls
+         --  Explicitly traverse rewritten subprogram calls and pragmas (e.g.
+         --  pragma Debug, which should be really ignored but might come from
+         --  the frontend globals).
          if Nkind (N) in Rewriten_Call
-           and then Nkind (Original_Node (N)) in N_Subprogram_Call
+           and then Nkind (Original_Node (N)) in N_Subprogram_Call | N_Pragma
          then
             Process_Tree (Original_Node (N));
          end if;

@@ -271,14 +271,12 @@ package body Gnat2Why.Driver is
       --  If Current_Unit_Only is set then we do NOT load the with'ed
       --  ALI files.
       if Current_Unit_Only then
-         declare
-            ALI_File_Name : constant File_Name_Type :=
-              ALIs.Table (Main_Lib_Id).Afile;
-            ALI_File_Name_Str : constant String :=
-              Get_Name_String (Full_Lib_File_Name (ALI_File_Name));
-         begin
-            Load_SPARK_Xrefs (ALI_File_Name_Str);
-         end;
+         Load_SPARK_Xrefs (Main_Lib_Id);
+
+         --  Compute the frame condition from raw SPARK cross-reference
+         --  information.
+
+         Propagate_Through_Call_Graph;
       else
          Read_Withed_ALIs (Main_Lib_Id, Ignore_Errors => True);
 
@@ -286,22 +284,10 @@ package body Gnat2Why.Driver is
          --  dependent units.
 
          for Index in ALIs.First .. ALIs.Last loop
-            declare
-               ALI_File_Name : constant File_Name_Type :=
-                 ALIs.Table (Index).Afile;
-               ALI_File_Name_Str : constant String :=
-                 Get_Name_String (Full_Lib_File_Name (ALI_File_Name));
-            begin
-               Load_SPARK_Xrefs (ALI_File_Name_Str);
-            end;
+            Load_SPARK_Xrefs (Index);
          end loop;
       end if;
 
-      --  Compute the frame condition from raw SPARK cross-reference
-      --  information.
-
-      Propagate_Through_Call_Graph (Ignore_Errors     => Current_Unit_Only,
-                                    Current_Unit_Only => Current_Unit_Only);
    end Compute_Global_Effects;
 
    ---------------------
@@ -482,10 +468,10 @@ package body Gnat2Why.Driver is
          --  Compute basic globals. These will be used for subprograms
          --  that are NOT in SPARK.
          Compute_Global_Effects (Current_Unit_Only => True);
+         Timing_Phase_Completed (Timing, "globals (frontend)");
 
-         if not Gnat2Why_Args.Debug_Proof_Only then
-            Generate_Flow_Globals (GNAT_Root);
-         end if;
+         Generate_Globals (GNAT_Root);
+         Timing_Phase_Completed (Timing, "globals (partial)");
 
       else
 
@@ -501,11 +487,9 @@ package body Gnat2Why.Driver is
 
          --  Do some flow analysis
 
-         if not Gnat2Why_Args.Debug_Proof_Only then
-            Flow_Analyse_CUnit (GNAT_Root);
-            Generate_Assumptions;
-            Timing_Phase_Completed (Timing, "flow analysis");
-         end if;
+         Flow_Analyse_CUnit (GNAT_Root);
+         Generate_Assumptions;
+         Timing_Phase_Completed (Timing, "flow analysis");
 
          --  Start the translation to Why
 
