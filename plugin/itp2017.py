@@ -164,6 +164,25 @@ def parse_notif(j, tree):
     else:
         print("Else")
 
+# TODO DOUBLON
+def send_request(p, node_id, command):
+        global n
+        request = "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : \"" + command + "\" }"
+        print (request)
+        p.send(request)
+        n = n + 1
+        print("TODO" + str(n))
+
+def interactive_console_input(process, tree, console, command):
+    # TODO
+    tree_selection = tree.view.get_selection()
+    node_id = 0
+    tree_selection.selected_foreach (lambda tree_model, tree_path, tree_iter:
+                                        send_request(process, tree_model[tree_iter][0], command))
+    print (node_id)
+#    tree.send_request(process, 0, node_id, command)
+
+
 def todo (tree):
 
     # Temporary arguments to be given to the gnat_server TODO
@@ -176,12 +195,15 @@ def todo (tree):
     # TODO_test = "/home/sdailler/test/test_ocaml/test.byte"
     p = GPS.Process(gnat_server + options + file, regexp=">>>>", on_match=tree.check_notifications)
 
+    def interactive_console_input2(console, command):
+        interactive_console_input(p, tree, console, command)
+
+    command_interface = GPS.Console("ITP_interactive", on_input=interactive_console_input2)
+    GPS.Console()
+
     # TODO generate real requests
     def send_request(p, timeout, node_id, command):
         global n
-        # TODO
-        # tree_selection = tree.view.get_selection()
-        # tree_selection.selected_foreach (fun (tree_model, tree_path, tree_iter) -> node_id = tree_model [tree_iter][0])
         request = "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : \"" + command + "\" }"
         print (request)
         p.send(request)
