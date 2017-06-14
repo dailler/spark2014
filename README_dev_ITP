@@ -27,3 +27,10 @@ ln -s $SPARK_INSTALL/plugin/itp_menu.xml $HOME/.gps/plug-ins/itp_menu.xml
   - Rebranch replay in gnatwhy3
   - Complete small descriptions
   - Make it work when there are several .mlw in the gnatprove folder (current behaviour is to find the first one )
+
+
+feature requests:
+- Produce tasks which use names coming from the source. Those name can be used on the commandline,
+- Focus on a specific goal with right click from Ada source code,
+- Find a way to squash long sequences of tactics,
+- Select a tactic directly with a right click on the source.
