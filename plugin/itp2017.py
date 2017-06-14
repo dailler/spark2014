@@ -22,7 +22,7 @@ import pygps
 from modules import Module
 from gps_utils.console_process import Console_Process
 
-
+debug_mode = False
 
 examine_root_project = 'ITP'
 
@@ -93,6 +93,7 @@ def parse_notif(j, tree):
         print notif_type
     elif notif_type == "Task":
         proof_task = GPS.Console("Proof Task")
+        proof_task.clear()
         proof_task.write(j["task"])
         GPS.Console()
         print notif_type
@@ -164,6 +165,9 @@ class Tree:
         # TODO reinitialize the map from node_id to row_ref
         self.node_id_to_row_ref = {}
 
+        # Make the tree in an independant window of gps
+        GPS.execute_action(action="Split horizontally")
+
     def add_iter(self, node, parent, name, node_type, proved):
         if parent == 0:
             parent_iter = self.model.get_iter_first()
@@ -210,7 +214,8 @@ class Tree:
 
     def check_notifications(self, unused, delimiter, notification):
         global nb_notif
-        self.print_notifications(notification)
+        if debug_mode:
+            self.print_notifications(notification)
         nb_notif = nb_notif + 1
         try:
             p = json.loads(notification)
@@ -273,7 +278,7 @@ class Tree_with_process:
         tree_selection.set_select_function(self.select_function)
 
         # Define a proof task
-        proof_task = GPS.Console("Proof task")
+        proof_task = GPS.Console("Proof Task")
         GPS.execute_action(action="Split horizontally")
 
     def select_function (self, select, model, path, currently_selected):
