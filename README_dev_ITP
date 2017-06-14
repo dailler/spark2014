@@ -33,4 +33,5 @@ feature requests:
 - Produce tasks which use names coming from the source. Those name can be used on the commandline,
 - Focus on a specific goal with right click from Ada source code,
 - Find a way to squash long sequences of tactics,
-- Select a tactic directly with a right click on the source.
+- Select a tactic directly with a right click on the source,
+- Syntax highlighting for the task.
