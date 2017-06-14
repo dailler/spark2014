@@ -6,7 +6,7 @@
 -->
     <action name="Launch ITP" category="cat" output="none">
       <shell
-          lang="python">itp2017.on_examine_root_project(GPS.current_context())
+          lang="python">itp2017.interactive_proof(GPS.current_context())
       </shell>
     </action>
 

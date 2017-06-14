@@ -21,6 +21,7 @@ from gi.repository import Gtk, Gdk, GLib, Pango
 import pygps
 from modules import Module
 from gps_utils.console_process import Console_Process
+import fnmatch
 
 debug_mode = False
 
@@ -103,14 +104,21 @@ def parse_notif(j, tree):
         print("Else")
 
 def command_request(command, node_id):
-    return "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : \"" + command + "\" }"
+    # TODO if remove do something els if save also do something else
+    # TODO very ad hoc
+    if command == "Save":
+        return "{\"ide_request\": \"Save_req\" " + " }"
+    elif command == "Remove":
+        return "{\"ide_request\": \"Remove_subtree\", \"node_ID\":" + str(node_id) + " }"
+    else:
+        return "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : \"" + command + "\" }"
 
 class Tree:
 
     # We have a dictionnary from node_id to row_references because we want an
     # "efficient" way to get/remove/etc a particular row and we are not going
-    # to go through the whole tree each time (TODO find something that do
-    # exactly this in Gtk).
+    # to go through the whole tree each time: O(n) vs O (ln n)
+    # TODO find something that do exactly this in Gtk).
     node_id_to_row_ref = {}
 
     def __init__(self):
@@ -231,16 +239,6 @@ n = 0
 nb_notif = 0
 
 
-
-# TODO DOUBLON
-#def send_request(p, node_id, command):
-#    global n
-#    request = "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : \"" + command + "\" }"
-#    print (request)
-#    p.send(request)
-#    n = n + 1
-#    print("TODO" + str(n))
-
 # TODO this is also a send_request
 def get_task (p, node_id):
     global n
@@ -257,18 +255,13 @@ def interactive_console_input(process, tree, console, command):
     tree_selection.selected_foreach (lambda tree_model, tree_path, tree_iter:
                                         send_request(process, tree_model[tree_iter][0], command))
     print (node_id)
-#    tree.send_request(process, 0, node_id, command)
 
 class Tree_with_process:
     def __init__(self, command):
-        # TODO
-        gnat_server = "/home/sdailler/Projet/spark_env/spark2014/install/libexec/spark/bin/gnat_server "
-        options = "--why3-conf " + "/home/sdailler/Projet/spark_env/spark2014/why3.conf " + "--standalone " + "--debug "
-        file = "/home/sdailler/Projet/spark_env/spark2014/testsuite/gnatprove/temp/tmp-test-itp__example-26211/src/gnatprove/test.mlw"
 
         #init the tree
         self.tree = Tree()
-        self.process = GPS.Process(gnat_server + options + file, regexp=">>>>", on_match=self.tree.check_notifications)
+        self.process = GPS.Process(command, regexp=">>>>", on_match=self.tree.check_notifications)
         self.console = GPS.Console("ITP_interactive", on_input=self.interactive_console_input2)
         #Back to the Messages console
         GPS.Console()
@@ -306,56 +299,35 @@ class Tree_with_process:
         n = n + 1
         print("TODO" + str(n))
 
-
-
-def todo (tree):
-
-    # Temporary arguments to be given to the gnat_server TODO
-    gnat_server = "/home/sdailler/Projet/spark_env/spark2014/install/libexec/spark/bin/gnat_server "
-    options = "--why3-conf " + "/home/sdailler/Projet/spark_env/spark2014/why3.conf " + "--standalone " + "--debug "
-    file = "/home/sdailler/Projet/spark_env/spark2014/testsuite/gnatprove/temp/tmp-test-itp__example-26211/src/gnatprove/test.mlw"
-    command = ["/home/sdailler/Projet/spark_env/spark2014/install/libexec/spark/bin/gnat_server", "--why3-conf", "/home/sdailler/Projet/spark_env/spark2014/why3.conf", "--standalone", "--debug", file]
-
-    # TODO >>>> is temporary
-    # TODO_test = "/home/sdailler/test/test_ocaml/test.byte"
-    p = GPS.Process(gnat_server + options + file, regexp=">>>>", on_match=tree.check_notifications)
-
-    def interactive_console_input2(console, command):
-        interactive_console_input(p, tree, console, command)
-
-    command_interface = GPS.Console("ITP_interactive", on_input=interactive_console_input2)
-    GPS.Console()
-
-    # TODO generate real requests
-    def send_request(p, timeout, node_id, command):
-        global n
-        request = "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : \"" + command + "\" }"
-        print (request)
-        p.send(request)
-        n = n + 1
-        print("TODO" + str(n))
-
-    # Send request automatically... TODO not necessary in the long term
-    t = GPS.Timeout(15000, lambda t: send_request(p, t, 101, "case true"))
-    # TODO test
-
-def launch_console(tree):
-    todo(tree)
-
 # TODO never put extra_args because they cannot be removed
 # TODO remove this function which comes from SPARK plugin
-def generic_on_analyze(target, args=[]):
+def start_ITP(target, args=[]):
     #TODO remove
     print "Launched"
     GPS.Locations.remove_category("Builder results")
     #GPS.execute_action(action="Split horizontally")
-    file = "/home/sdailler/Projet/spark_env/spark2014/testsuite/gnatprove/temp/tmp-test-itp__example-26211/src/gnatprove/test.mlw"
-    tree = Tree_with_process(["/home/sdailler/Projet/spark_env/spark2014/install/libexec/spark/bin/gnat_server", "--why3-conf", "/home/sdailler/Projet/spark_env/spark2014/why3.conf", "--standalone", "--debug", file])
-    #tree = Tree()
-    #launch_console(tree)
 
-def on_examine_root_project(self):
-    generic_on_analyze(examine_root_project)
+    # TODO all these options are already in spark2014.py
+    gnat_server = os_utils.locate_exec_on_path("gnat_server")
+    objdirs = GPS.Project.root().object_dirs()
+    default_objdir = objdirs[0]
+    obj_subdir_name = "gnatprove"
+    dir_name = os.path.join(default_objdir, obj_subdir_name)
+    mlw_file = ""
+    for dir_name, sub_dir_name, files in os.walk(dir_name):
+        for file in files:
+            if fnmatch.fnmatch(file, '*.mlw') and mlw_file == "":
+                mlw_file = os.path.join (dir_name, file)
+    if mlw_file == "":
+        print "TODO error"
+
+    command = gnat_server + " " + mlw_file
+    print(command)
+    tree = Tree_with_process(command)
+
+def interactive_proof(self):
+    # TODO use examine_root_project
+    start_ITP(examine_root_project)
 
 # TODO use this part of the tuto for interactivity. Not necessary right now.
 def example1():
