@@ -1,0 +1,29 @@
+* To install
+make clean  // TODO possibly not necessary
+make
+make install-all 
+
+Then make a symbolic link from file in directory plugin to the plugin directory of your gps install. (directory link do not seem to work; use absolute path)
+ln -s $SPARK_INSTALL/plugin/itp2017.py $HOME/.gps/plug-ins/itp2017.py
+ln -s $SPARK_INSTALL/plugin/itp_menu.xml $HOME/.gps/plug-ins/itp_menu.xml
+
+* What has been done
+  - adapt gnatwhy3 to the new Why3 ITP / Session etc
+  - write a small minimal server gnat_server.ml for interaction with Why3 ITP
+  - write a small plugin in GPS that interactively launch and communicate with gnat_server thanks to request/notification written in JSON
+
+
+** Adapting gnatwhy3
+  TODO
+
+** Minimal server
+  TODO
+
+
+* TODO list:
+  - Add detection of the correct command line instead of a hard path to a file
+  - Possibility to have directly the focus from the source code/integration with SPARK (put everything in the same plugin)
+  - Rebranch manual proof (coq/Isabelle) in gnatwhy3
+  - Rebranch replay in gnatwhy3
+  - Complete small descriptions
+  - Make it work when there are several .mlw in the gnatprove folder (current behaviour is to find the first one )
