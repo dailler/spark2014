@@ -17,6 +17,8 @@ ln -s $SPARK_INSTALL/plugin/itp_menu.xml $HOME/.gps/plug-ins/itp_menu.xml
   TODO
 
 ** Minimal server
+  We have a minimal server which communicate to a gps plugin through its input/output in a JSON format. The server produce notification at random type and has to be able to handle request.   
+
   TODO
 
 
@@ -34,4 +36,12 @@ feature requests:
 - Focus on a specific goal with right click from Ada source code,
 - Find a way to squash long sequences of tactics,
 - Select a tactic directly with a right click on the source,
-- Syntax highlighting for the task.
+- Syntax highlighting for the task,
+- proof task on top right; command prompt should not be that big, completion etc..
+- hyperlink text to the code/their definitions in the task,
+- test a real example (with array for example); look at example that comes from users ie ticket list for this,
+- use spark name when possible. Proposition of syntax X@line54@If or something like this ?
+- command prompt for the commandline 
+- put a toolbar with some tactics
+- in the proof tree, add some nice image for "proved" "obsolete" etc... The same as why3ide ?
+- get ideas from other proof assistant. 
