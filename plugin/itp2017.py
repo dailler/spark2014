@@ -29,10 +29,18 @@ examine_root_project = 'ITP'
 
 #TODO add a perspective
 
+def print_to_console(message):
+    console = GPS.Console("ITP_interactive")
+    console.write(message)
+    console.write("\n> ")
+
+
 # This functions takes a Json object and a proof tree and treat it as a
 # notification on the prooft tree
 # TODO add exceptions
-def parse_notif(j, tree):
+def parse_notif(j, tree, proof_task):
+    print j
+    tree = tree.tree
     try:
         notif_type = j["notification"]
     except:
@@ -89,13 +97,19 @@ def parse_notif(j, tree):
     elif notif_type == "Saved":
         print notif_type
     elif notif_type == "Message":
+        message = j["message"]
+        message_type = message["mess_notif"]
+        if message_type == "Help":
+            print_to_console (message["qhelp"])
         print notif_type
     elif notif_type == "Dead":
         print notif_type
     elif notif_type == "Task":
-        proof_task = GPS.Console("Proof Task")
-        proof_task.clear()
-        proof_task.write(j["task"])
+        proof_task.set_read_only(read_only=False)
+        proof_task.delete()
+        proof_task.insert(j["task"])
+        proof_task.save(interactive=False)
+        proof_task.set_read_only(read_only=True)
         GPS.Console()
         print notif_type
     elif notif_type == "File_contents":
@@ -111,7 +125,7 @@ def command_request(command, node_id):
     elif command == "Remove":
         return "{\"ide_request\": \"Remove_subtree\", \"node_ID\":" + str(node_id) + " }"
     else:
-        return "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : \"" + command + "\" }"
+        return "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : " + json.dumps(command) + " }"
 
 class Tree:
 
@@ -136,7 +150,7 @@ class Tree:
         self.box.pack_start(scroll, True, True, 0)
 
         # TODO by default append this box to the GPS.MDI
-        GPS.MDI.add(self.box, "Proof Tree", "Proof Tree")
+        GPS.MDI.add(self.box, "Proof Tree", "Proof Tree", group=101, position=4) # TODO find the correct group
 
         # TODO ???
         cell = Gtk.CellRendererText(xalign=0)
@@ -174,7 +188,8 @@ class Tree:
         self.node_id_to_row_ref = {}
 
         # Make the tree in an independant window of gps
-        GPS.execute_action(action="Split horizontally")
+        # TODO not needed anymore. Should not use it in python and prefer group
+        #GPS.execute_action(action="Split horizontally")
 
     def add_iter(self, node, parent, name, node_type, proved):
         if parent == 0:
@@ -220,21 +235,6 @@ class Tree:
         a.write(notification)
         GPS.Console()
 
-    def check_notifications(self, unused, delimiter, notification):
-        global nb_notif
-        if debug_mode:
-            self.print_notifications(notification)
-        nb_notif = nb_notif + 1
-        try:
-            p = json.loads(notification)
-            parse_notif(p, self)
-        except (ValueError):
-            print ("Bad Json value")
-        except (KeyError):
-            print ("Bad Json key")
-        except (TypeError):
-            print ("Bad type")
-
 n = 0
 nb_notif = 0
 
@@ -261,7 +261,7 @@ class Tree_with_process:
 
         #init the tree
         self.tree = Tree()
-        self.process = GPS.Process(command, regexp=">>>>", on_match=self.tree.check_notifications)
+        self.process = GPS.Process(command, regexp=">>>>", on_match=self.check_notifications)
         self.console = GPS.Console("ITP_interactive", on_input=self.interactive_console_input2)
         #Back to the Messages console
         GPS.Console()
@@ -271,8 +271,29 @@ class Tree_with_process:
         tree_selection.set_select_function(self.select_function)
 
         # Define a proof task
-        proof_task = GPS.Console("Proof Task")
-        GPS.execute_action(action="Split horizontally")
+        proof_task_file = GPS.File ("Proof Task", local=True)
+        self.proof_task = GPS.EditorBuffer.get(proof_task_file, force=True, open=True)
+        self.proof_task.set_read_only()
+        # TODO should prefer using group and position
+        #GPS.execute_action(action="Split horizontally")
+
+    def check_notifications(self, unused, delimiter, notification):
+        global nb_notif
+        if debug_mode:
+            self.print_notifications(notification)
+        nb_notif = nb_notif + 1
+        try:
+            # Remove remaining stderr output (stderr and stdout are mixed) by
+            # looking for the beginning of the notification (begins with {).
+            i = notification.find("{")
+            p = json.loads(notification[i:])
+            parse_notif(p, self, self.proof_task)
+        except (ValueError):
+            print ("Bad Json value")
+        except (KeyError):
+            print ("Bad Json key")
+        except (TypeError):
+            print ("Bad type")
 
     def select_function (self, select, model, path, currently_selected):
         tree_iter = model.get_iter(path)
