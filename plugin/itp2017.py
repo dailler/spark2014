@@ -115,7 +115,41 @@ def parse_notif(j, tree, proof_task):
     elif notif_type == "File_contents":
         print notif_type
     else:
-        print("Else")
+        print("Else") # TODO
+
+def parse_message(j):
+    notif_type = j["notification"]
+    message = j["message"]
+    message_type = message["mess_notif"]
+    if message_type == "Proof_error":
+        print notif_type
+    elif message_type == "Transf_error":
+        print notif_type
+    elif message_type == "Strat_error":
+        print notif_type
+    elif message_type == "Replay_Info":
+        print notif_type
+    elif message_type == "Query_Info":
+        print notif_type
+    elif message_type == "Query_Error":
+        print notif_type
+    elif message_type == "Help":
+        print_to_console (message["qhelp"])
+    elif message_type == "Information":
+        print_to_console (message["information"])
+    elif message_type == "Task_Monitor":
+        print notif_type
+    elif message_type == "Parse_Or_Type_Error":
+        print notif_type
+    elif message_type == "Error":
+        print notif_type
+    elif message_type == "Open_File_Error":
+        print notif_type
+    elif message_type == "File_Saved":
+        print notif_type
+    else:
+        print("Else") # TODO
+
 
 def command_request(command, node_id):
     # TODO if remove do something els if save also do something else
