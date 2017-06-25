@@ -29,11 +29,15 @@ examine_root_project = 'ITP'
 
 #TODO add a perspective
 
-def print_to_console(message):
+def print_error(message):
+    console = GPS.Console("ITP_interactive")
+    console.write(message, mode="error")
+    console.write("\n> ")
+
+def print_message(message):
     console = GPS.Console("ITP_interactive")
     console.write(message)
     console.write("\n> ")
-
 
 # This functions takes a Json object and a proof tree and treat it as a
 # notification on the prooft tree
@@ -91,19 +95,17 @@ def parse_notif(j, tree, proof_task):
         tree.remove_iter(node_id)
         print "Remove"
     elif notif_type == "Next_Unproven_Node_Id":
-        print "Next_Unproven_Node_Id"
+        from_node = j["node_ID1"]
+        to_node = j["node_ID2"]
+        node_jump_select (from_node, to_node)
     elif notif_type == "Initialized":
-        print notif_type
+        print_message("Initialization done")
     elif notif_type == "Saved":
-        print notif_type
+        print_message("Session saved")
     elif notif_type == "Message":
-        message = j["message"]
-        message_type = message["mess_notif"]
-        if message_type == "Help":
-            print_to_console (message["qhelp"])
-        print notif_type
+        parse_message(j)
     elif notif_type == "Dead":
-        print notif_type
+        print_message("ITP server encountered a fatal error, please report !")
     elif notif_type == "Task":
         proof_task.set_read_only(read_only=False)
         proof_task.delete()
@@ -122,38 +124,51 @@ def parse_message(j):
     message = j["message"]
     message_type = message["mess_notif"]
     if message_type == "Proof_error":
-        print notif_type
+        print_error (message["error"])
     elif message_type == "Transf_error":
-        print notif_type
+        print_error (message["error"])
     elif message_type == "Strat_error":
-        print notif_type
+        print_error (message["error"])
     elif message_type == "Replay_Info":
-        print notif_type
+        print_message (message["replay_info"])
     elif message_type == "Query_Info":
-        print notif_type
+        print_message (message["qinfo"])
     elif message_type == "Query_Error":
-        print notif_type
+        print_error (message["qerror"])
     elif message_type == "Help":
-        print_to_console (message["qhelp"])
+        print_message (message["qhelp"])
     elif message_type == "Information":
-        print_to_console (message["information"])
+        print_message (message["information"])
     elif message_type == "Task_Monitor":
-        print notif_type
+        print notif_type # TODO
     elif message_type == "Parse_Or_Type_Error":
-        print notif_type
+        print_error (message["error"])
     elif message_type == "Error":
-        print notif_type
+        print_error (message["error"])
     elif message_type == "Open_File_Error":
-        print notif_type
+        print_error (message["open_error"])
     elif message_type == "File_Saved":
-        print notif_type
+        print_message (message["information"])
     else:
         print("Else") # TODO
+
+def node_jump_select(tree, from_node, to_node):
+    # TODO this should be a function
+    from_node_row = tree.node_id_to_row_ref[from_node]
+    from_node_path = from_node_row.get_path()
+    from_node_iter = tree.model.get_iter(from_node_path)
+    if (tree.selection.path_is_selected(from_node_path)):
+        tree.selection.unselect_all()
+        to_node_row = tree.node_id_to_row_ref[to_node]
+        to_node_path = to_node_row.get_path()
+        to_node_iter = tree.model.get_iter(to_node_path)
+        tree.selection.select_path(to_node_path)
 
 
 def command_request(command, node_id):
     # TODO if remove do something els if save also do something else
     # TODO very ad hoc
+    print_message("")
     if command == "Save":
         return "{\"ide_request\": \"Save_req\" " + " }"
     elif command == "Remove":
@@ -167,7 +182,7 @@ class Tree:
     # "efficient" way to get/remove/etc a particular row and we are not going
     # to go through the whole tree each time: O(n) vs O (ln n)
     # TODO find something that do exactly this in Gtk).
-    node_id_to_row_ref = {}
+    # TODO unused node_id_to_row_ref = {}
 
     def __init__(self):
         # Create a tree that can be appended anywhere
@@ -281,6 +296,9 @@ def get_task (p, node_id):
     n= n + 1
     print("TODO" + str(n))
 
+def get_next_id(p, node_id):
+    p.send("{\"ide_request\": \"Get_first_unproven_node\", \"node_ID\":" + str(node_id) + "}")
+
 # TODO replaced by the stuff in the class Tree_with_process
 def interactive_console_input(process, tree, console, command):
     # TODO
@@ -290,6 +308,8 @@ def interactive_console_input(process, tree, console, command):
                                         send_request(process, tree_model[tree_iter][0], command))
     print (node_id)
 
+
+
 class Tree_with_process:
     def __init__(self, command):
 
@@ -297,6 +317,7 @@ class Tree_with_process:
         self.tree = Tree()
         self.process = GPS.Process(command, regexp=">>>>", on_match=self.check_notifications)
         self.console = GPS.Console("ITP_interactive", on_input=self.interactive_console_input2)
+        self.console.write("> ")
         #Back to the Messages console
         GPS.Console()
 
@@ -323,6 +344,7 @@ class Tree_with_process:
             p = json.loads(notification[i:])
             parse_notif(p, self, self.proof_task)
         except (ValueError):
+            print (notification) # TODO debug
             print ("Bad Json value")
         except (KeyError):
             print ("Bad Json key")
@@ -351,6 +373,7 @@ class Tree_with_process:
         request = command_request (command, node_id)
         print (request)
         self.process.send(request)
+        get_next_id(self.process, node_id)
         n = n + 1
         print("TODO" + str(n))
 
