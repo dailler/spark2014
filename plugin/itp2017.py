@@ -44,6 +44,8 @@ def print_message(message):
 # TODO add exceptions
 def parse_notif(j, tree, proof_task):
     print j
+    # TODO rewrite this
+    abs_tree = tree
     tree = tree.tree
     try:
         notif_type = j["notification"]
@@ -97,7 +99,7 @@ def parse_notif(j, tree, proof_task):
     elif notif_type == "Next_Unproven_Node_Id":
         from_node = j["node_ID1"]
         to_node = j["node_ID2"]
-        node_jump_select (from_node, to_node)
+        node_jump_select (tree, from_node, to_node)
     elif notif_type == "Initialized":
         print_message("Initialization done")
     elif notif_type == "Saved":
@@ -118,6 +120,11 @@ def parse_notif(j, tree, proof_task):
         print notif_type
     else:
         print("Else") # TODO
+
+    # TODO next_unproven_node_ID is called too many times... Find a way to solve this
+    if not (notif_type == "Next_Unproven_Node_Id" or notif_type == "Task"):
+        get_next_id(abs_tree)
+
 
 def parse_message(j):
     notif_type = j["notification"]
@@ -154,15 +161,16 @@ def parse_message(j):
 
 def node_jump_select(tree, from_node, to_node):
     # TODO this should be a function
+    tree_selection = tree.view.get_selection()
     from_node_row = tree.node_id_to_row_ref[from_node]
     from_node_path = from_node_row.get_path()
     from_node_iter = tree.model.get_iter(from_node_path)
-    if (tree.selection.path_is_selected(from_node_path)):
-        tree.selection.unselect_all()
+    if (tree_selection.path_is_selected(from_node_path)):
+        tree_selection.unselect_all()
         to_node_row = tree.node_id_to_row_ref[to_node]
         to_node_path = to_node_row.get_path()
         to_node_iter = tree.model.get_iter(to_node_path)
-        tree.selection.select_path(to_node_path)
+        tree_selection.select_path(to_node_path)
 
 
 def command_request(command, node_id):
@@ -296,8 +304,16 @@ def get_task (p, node_id):
     n= n + 1
     print("TODO" + str(n))
 
-def get_next_id(p, node_id):
-    p.send("{\"ide_request\": \"Get_first_unproven_node\", \"node_ID\":" + str(node_id) + "}")
+def get_next_id(tree):
+    p = tree.process
+    selection = tree.tree.view.get_selection()
+    model, paths = selection.get_selected_rows ()
+    print (paths)
+    if len(paths) == 1:
+        for i in paths:
+            cur_iter = model.get_iter(i)
+            it = model[cur_iter][0]
+            p.send("{\"ide_request\": \"Get_first_unproven_node\", \"node_ID\":" + it + "}")
 
 # TODO replaced by the stuff in the class Tree_with_process
 def interactive_console_input(process, tree, console, command):
@@ -344,7 +360,6 @@ class Tree_with_process:
             p = json.loads(notification[i:])
             parse_notif(p, self, self.proof_task)
         except (ValueError):
-            print (notification) # TODO debug
             print ("Bad Json value")
         except (KeyError):
             print ("Bad Json key")
@@ -373,7 +388,6 @@ class Tree_with_process:
         request = command_request (command, node_id)
         print (request)
         self.process.send(request)
-        get_next_id(self.process, node_id)
         n = n + 1
         print("TODO" + str(n))
 
