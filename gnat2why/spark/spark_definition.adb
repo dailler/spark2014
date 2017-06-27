@@ -25,7 +25,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
-with Ada.Text_IO;                     use Ada.Text_IO;
+with Ada.Text_IO;
 with Aspects;                         use Aspects;
 with Assumption_Types;                use Assumption_Types;
 with Common_Iterators;                use Common_Iterators;
@@ -2576,8 +2576,6 @@ package body SPARK_Definition is
       CU        : constant Node_Id := Parent (N);
       Context_N : Node_Id;
 
-      use type Node_Lists.Cursor;
-
    begin
       --  Avoid rewriting generic units which are only preanalyzed, which may
       --  cause rewriting to fail, as this is not needed.
@@ -5105,6 +5103,7 @@ package body SPARK_Definition is
               Pragma_Restrictions                 |
               Pragma_Reviewable                   |
               Pragma_Suppress                     |
+              Pragma_Unchecked_Union              |
               Pragma_Unsuppress                   |
               Pragma_Volatile                     |
               Pragma_Volatile_Components          |
@@ -5315,7 +5314,6 @@ package body SPARK_Definition is
            Pragma_Thread_Local_Storage           |
            Pragma_Time_Slice                     |
            Pragma_Title                          |
-           Pragma_Unchecked_Union                |
            Pragma_Unimplemented_Unit             |
            Pragma_Universal_Aliasing             |
            Pragma_Universal_Data                 |

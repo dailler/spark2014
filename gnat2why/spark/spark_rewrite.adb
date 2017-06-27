@@ -26,7 +26,6 @@
 with Atree;                  use Atree;
 with Einfo;                  use Einfo;
 with Namet;                  use Namet;
-with Nlists;                 use Nlists;
 with Sem_Aux;                use Sem_Aux;
 with Sem_Eval;               use Sem_Eval;
 with Sem_Util;               use Sem_Util;
@@ -122,7 +121,7 @@ package body SPARK_Rewrite is
                Rewrite (Old_Node => N,
                         New_Node => Unchecked_Convert_To
                           (Typ  => Etype (Etype (N)),
-                           Expr => First (Parameter_Associations (N))));
+                           Expr => First_Actual (N)));
                Set_Comes_From_Source (N, True);
 
                --  Reset correct parent of original node, as this may be used
@@ -273,7 +272,24 @@ package body SPARK_Rewrite is
       ------------------
 
       function Rewrite_Node (N : Node_Id) return Traverse_Result is
+         subtype Rewriten_Call is Node_Kind with
+           Static_Predicate => Rewriten_Call in N_Block_Statement
+                                              | N_Identifier
+                                              | N_Integer_Literal
+                                              | N_Null_Statement
+                                              | N_Qualified_Expression
+                                              | N_Unchecked_Type_Conversion;
+         --  ??? this is copy-pasted from SPARK_Register; refactor
+
       begin
+         --  Explicitly traverse rewritten subprogram calls and pragmas (e.g.
+         --  pragma Debug).
+         if Nkind (N) in Rewriten_Call
+           and then Nkind (Original_Node (N)) in N_Subprogram_Call | N_Pragma
+         then
+            Rewrite_Nodes (Original_Node (N));
+         end if;
+
          case Nkind (N) is
             when N_Real_Literal =>
                Rewrite_Real_Literal (N);
@@ -337,6 +353,8 @@ package body SPARK_Rewrite is
                         DIC_Expr := SPARK_Util.Subprograms.
                           Get_Expr_From_Check_Only_Proc (DIC_Subp);
                         Rewrite_Nodes (DIC_Expr);
+                        --  ??? this is slighly different from SPARK_Register;
+                        --  both should be unified.
                      end if;
                   end if;
                end;

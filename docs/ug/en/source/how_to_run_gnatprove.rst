@@ -15,8 +15,8 @@ Attributes` for optional project attributes to specify the proof directory and
 other |GNATprove| switches in the project file directly.
 
 Note that you can use the project wizard from GPS to create a project file
-interactively, via the menu :menuselection:`Project --> New...` See in
-particular the first option (:menuselection:`Single Project`).
+interactively, via the menu :menuselection:`File --> New Project...`.
+In the dialog, see in particular the default option (:menuselection:`Single Project`).
 
 If you want to get started quickly, and assuming a standard naming scheme using
 ``.ads/.adb`` lower case files and a single source directory, then your project
@@ -120,31 +120,34 @@ refinement versions of these), and verifies the initialization of
 variables. Proof verifies the absence of run-time errors and the
 correctness of assertions such as ``Pre`` and ``Post`` aspects. Using the
 switch ``--mode=<mode>``, whose possible values are ``check``,
-``check_all``, ``flow``, ``prove`` and ``all``, you can choose which
-analysis is performed:
+``check_all``, ``flow``, ``prove`` ``all``, ``stone``, ``bronze``, ``silver``
+and ``gold``, you can choose which analysis is performed:
 
 * In mode ``check``, |GNATprove| partially checks that the program does not
   violate |SPARK| restrictions. The benefit of using this mode prior to mode
   ``check_all`` is that it is much faster, as it does not require the results
   of flow analysis.
 
-* In mode ``check_all``, |GNATprove| fully checks that the program does not
-  violate |SPARK| restrictions, including checks not performed in mode
-  ``check`` like the absence of side-effects in functions. Mode ``check_all``
-  includes mode ``check``.
+* In mode ``check_all`` (``stone`` is a synonym for this mode), |GNATprove|
+  fully checks that the program does not violate |SPARK| restrictions,
+  including checks not performed in mode ``check`` like the absence of
+  side-effects in functions. Mode ``check_all`` includes mode ``check``.
 
-* In mode ``flow``, |GNATprove| checks that no uninitialized data is read in
-  the program, and that the specified data dependencies and flow dependencies
-  are respected in the implementation. Mode ``flow`` includes mode
-  ``check_all``.  This phase is called *flow analysis*.
+* In mode ``flow`` (``bronze`` is a synonym for this mode), |GNATprove| checks
+  that no uninitialized data is read in the program, and that the specified
+  data dependencies and flow dependencies are respected in the implementation.
+  Mode ``flow`` includes mode ``check_all``.  This phase is called *flow
+  analysis*.
 
-* In mode ``prove``, |GNATprove| checks that the program is free from run-time
-  errors, and that the specified functional contracts are respected in the
-  implementation. Mode ``prove`` includes mode ``check_all``, as well as the
-  part of mode ``flow`` which checks that no uninitialized data is read, to
-  guarantees soundness of the proof results. This phase is called *proof*.
+* In mode ``prove`` ,
+  |GNATprove| checks that the program is free from run-time errors, and that
+  the specified functional contracts are respected in the implementation. Mode
+  ``prove`` includes mode ``check_all``, as well as the part of mode ``flow``
+  which checks that no uninitialized data is read, to guarantees soundness of
+  the proof results. This phase is called *proof*.
 
 * In the default mode ``all``, |GNATprove| does both flow analysis and proof.
+  The ``silver`` and ``gold`` modes are synonyms for this mode.
 
 Using the option ``--limit-line=`` one can limit proofs to a particular file
 and line of an Ada file. For example, if you want to prove only line 12 of
@@ -561,7 +564,8 @@ neither main files nor includes other projects, menus :menuselection:`SPARK
 Sources` are equivalent.
 
 Keyboard shortcuts for these menu items can be set using the
-:menuselection:`Edit --> Key Shortcuts` dialog in GPS.
+:menuselection:`Edit --> Preferences` dialog in GPS, and opening
+the :menuselection:`General --> Key Shortcuts` section.
 
 .. note::
 
@@ -601,12 +605,14 @@ The menus :menuselection:`SPARK --> Prove ...` open a panel which allows
 setting various switches for |GNATprove|'s analysis. By default, this panel
 offers a few simple choices, like the proof level (see description of switch
 ``--level`` in :ref:`Running GNATprove from the Command Line`). If the user
-changes its ``User profile`` for |SPARK| in :menuselection:`Edit -->
-Preferences --> SPARK` from ``Basic`` to ``Advanced``, then a
-more complex panel is displayed for proof, with more detailed switches.
+changes its ``User profile`` for |SPARK| (in the |SPARK| section of the
+Preferences dialog - menu :menuselection:`Edit --> Preferences`) from ``Basic``
+to ``Advanced``, then a more complex panel is displayed for proof,
+with more detailed switches.
 
-|GNATprove| project switches can be edited from the panel ``GNATprove`` (in
-:menuselection:`Project --> Edit Project Properties --> Switches`).
+|GNATprove| project switches can be edited from the panel ``GNATprove`` (menu
+:menuselection:`Edit --> Project Properties`, in the :menuselection:`Build --> Switches`
+section of the dialog).
 
 When proving a check fails on a specific path through a subprogram (for both
 checks verified in flow analysis and in proof), |GNATprove| may generate path

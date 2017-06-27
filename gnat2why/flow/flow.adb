@@ -23,9 +23,9 @@
 
 with Ada.Characters.Latin_1;
 with Ada.Strings.Maps;
-with Ada.Strings;                      use Ada.Strings;
+with Ada.Strings;
 with Assumptions;                      use Assumptions;
-with Errout;                           use Errout;
+with Errout;
 with Flow.Analysis;
 with Flow.Control_Dependence_Graph;
 with Flow.Control_Flow_Graph;
@@ -92,8 +92,6 @@ package body Flow is
    --  Nasty nasty hack to add the given string to a global variable,
    --  Temp_String. We use this to pretty print nodes via Sprint_Node.
 
-   use type Analysis_Maps.Map;
-
    procedure Build_Graphs_For_Analysis (FA_Graphs : out Analysis_Maps.Map);
    --  Build flow graphs for the current compilation unit; phase 2
 
@@ -132,6 +130,9 @@ package body Flow is
             Outdent;
          end if;
       end Print_Named_Flow_Id_Set;
+
+   --  Start of processing for Debug_Print_Generated_Contracts
+
    begin
       Write_Str ("Generated contracts for ");
       Sprint_Node (FA.Analyzed_Entity);
@@ -161,44 +162,42 @@ package body Flow is
          declare
             use type Flow_Id_Sets.Set;
 
-            P, R, W : Flow_Id_Sets.Set;
+            Globals : Global_Flow_Ids;
 
             procedure Print_Sets;
             procedure Print_Sets is
                RO : constant Flow_Id_Sets.Set :=
-                 Change_Variant (R, Normal_Use) -
-                 Change_Variant (W, Normal_Use);
+                 Change_Variant (Globals.Reads, Normal_Use) -
+                 Change_Variant (Globals.Writes, Normal_Use);
                RW : constant Flow_Id_Sets.Set :=
-                 Change_Variant (R, Normal_Use) and
-                 Change_Variant (W, Normal_Use);
+                 Change_Variant (Globals.Reads, Normal_Use) and
+                 Change_Variant (Globals.Writes, Normal_Use);
                WO : constant Flow_Id_Sets.Set :=
-                 Change_Variant (W, Normal_Use) -
-                 Change_Variant (R, Normal_Use);
+                 Change_Variant (Globals.Writes, Normal_Use) -
+                 Change_Variant (Globals.Reads, Normal_Use);
             begin
                Print_Named_Flow_Id_Set ("Proof_In",
-                                        Change_Variant (P, Normal_Use),
+                                        Change_Variant
+                                          (Globals.Proof_Ins,
+                                           Normal_Use),
                                         False);
                Print_Named_Flow_Id_Set ("Input", RO, False);
                Print_Named_Flow_Id_Set ("In_Out", RW, False);
                Print_Named_Flow_Id_Set ("Output", WO, False);
             end Print_Sets;
          begin
-            GG_Get_Globals (E           => FA.Analyzed_Entity,
-                            S           => FA.S_Scope,
-                            Proof_Reads => P,
-                            Reads       => R,
-                            Writes      => W);
+            GG_Get_Globals (E       => FA.Analyzed_Entity,
+                            S       => FA.S_Scope,
+                            Globals => Globals);
             Write_Str ("Global =>");
             Write_Eol;
             Indent;
             Print_Sets;
             Outdent;
 
-            GG_Get_Globals (E           => FA.Analyzed_Entity,
-                            S           => FA.B_Scope,
-                            Proof_Reads => P,
-                            Reads       => R,
-                            Writes      => W);
+            GG_Get_Globals (E       => FA.Analyzed_Entity,
+                            S       => FA.B_Scope,
+                            Globals => Globals);
             Write_Str ("Refined_Global =>");
             Write_Eol;
             Indent;
@@ -346,7 +345,11 @@ package body Flow is
                  when E_Package_Body                     => Kind_Package_Body,
                  when others => raise Program_Error)
        and then (if not X.Generating_Globals
-                 then not X.GG.Aborted and then X.GG.Globals.Is_Empty)
+                 then
+                   not X.GG.Aborted
+                   and then X.GG.Globals.Is_Empty
+                   and then X.Entries.Is_Empty
+                   and then (for all Info of X.Tasking => Info.Is_Empty))
       );
 
    -------------------------------

@@ -202,25 +202,9 @@ package body Why.Gen.Records is
               (Discr, EW_Abstract (Etype (Discr)));
             Binds (I) := R_Acc;
 
-            declare
-               Base_Discr : constant Entity_Id :=
-                 (if Is_Base_Type (Ty_Ext) then Discr
-                  else Original_Record_Component (Discr));
-               --  Depending on the case, we may also need to refer to
-               --  discriminants of the base type. It is the case for example
-               --  for default values which are declared on base types.
-            begin
+            --  We need entities of discrimiants
 
-               --  We need entities of discrimiants
-
-               Insert_Entity (Discr, Tmps (I));
-
-               --  and entities of discrimiants of the base type
-
-               if not Is_Base_Type (Ty_Ext) then
-                  Insert_Entity (Base_Discr, Tmps (I));
-               end if;
-            end;
+            Insert_Entity (Discr, Tmps (I));
 
             --  Call Build_Predicate_For_Discr on discriminants
 
@@ -2437,9 +2421,10 @@ package body Why.Gen.Records is
          then New_Discriminants_Access (Ada_Node, Domain, Name, Ty)
          else New_Fields_Access (Ada_Node, Domain, Name, Ty));
    begin
-      if Domain = EW_Prog and then
-        Nkind (Ada_Node) /= N_Identifier and then
-        Do_Discriminant_Check (Ada_Node)
+      if Domain = EW_Prog
+        and then Ekind (Field) = E_Component
+        and then Retysp_Kind (Rec) in Private_Kind | Record_Kind
+        and then Has_Variant_Info (Rec, Field)
       then
          return
            New_VC_Call
@@ -2614,13 +2599,20 @@ package body Why.Gen.Records is
       return W_Expr_Id
    is
    begin
-      return
-        New_Call
-          (Ada_Node => Ada_Node,
-           Name     => Discriminant_Check_Pred_Name (Ty, Field, False),
-           Args     => (1 => Name),
-           Domain   => Domain,
-           Typ      => EW_Bool_Type);
+      --  Do not emit checks for part of variables or discriminants
+
+      if Ekind (Field) = E_Component then
+         return
+           New_Call
+             (Ada_Node => Ada_Node,
+              Name     => Discriminant_Check_Pred_Name (Ty, Field, False),
+              Args     => (1 => Name),
+              Domain   => Domain,
+              Typ      => EW_Bool_Type);
+      else
+         return New_Literal (Domain => Domain,
+                             Value  => EW_True);
+      end if;
    end New_Ada_Record_Check_For_Field;
 
    ---------------------------
@@ -2891,11 +2883,11 @@ package body Why.Gen.Records is
          end;
       end if;
 
-         return New_Record_Update
-           (Ada_Node => Ada_Node,
-            Name     => Name,
-            Updates  => Associations,
-            Typ      => Get_Type (Name));
+      return New_Record_Update
+        (Ada_Node => Ada_Node,
+         Name     => Name,
+         Updates  => Associations,
+         Typ      => Get_Type (Name));
    end New_Record_Attributes_Update;
 
    --------------------

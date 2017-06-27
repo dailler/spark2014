@@ -841,8 +841,7 @@ package body Gnat2Why.Driver is
             --  Ignore discriminals, i.e. objects that occur for discriminants
             --  of protected types and task types.
 
-            if Ekind (E) in Formal_Kind
-              and then Present (Discriminal_Link (E))
+            if Is_Discriminal (E)
                 and then Ekind (Scope (E)) in E_Protected_Type | E_Task_Type
             then
                return;
@@ -853,9 +852,15 @@ package body Gnat2Why.Driver is
 
             Translated_Object_Entities.Include (To_Entity_Name (E));
 
+            --  Variables that are part of a protected object are not
+            --  translated separately.
+
+            if Is_Protected_Component_Or_Discr_Or_Part_Of (E) then
+               null;
+
             --  Constants and variables are translated differently
 
-            if not Is_Mutable_In_Why (E) then
+            elsif not Is_Mutable_In_Why (E) then
                if Ekind (E) = E_Constant then
                   if Is_Partial_View (E) then
                      Translate_Constant (File, E);
@@ -872,12 +877,6 @@ package body Gnat2Why.Driver is
                   Translate_Constant (File, E);
                   Generate_Empty_Axiom_Theory (File, E);
                end if;
-
-            --  Variables that are part of a protected object are not
-            --  translated separately.
-
-            elsif Is_Part_Of_Protected_Object (E) then
-               null;
 
             else
                Translate_Variable (File, E);

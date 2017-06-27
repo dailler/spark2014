@@ -88,6 +88,14 @@ package body Flow.Analysis.Sanity is
       function Check_Expression (N : Node_Id) return Traverse_Result;
       --  Helper function to walk over the tree
 
+      procedure Check_Variable_Inputs
+        (Flow_Ids : Ordered_Flow_Id_Sets.Set;
+         Err_Desc : String;
+         Err_Node : Node_Id);
+      --  Issues an error for any member of the Flow_Ids which does NOT denote
+      --  a constant, a bound or a discriminant (of an enclosing concurrent
+      --  type).
+
       function Global_Reads (N : Node_Id) return Ordered_Flow_Id_Sets.Set;
       --  Wrapper around Get_Globals that only returns global reads and proof
       --  reads.
@@ -121,30 +129,21 @@ package body Flow.Analysis.Sanity is
 
       function Global_Reads (N : Node_Id) return Ordered_Flow_Id_Sets.Set
       is
-         Proof_Ins, Reads, Writes : Flow_Id_Sets.Set;
+         Globals : Global_Flow_Ids;
+
       begin
          Get_Globals (Subprogram => N,
                       Scope      => FA.B_Scope,
                       Classwide  => False,
-                      Proof_Ins  => Proof_Ins,
-                      Reads      => Reads,
-                      Writes     => Writes);
-         return To_Ordered_Flow_Id_Set (Reads or Proof_Ins);
+                      Globals    => Globals);
+         return To_Ordered_Flow_Id_Set (Globals.Reads or Globals.Proof_Ins);
       end Global_Reads;
 
       ----------------------
       -- Check_Expression --
       ----------------------
 
-      function Check_Expression (N : Node_Id) return Traverse_Result
-      is
-         procedure Check_Variable_Inputs
-           (Flow_Ids : Ordered_Flow_Id_Sets.Set;
-            Err_Desc : String;
-            Err_Node : Node_Id);
-         --  Issues an error for any member of the Flow_Ids which does NOT
-         --  denote a constant, a bound or a discriminant (of an enclosing
-         --  concurrent type).
+      function Check_Expression (N : Node_Id) return Traverse_Result is
 
          function Check_Renaming (N : Node_Id) return Traverse_Result;
          --  Checks that indexed components and slices in object renaming
@@ -154,39 +153,6 @@ package body Flow.Analysis.Sanity is
          --  Checks that for a generic instance there is no Actual with
          --  variable inputs corresponding to a Formal object declaration with
          --  mode in.
-
-         ---------------------------
-         -- Check_Variable_Inputs --
-         ---------------------------
-
-         procedure Check_Variable_Inputs
-           (Flow_Ids : Ordered_Flow_Id_Sets.Set;
-            Err_Desc : String;
-            Err_Node : Node_Id)
-         is
-         begin
-            for F of Flow_Ids loop
-               if (F.Kind in Direct_Mapping | Record_Field
-                 and then Nkind (Get_Direct_Mapping_Id (F)) in N_Entity
-                 and then not (Is_Constant_Object (Get_Direct_Mapping_Id (F))
-                                 or else Is_Bound (F)
-                                 or else Ekind (Get_Direct_Mapping_Id (F)) =
-                                           E_Discriminant))
-                 or else
-                   F.Kind = Magic_String
-               then
-                  Error_Msg_Flow
-                    (FA       => FA,
-                     Msg      => Err_Desc & " cannot depend on variable " &
-                       "input &",
-                     SRM_Ref  => "4.4(2)",
-                     N        => Err_Node,
-                     Severity => Error_Kind,
-                     F1       => Entire_Variable (F));
-                  Sane := False;
-               end if;
-            end loop;
-         end Check_Variable_Inputs;
 
          --------------------
          -- Check_Renaming --
@@ -224,15 +190,13 @@ package body Flow.Analysis.Sanity is
          begin
             if Nkind (Formal) = N_Formal_Object_Declaration then
                declare
-                  Formal_E : constant Entity_Id :=
-                    Defining_Entity (Formal);
+                  Formal_E : constant Entity_Id := Defining_Entity (Formal);
 
                begin
                   if Ekind (Formal_E) = E_Generic_In_Parameter then
                      Check_Variable_Inputs
                        (Flow_Ids => Variables (Actual),
-                        Err_Desc => "actual for formal object with"
-                        & " mode in",
+                        Err_Desc => "actual for formal object with mode in",
                         Err_Node => Actual);
                   end if;
                end;
@@ -260,30 +224,9 @@ package body Flow.Analysis.Sanity is
 
                if N = Entry_Node then
                   declare
-                     Spec : constant Entity_Id :=
-                       Unique_Defining_Entity (N);
+                     Spec : constant Entity_Id := Unique_Defining_Entity (N);
 
                   begin
-                     --  If we are dealing with a user-defined equality then we
-                     --  need to check that it does not read any variable.
-                     if Nkind (N) = N_Subprogram_Body then
-                        if Is_User_Defined_Equality (Spec) then
-                           declare
-                              Typ : constant Entity_Id :=
-                                Get_Full_Type_Without_Checking
-                                  (First_Formal (Spec));
-
-                           begin
-                              if Ekind (Typ) in Record_Kind then
-                                 Check_Variable_Inputs
-                                   (Flow_Ids => Global_Reads (Spec),
-                                    Err_Desc => "user-defined equality",
-                                    Err_Node => N);
-                              end if;
-                           end;
-                        end if;
-                     end if;
-
                      --  If the node is an instance of a generic then we need
                      --  to check its actuals.
                      if Is_Generic_Instance (Spec) then
@@ -338,9 +281,7 @@ package body Flow.Analysis.Sanity is
                             (Invariant_Procedure (Typ));
 
                         Funs : constant Node_Sets.Set :=
-                          Get_Functions
-                            (Expr,
-                             Include_Predicates => False);
+                          Get_Functions (Expr, Include_Predicates => False);
 
                      begin
                         --  Check 4.4(2) (no variable inputs)
@@ -351,8 +292,7 @@ package body Flow.Analysis.Sanity is
 
                         --  Check 7.3.2(4) (no calls to boundary subprograms)
                         for F of Funs loop
-                           if Is_Boundary_Subprogram_For_Type (F, Typ)
-                           then
+                           if Is_Boundary_Subprogram_For_Type (F, Typ) then
                               Error_Msg_Flow
                                 (FA       => FA,
                                  Msg      =>
@@ -391,7 +331,7 @@ package body Flow.Analysis.Sanity is
                   Parent_N : constant Node_Id := Parent (N);
                begin
                   if Nkind (Parent_N) = N_Subtype_Declaration
-                    and then Is_Internal (Defining_Identifier (Parent (N)))
+                    and then Is_Internal (Defining_Identifier (Parent_N))
                   then
                      return Skip;
                   end if;
@@ -435,18 +375,55 @@ package body Flow.Analysis.Sanity is
             when N_Component_Declaration
                | N_Discriminant_Specification
             =>
-               if Present (Expression (N)) then
-                  Check_Variable_Inputs
-                    (Flow_Ids => Variables (Expression (N)),
-                     Err_Desc => "default initialization",
-                     Err_Node => Expression (N));
-               end if;
+               declare
+                  Default_Expression : constant Node_Id := Expression (N);
+               begin
+                  if Present (Default_Expression) then
+                     Check_Variable_Inputs
+                       (Flow_Ids => Variables (Default_Expression),
+                        Err_Desc => "default initialization",
+                        Err_Node => Default_Expression);
+                  end if;
+               end;
                return Skip;
 
             when others =>
                return OK;
          end case;
       end Check_Expression;
+
+      ---------------------------
+      -- Check_Variable_Inputs --
+      ---------------------------
+
+      procedure Check_Variable_Inputs
+        (Flow_Ids : Ordered_Flow_Id_Sets.Set;
+         Err_Desc : String;
+         Err_Node : Node_Id)
+      is
+      begin
+         for F of Flow_Ids loop
+            if (F.Kind in Direct_Mapping | Record_Field
+                and then Nkind (Get_Direct_Mapping_Id (F)) in N_Entity
+                and then not (Is_Constant_Object (Get_Direct_Mapping_Id (F))
+                              or else Is_Bound (F)
+                              or else Ekind (Get_Direct_Mapping_Id (F)) =
+                                E_Discriminant))
+              or else
+                F.Kind = Magic_String
+            then
+               Error_Msg_Flow
+                 (FA       => FA,
+                  Msg      => Err_Desc &
+                              " cannot depend on variable input &",
+                  SRM_Ref  => "4.4(2)",
+                  N        => Err_Node,
+                  Severity => Error_Kind,
+                  F1       => Entire_Variable (F));
+               Sane := False;
+            end if;
+         end loop;
+      end Check_Variable_Inputs;
 
       procedure Do_Checks is new Traverse_Proc (Check_Expression);
 
@@ -462,6 +439,22 @@ package body Flow.Analysis.Sanity is
          when Kind_Subprogram =>
             Entry_Node := Get_Body (FA.Analyzed_Entity);
             Do_Checks (Entry_Node);
+
+            if Is_User_Defined_Equality (FA.Spec_Entity) then
+               declare
+                  Typ : constant Entity_Id :=
+                    Get_Full_Type_Without_Checking
+                      (First_Formal (FA.Spec_Entity));
+
+               begin
+                  if Ekind (Typ) in Record_Kind then
+                     Check_Variable_Inputs
+                       (Flow_Ids => Global_Reads (FA.Spec_Entity),
+                        Err_Desc => "user-defined equality",
+                        Err_Node => FA.Spec_Entity);
+                  end if;
+               end;
+            end if;
 
          when Kind_Task =>
             Entry_Node := Task_Body (FA.Analyzed_Entity);
@@ -705,14 +698,10 @@ package body Flow.Analysis.Sanity is
    is
 
       --  Globals provided by the user
-      User_Proof_Ins             : Flow_Id_Sets.Set;
-      User_Reads                 : Flow_Id_Sets.Set;
-      User_Writes                : Flow_Id_Sets.Set;
+      User_Globals   : Global_Flow_Ids;
 
       --  Globals calculated by the tools
-      Actual_Proof_Ins           : Flow_Id_Sets.Set;
-      Actual_Reads               : Flow_Id_Sets.Set;
-      Actual_Writes              : Flow_Id_Sets.Set;
+      Actual_Globals : Global_Flow_Ids;
 
       --  Calculated globals projected upwards
       Projected_Actual_Proof_Ins : Flow_Id_Sets.Set;
@@ -819,7 +808,7 @@ package body Flow.Analysis.Sanity is
                   if Nkind (RC) /= N_Null then
                      Constit := Direct_Mapping_Id (RC, Out_View);
 
-                     if Actual_Writes.Contains (Constit) then
+                     if Actual_Globals.Writes.Contains (Constit) then
                         Writes_At_Least_One := True;
                      else
                         One_Is_Missing := True;
@@ -890,29 +879,28 @@ package body Flow.Analysis.Sanity is
       Get_Globals (Subprogram => FA.Analyzed_Entity,
                    Scope      => FA.S_Scope,
                    Classwide  => False,
-                   Proof_Ins  => User_Proof_Ins,
-                   Reads      => User_Reads,
-                   Writes     => User_Writes);
+                   Globals    => User_Globals);
 
       --  Read the Generated Globals (actual globals)
       Get_Globals (Subprogram => FA.Analyzed_Entity,
                    Scope      => FA.B_Scope,
                    Classwide  => False,
-                   Proof_Ins  => Actual_Proof_Ins,
-                   Reads      => Actual_Reads,
-                   Writes     => Actual_Writes);
+                   Globals    => Actual_Globals);
 
       --  Up project actual globals
-      Projected_Actual_Writes    := Up_Project_Flow_Set (Actual_Writes);
-      Projected_Actual_Reads     := Up_Project_Flow_Set (Actual_Reads);
-      Projected_Actual_Proof_Ins := Up_Project_Flow_Set (Actual_Proof_Ins);
+      Projected_Actual_Writes    :=
+        Up_Project_Flow_Set (Actual_Globals.Writes);
+      Projected_Actual_Reads     :=
+        Up_Project_Flow_Set (Actual_Globals.Reads);
+      Projected_Actual_Proof_Ins :=
+        Up_Project_Flow_Set (Actual_Globals.Proof_Ins);
 
       --  Remove Reads from Proof_Ins
       Projected_Actual_Proof_Ins.Difference (Projected_Actual_Reads);
 
       --  Compare writes
       for W of Projected_Actual_Writes loop
-         if not User_Writes.Contains (W) then
+         if not User_Globals.Writes.Contains (W) then
             Sane := False;
 
             Error_Msg_Flow
@@ -926,7 +914,7 @@ package body Flow.Analysis.Sanity is
          end if;
       end loop;
 
-      for W of User_Writes loop
+      for W of User_Globals.Writes loop
          declare
             E : constant Entity_Id := Get_Direct_Mapping_Id (W);
          begin
@@ -950,7 +938,8 @@ package body Flow.Analysis.Sanity is
                end if;
 
             elsif Ekind (E) = E_Abstract_State
-              and then not User_Reads.Contains (Change_Variant (W, In_View))
+              and then not User_Globals.Reads.Contains
+                (Change_Variant (W, In_View))
               and then State_Partially_Written (W)
             then
                --  The synthesized Refined_Global is not fully written
@@ -970,7 +959,7 @@ package body Flow.Analysis.Sanity is
 
       --  Compare reads
       for R of Projected_Actual_Reads loop
-         if not User_Reads.Contains (R) then
+         if not User_Globals.Reads.Contains (R) then
             Sane := False;
 
             Error_Msg_Flow
@@ -984,7 +973,7 @@ package body Flow.Analysis.Sanity is
          end if;
       end loop;
 
-      for R of User_Reads loop
+      for R of User_Globals.Reads loop
          if not Extended_Set_Contains (R, Projected_Actual_Reads)
            and then not State_Partially_Written (R)
            --  Don't issue this error if we are dealing with a partially
@@ -1005,7 +994,7 @@ package body Flow.Analysis.Sanity is
 
       --  Compare Proof_Ins
       for P of Projected_Actual_Proof_Ins loop
-         if not User_Proof_Ins.Contains (P) then
+         if not User_Globals.Proof_Ins.Contains (P) then
             Sane := False;
 
             Error_Msg_Flow
@@ -1019,7 +1008,7 @@ package body Flow.Analysis.Sanity is
          end if;
       end loop;
 
-      for P of User_Proof_Ins loop
+      for P of User_Globals.Proof_Ins loop
          if not Extended_Set_Contains (P, Projected_Actual_Proof_Ins) then
             Sane := False;
 

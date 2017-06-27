@@ -22,13 +22,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Latin_1; use Ada.Characters.Latin_1;
-with Ada.Containers;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Atree;                  use Atree;
 with Output;                 use Output;
 with Sprint;                 use Sprint;
-
-use type Ada.Containers.Count_Type;
 
 package body Flow_Debug is
 
@@ -150,9 +147,9 @@ package body Flow_Debug is
    -- Print_Dependency_Map --
    --------------------------
 
-   procedure Print_Dependency_Map (M : Dependency_Maps.Map) is
+   procedure Print_Dependency_Map (Label : String; M : Dependency_Maps.Map) is
    begin
-      Write_Line ("Dependency_Map:");
+      Write_Line ("Dependency_Map (" & Label & "):");
       Indent;
       for C in M.Iterate loop
          declare

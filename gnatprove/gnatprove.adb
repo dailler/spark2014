@@ -77,6 +77,7 @@ with GNAT.Expect;                use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Strings;               use GNAT.Strings;
 with Gnat2Why_Args;
+with GNATCOLL.JSON;              use GNATCOLL.JSON;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
@@ -172,6 +173,9 @@ procedure Gnatprove with SPARK_Mode is
    --  argument). Otherwise, copy the provided config file to a new file with
    --  the name of the second argument while adding the runtime information to
    --  it. Return the second argument.
+
+   procedure Write_Why3_Conf_File (Obj_Dir : String);
+   --  Write the Why3 conf file to process prover configuration
 
    -------------------
    -- Call_Gprbuild --
@@ -297,11 +301,19 @@ procedure Gnatprove with SPARK_Mode is
          Args.Append ("--RTS=" & RTS_Dir.all);
       end if;
 
-      Call_Gprbuild (Project_File,
-                     File_System.Install.Gpr_Frames_Cnf_File,
-                     Compose (Obj_Dir, File_System.Install.Frames_Cgpr),
-                     Args,
-                     Status);
+      declare
+         Cnf_File : constant String :=
+           (if CL_Switches.Coverage then
+               File_System.Install.Gpr_Frames_Cov_Cnf_File
+            else
+               File_System.Install.Gpr_Frames_Cnf_File);
+      begin
+         Call_Gprbuild (Project_File,
+                        Cnf_File,
+                        Compose (Obj_Dir, File_System.Install.Frames_Cgpr),
+                        Args,
+                        Status);
+      end;
       if Status = 0 and then not Debug then
          GNAT.OS_Lib.Delete_File (Opt_File, Del_Succ);
       end if;
@@ -432,10 +444,6 @@ procedure Gnatprove with SPARK_Mode is
          Args.Append ("--replay");
       end if;
 
-      if CL_Switches.Benchmark then
-         Args.Append ("--benchmark");
-      end if;
-
       Args.Append ("-j");
       Args.Append (Image (Parallel, 1));
 
@@ -539,6 +547,7 @@ procedure Gnatprove with SPARK_Mode is
       Obj_Dir : constant String :=
         Proj.Root_Project.Artifacts_Dir.Display_Full_Name;
    begin
+      Write_Why3_Conf_File (Obj_Dir);
       declare
          use String_Lists;
          Args     : String_Lists.List;
@@ -596,11 +605,20 @@ procedure Gnatprove with SPARK_Mode is
 
          Id := Spawn_VC_Server (Proj.Root_Project);
 
-         Call_Gprbuild (Project_File,
-                        File_System.Install.Gpr_Translation_Cnf_File,
-                        Compose (Obj_Dir, File_System.Install.Gnat2why_Cgpr),
-                        Args,
-                        Status);
+         declare
+            Cnf_File : constant String :=
+              (if CL_Switches.Coverage then
+                  File_System.Install.Gpr_Gnat2why_Cov_Cnf_File
+               else
+                  File_System.Install.Gpr_Translation_Cnf_File);
+         begin
+            Call_Gprbuild (Project_File,
+                           Cnf_File,
+                           Compose (Obj_Dir,
+                             File_System.Install.Gnat2why_Cgpr),
+                           Args,
+                           Status);
+         end;
          if Status = 0 and then not Debug then
             GNAT.OS_Lib.Delete_File (Opt_File, Del_Succ);
          end if;
@@ -952,7 +970,7 @@ procedure Gnatprove with SPARK_Mode is
       --  The full command line
 
    begin
-      --  Add <prefix>/libexec/spark2014/bin in front of the PATH
+      --  Add <prefix>/libexec/spark/bin in front of the PATH
 
       Set ("PATH",
            File_System.Install.Libexec_Spark_Bin & Path_Separator & Path_Val);
@@ -1032,6 +1050,249 @@ procedure Gnatprove with SPARK_Mode is
             end case;
       end case;
    end Text_Of_Step;
+
+   --------------------------
+   -- Write_Why3_Conf_File --
+   --------------------------
+
+   procedure Write_Why3_Conf_File (Obj_Dir : String) is
+
+      --  Here we read the "gnatprove.conf" file and generate from it
+      --  the "why3.conf" file. This comment defines the structure of the
+      --  "gnatprove.conf" file.
+      --  Note that we leave many fields uncommented here because they map
+      --  directly to why3 fields.
+      --
+      --  gnatprove.conf =
+      --    { magic    : int,
+      --      memlimit : int,
+      --      provers  : list prover,
+      --      editors  : list editor
+      --    }
+      --
+      --  "magic" and "memlimit" map directly to the entries in Why3.conf in
+      --  the [main] section.
+      --
+      --  prover =
+      --    { executable : string,
+      --      args       : list string,
+      --      args_steps : list string,
+      --      driver     : string,
+      --      name       : string,
+      --      shortcut   : string,
+      --      version    : string
+      --    }
+      --
+      --    "driver", "name", "shortcut", "version" map directly to why3.conf
+      --    keys for a prover. "executable" is just the name of the binary to
+      --    be run. "args" are all the arguments for a run without a step
+      --    limit. "args_steps" are the *extra* arguments that need to be
+      --    provided for a steps limit to be active.
+      --
+      --  editor =
+      --    { title      : string,
+      --      name       : string,
+      --      executable : string,
+      --      args       : list string
+      --    }
+      --
+      --  "title" maps to the name of the editor used in the title of the
+      --  section, e.g. for "[editor coqide]" the title would be "coqide".
+      --  "name" maps to the why3.conf key. "executable" is just the name of
+      --  the binary, and "args" the arguments that need to be provided.
+
+      Config : constant JSON_Value :=
+        Read (Read_File_Into_String (File_System.Install.Gnatprove_Conf));
+      File : File_Type;
+
+      procedure Start_Section (Name : String);
+      --  start a section in the why3.conf file
+
+      procedure Set_Key_Value (Key, Value : String);
+      --  write a line 'key = "value"' to the why3.conf file
+
+      procedure Set_Key_Value_Int (Key : String; Value : Integer);
+      --  same, but for Integers. We do not use overloading, because in
+      --  connection with the overloading of JSON API, this will require type
+      --  annotations.
+
+      procedure Write_Prover_Config (Prover : JSON_Value);
+      --  write the config of a prover
+
+      procedure Write_Editor_Config (Editor : JSON_Value);
+      --  write the config of an editor
+
+      function Build_Prover_Command (Prover : JSON_Value) return String;
+      --  given a prover configuration in JSON, construct the prover command
+      --  for why3.conf
+
+      function Build_Steps_Command (Prover : JSON_Value) return String;
+      --  same as Build_Prover_Command, but also add the extra arguments for
+      --  steps. The last argument of the regular arguments is preserved, that
+      --  is, the extra arguments for steps are added just before.
+
+      function Build_Executable (Exec : String) return String;
+      --  build the part of a command that corresponds to the executable. Takes
+      --  into account Benchmark mode.
+
+      ----------------------
+      -- Build_Executable --
+      ----------------------
+
+      function Build_Executable (Exec : String) return String is
+
+         function Add_Memcached_Wrapper (Cmd : String) return String;
+         function Add_Benchmark_Prefix (Cmd : String) return String;
+
+         --------------------------
+         -- Add_Benchmark_Prefix --
+         --------------------------
+
+         function Add_Benchmark_Prefix (Cmd : String) return String is
+         begin
+            if CL_Switches.Benchmark then
+               return "fake_" & Cmd;
+            else
+               return Cmd;
+            end if;
+         end Add_Benchmark_Prefix;
+
+         ---------------------------
+         -- Add_Memcached_Wrapper --
+         ---------------------------
+
+         function Add_Memcached_Wrapper (Cmd : String) return String is
+         begin
+            if Memcached_Server /= null and then
+              Memcached_Server.all /= ""
+            then
+               return "spark_memcached_wrapper " &
+                 Memcached_Server.all & " " &
+                 Cmd;
+            else
+               return Cmd;
+            end if;
+         end Add_Memcached_Wrapper;
+
+         --  Start of processing for Build_Executable
+
+      begin
+         return Add_Memcached_Wrapper (Add_Benchmark_Prefix (Exec));
+      end Build_Executable;
+
+      --------------------------
+      -- Build_Prover_Command --
+      --------------------------
+
+      function Build_Prover_Command (Prover : JSON_Value) return String is
+         use Ada.Strings.Unbounded;
+         Command : Unbounded_String;
+         Args : constant JSON_Array := Get (Get (Prover, "args"));
+      begin
+         Append (Command,
+                 Build_Executable (String'(Get (Get (Prover, "executable")))));
+         for Index in 1 .. Length (Args) loop
+            Append (Command, " " & String'(Get (Get (Args, Index))));
+         end loop;
+         return To_String (Command);
+      end Build_Prover_Command;
+
+      -------------------------
+      -- Build_Steps_Command --
+      -------------------------
+
+      function Build_Steps_Command (Prover : JSON_Value) return String is
+         use Ada.Strings.Unbounded;
+         Command : Unbounded_String;
+         Args : constant JSON_Array := Get (Get (Prover, "args"));
+         Args_Steps : constant JSON_Array := Get (Get (Prover, "args_steps"));
+      begin
+         Append (Command,
+                 Build_Executable (String'(Get (Get (Prover, "executable")))));
+         for Index in 1 .. Length (Args) - 1 loop
+            Append (Command, " " & String'(Get (Get (Args, Index))));
+         end loop;
+         for Index in 1 .. Length (Args_Steps) loop
+            Append (Command, " " & String'(Get (Get (Args_Steps, Index))));
+         end loop;
+         Append (Command, " " & String'(Get (Get (Args, Length (Args)))));
+         return To_String (Command);
+      end Build_Steps_Command;
+
+      -------------------
+      -- Set_Key_Value --
+      -------------------
+
+      procedure Set_Key_Value (Key, Value : String) is
+      begin
+         Put_Line (File, Key & " = " & """" & Value & """");
+      end Set_Key_Value;
+
+      -----------------------
+      -- Set_Key_Value_Int --
+      -----------------------
+
+      procedure Set_Key_Value_Int (Key : String; Value : Integer) is
+      begin
+         Put_Line (File, Key & " = " & Integer'Image (Value));
+      end Set_Key_Value_Int;
+
+      -------------------
+      -- Start_Section --
+      -------------------
+
+      procedure Start_Section (Name : String) is
+      begin
+         Put_Line (File, "[" & Name & "]");
+      end Start_Section;
+
+      -------------------------
+      -- Write_Editor_Config --
+      -------------------------
+
+      procedure Write_Editor_Config (Editor : JSON_Value) is
+      begin
+         Start_Section ("editor " & Get (Get (Editor, "title")));
+         Set_Key_Value ("name", Get (Get (Editor, "name")));
+         Set_Key_Value ("command", Build_Prover_Command (Editor));
+      end Write_Editor_Config;
+
+      -------------------------
+      -- Write_Prover_Config --
+      -------------------------
+
+      procedure Write_Prover_Config (Prover : JSON_Value) is
+      begin
+         Start_Section ("prover");
+         Set_Key_Value ("command", Build_Prover_Command (Prover));
+         if Has_Field (Prover, "args_steps") then
+            Set_Key_Value ("command_steps", Build_Steps_Command (Prover));
+         end if;
+         Set_Key_Value ("driver", Get (Get (Prover, "driver")));
+         Set_Key_Value ("name", Get (Get (Prover, "name")));
+         Set_Key_Value ("shortcut", Get (Get (Prover, "shortcut")));
+         Set_Key_Value ("version", Get (Get (Prover, "version")));
+      end Write_Prover_Config;
+
+      Editors : constant JSON_Array := Get (Get (Config, "editors"));
+      Provers : constant JSON_Array := Get (Get (Config, "provers"));
+      Filename : constant String := Compose (Obj_Dir, "why3.conf");
+
+      --  Start of Processing of Write_Why3_Conf_File
+
+   begin
+      Create (File, Out_File, Filename);
+      Start_Section ("main");
+      Set_Key_Value_Int ("magic", Get (Get (Config, "magic")));
+      Set_Key_Value_Int ("memlimit", Get (Get (Config, "memlimit")));
+      for Index in 1 .. Length (Editors) loop
+         Write_Editor_Config (Get (Editors, Index));
+      end loop;
+      for Index in 1 .. Length (Provers) loop
+         Write_Prover_Config (Get (Provers, Index));
+      end loop;
+      Close (File);
+   end Write_Why3_Conf_File;
 
    Tree      : Project_Tree;
    --  GNAT project tree

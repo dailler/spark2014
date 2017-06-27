@@ -1071,7 +1071,9 @@ package body Gnat2Why.Expr is
 
       L_Id : constant W_Expr_Id :=
         (if Is_Protected_Type (E) then
-            New_Deref (Right => Self_Name, Typ => Get_Typ (Self_Name))
+            (if Self_Is_Mutable then
+                   New_Deref (Right => Self_Name, Typ => Get_Typ (Self_Name))
+              else +Self_Name)
          else Transform_Identifier (Params   => Params,
                                     Expr     => E,
                                     Ent      => E,
@@ -2108,20 +2110,32 @@ package body Gnat2Why.Expr is
                      Prot : constant W_Identifier_Id :=
                        Binders (Bind_Cnt).Main.B_Name;
                   begin
-                     --  External call, pass the object itself
+                     --  External call, we need to reconstruct the object if
+                     --  it is mutable as protected types can be in split form.
 
                      if Is_External_Call (Call) then
-                        Why_Args (Arg_Cnt) :=
-                          Transform_Expr
-                            (Prefix (Sinfo.Name (Call)),
-                             Get_Typ (Prot),
-                             Domain,
-                             Params);
+                        if Binders (Bind_Cnt).Main.Mutable then
+                           Why_Args (Arg_Cnt) :=
+                             +New_Identifier
+                             (Ada_Node => Empty,
+                              Name     => "__self__compl",
+                              Typ      => Get_Typ (Prot));
+                           Nb_Of_Refs := Nb_Of_Refs + 1;
+                        else
+                           Why_Args (Arg_Cnt) :=
+                             Transform_Expr
+                               (Prefix (Sinfo.Name (Call)),
+                                Get_Typ (Prot),
+                                Domain,
+                                Params);
+                        end if;
 
                      --  Otherwise, it is an internal call
 
                      else
-                        if Self_Is_Mutable then
+                        if not Binders (Bind_Cnt).Main.Mutable
+                          and then Self_Is_Mutable
+                        then
                            Why_Args (Arg_Cnt) :=
                              New_Deref (Right => Prot,
                                         Typ   => Get_Typ (Prot));
@@ -2691,10 +2705,7 @@ package body Gnat2Why.Expr is
             end if;
          end;
 
-      elsif Is_Record_Type (Ty)
-        or else Is_Private_Type (Ty)
-        or else Is_Concurrent_Type (Ty)
-      then
+      elsif Is_Record_Type_In_Why (Ty) then
 
          --  Generates:
          --  let tmp1 = Discr1.default in <if Ty_Ext is unconstrained>
@@ -2720,11 +2731,11 @@ package body Gnat2Why.Expr is
             Binds   : W_Expr_Array (1 .. Discrs);
             --  Arrays to store the bindings for discriminants
 
-            Discr   : Node_Id := (if Count_Discriminants (Ty_Ext) > 0
+            Discr   : Node_Id := (if Discrs > 0
                                   then First_Discriminant (Ty_Ext)
                                   else Empty);
             Elmt    : Elmt_Id :=
-              (if Count_Discriminants (Ty_Ext) > 0
+              (if Discrs > 0
                and then Is_Constrained (Ty_Ext) then
                     First_Elmt (Stored_Constraint (Ty_Ext))
                else No_Elmt);
@@ -3250,7 +3261,7 @@ package body Gnat2Why.Expr is
 
             Assumption := Default_Init_For_Array (+Expr, Ty_Ext);
 
-      elsif Is_Record_Type (Ty_Ext) or else Is_Private_Type (Ty_Ext) then
+      elsif Is_Record_Type_In_Why (Ty_Ext) then
 
          --  Generates:
          --  let tmp1 = <Expr>.rec__disc1 in
@@ -4430,7 +4441,53 @@ package body Gnat2Why.Expr is
       begin
          case Binders (Bind_Cnt).Kind is
             when Concurrent_Self =>
-               null;
+               --  External call, we need to reconstruct the object if
+               --  it is mutable as protected types can be in split form.
+
+               if Is_External_Call (Ada_Call)
+                 and then Binders (Bind_Cnt).Main.Mutable
+               then
+                  declare
+                     Prefix_Node : constant Node_Id :=
+                       Prefix (Sinfo.Name (Ada_Call));
+                     Formal_T    : constant W_Type_Id :=
+                       Get_Typ (Binders (Bind_Cnt).Main.B_Name);
+
+                     Tmp_Var       : constant W_Identifier_Id :=
+                       New_Identifier (Ada_Node => Empty,
+                                       Name     => "__self__compl",
+                                       Typ      => Formal_T);
+                     Tmp_Var_Deref : constant W_Prog_Id :=
+                       New_Deref (Right => Tmp_Var,
+                                  Typ   => Formal_T);
+                     Fetch_Actual  : constant W_Prog_Id :=
+                       +Transform_Expr
+                         (Prefix_Node,
+                          Formal_T,
+                          EW_Prog,
+                          Params);
+
+                     Arg_Value   : constant W_Prog_Id :=
+                       +Insert_Checked_Conversion
+                       (Ada_Node => Prefix_Node,
+                        Domain   => EW_Prog,
+                        Expr     => +Tmp_Var_Deref,
+                        To       => Type_Of_Node (Prefix_Node));
+
+                     Store_Value : constant W_Prog_Id :=
+                       New_Assignment
+                         (Ada_Node => Prefix_Node,
+                          Lvalue   => Prefix_Node,
+                          Expr     => Arg_Value);
+                  begin
+                     Statement_Sequence_Append_To_Statements
+                       (Store, Store_Value);
+
+                     Ref_Tmp_Vars (Ref_Index) := Tmp_Var;
+                     Ref_Fetch (Ref_Index) := Fetch_Actual;
+                     Ref_Index := Ref_Index + 1;
+                  end;
+               end if;
 
             when Regular =>
 
@@ -5371,7 +5428,7 @@ package body Gnat2Why.Expr is
       declare
          Ty : constant Entity_Id := Etype (Left_Side);
       begin
-         if Has_Record_Type (Ty) or else Full_View_Not_In_SPARK (Ty) then
+         if Is_Record_Type_In_Why (Ty) then
             Right_Side :=
               +New_Record_Attributes_Update
               (Ada_Node  => Ada_Node,
@@ -5399,35 +5456,12 @@ package body Gnat2Why.Expr is
       --  In the case of protected components, we have to generate the record
       --  code ourselves on top.
 
-      --  ??? the following test is excessive, assignement to discriminants is
-      --  would be rejected by the front end; this should be fixed in the
-      --  SPARK_Util API for protected objects.
-
       if Is_Protected_Component_Or_Discr_Or_Part_Of (Entity (Left_Side)) then
          declare
-            Left : constant Entity_Id := Entity (Left_Side);
-
-            Prot_Obj : W_Identifier_Id;
+            Prot_Obj : constant W_Identifier_Id := Self_Name;
 
          begin
-            if Is_Part_Of_Protected_Object (Left) then
-               declare
-                  Ada_Obj : constant Entity_Id := Encapsulating_State (Left);
-                  Ada_Typ : constant Entity_Id := Etype (Ada_Obj);
-
-                  pragma Assert (Ekind (Ada_Obj) = E_Variable and then
-                                 Ekind (Ada_Typ) = E_Protected_Type);
-
-               begin
-                  Prot_Obj :=
-                    To_Why_Id
-                      (E      => Ada_Obj,
-                       Domain => EW_Prog,
-                       Typ    => Type_Of_Node (Ada_Typ));
-               end;
-            else
-               Prot_Obj := Self_Name;
-            end if;
+            pragma Assert (Self_Is_Mutable);
 
             Result :=
               New_Assignment
@@ -7059,10 +7093,10 @@ package body Gnat2Why.Expr is
            and then not Is_Static_Array_Type (Etype (Expr))
          then
             declare
-               Temp : constant W_Expr_Id := New_Temp_For_Expr (R, True);
+               Temp   : constant W_Expr_Id := New_Temp_For_Expr (R, True);
                A1, A2 : W_Prog_Id;
-               Typ : constant Node_Id := First_Index (Etype (Etype (Expr)));
-               W_Typ : constant W_Type_Id :=
+               Typ    : constant Node_Id := First_Index (Etype (Etype (Expr)));
+               W_Typ  : constant W_Type_Id :=
                  (if Typ = Empty then EW_Int_Type else
                      Base_Why_Type_No_Bool (Typ));
             begin
@@ -8901,9 +8935,12 @@ package body Gnat2Why.Expr is
    begin
 
       --  Do not generate old when they are not allowed (eg in postconditions
-      --  of functions or inside prefixes of 'Old attributes).
+      --  of functions or inside prefixes of 'Old attributes), or when the
+      --  expression contains no variable.
 
-      if not Params.Old_Allowed then
+      if not Params.Old_Allowed
+        or else Get_Variables_For_Proof (Expr, Expr).Is_Empty
+      then
          return Transform_Expr (Expr, Domain, Params);
       end if;
 
@@ -10262,7 +10299,7 @@ package body Gnat2Why.Expr is
       function Check_Itypes_Of_Components (Ent : Entity_Id) return W_Prog_Id is
          N      : constant Natural :=
            (if not Is_Constrained (Ent)
-            and then (Count_Discriminants (Ent) > 0)
+            and then Count_Discriminants (Ent) > 0
             then Natural (Number_Discriminants (Ent)) else 0);
          Vars   : W_Identifier_Array (1 .. N);
          Vals   : W_Expr_Array (1 .. N);
@@ -10385,18 +10422,8 @@ package body Gnat2Why.Expr is
       -------------------
 
       function Get_Base_Type (N : Node_Id) return Entity_Id is
-         Ent : constant Entity_Id := Defining_Identifier (N);
       begin
-         --  Full type declarations can only require checks when they are
-         --  scalar types, and then only when the range is non-static.
-
          if Nkind (N) = N_Full_Type_Declaration then
-            if Is_Scalar_Type (Ent)
-              and then Is_OK_Static_Range (Get_Range (Ent))
-            then
-               return Empty;
-            end if;
-
             declare
                T_Def : constant Node_Id := Type_Definition (N);
             begin
@@ -10443,13 +10470,6 @@ package body Gnat2Why.Expr is
                                                  then Partial_View (Obj)
                                                  else Obj);
             begin
-               --  We can ignore task declarations
-
-               if Is_Task_Type (Obj_Type) then
-                  --  ??? missing checks for priority range
-                  return R;
-               end if;
-
                --  Non-scalar object declaration should not appear before the
                --  loop invariant in a loop.
 
@@ -10516,9 +10536,21 @@ package body Gnat2Why.Expr is
                if Entity_In_SPARK (Ent) then
                   case Ekind (Ent) is
                   when Scalar_Kind =>
-                     R := Check_Scalar_Range (Params => Body_Params,
-                                              N      => Ent,
-                                              Base   => Base);
+
+                     --  Scalar type declarations can only require checks when
+                     --  either their range is non-static, or their Base type
+                     --  is not static.
+
+                     if (Present (Base)
+                         and then
+                           not Sem_Eval.Is_OK_Static_Range (Get_Range (Base)))
+                       or else
+                         not Sem_Eval.Is_OK_Static_Range (Get_Range (Ent))
+                     then
+                        R := Check_Scalar_Range (Params => Body_Params,
+                                                 N      => Ent,
+                                                 Base   => Base);
+                     end if;
 
                   when Array_Kind =>
                      declare
@@ -12584,6 +12616,18 @@ package body Gnat2Why.Expr is
                                 Typ      => Get_Type (T));
             end if;
          end;
+
+      --  Discriminals are not translated in Why3. Use their discriminal link
+      --  instead.
+
+      elsif Is_Discriminal (Ent)
+        and then Ekind (Scope (Ent)) in E_Protected_Type | E_Task_Type
+      then
+         T := Transform_Identifier (Params   => Params,
+                                    Expr     => Expr,
+                                    Ent      => Discriminal_Link (Ent),
+                                    Domain   => Domain,
+                                    Selector => Selector);
       elsif Ekind (Ent) = E_Enumeration_Literal then
          T := Transform_Enum_Literal (Expr, Ent, Domain);
 
@@ -12616,7 +12660,7 @@ package body Gnat2Why.Expr is
                Name     =>
                  (if Self_Is_Mutable
                   then New_Deref (Right => Id, Typ => Type_Of_Node (Prot))
-                    else +Id),
+                  else +Id),
                Field    => Ent,
                Ty       => Prot);
          end;
@@ -12758,7 +12802,7 @@ package body Gnat2Why.Expr is
             begin
                --  Record subtypes are special
 
-               if Is_Record_Type (Ty) then
+               if Is_Record_Type_In_Why (Ty) then
 
                   --  We must check for two cases. Ty may be constrained, in
                   --  which case we need to check its dicriminant, or it may
@@ -12770,7 +12814,7 @@ package body Gnat2Why.Expr is
                      Spec_Ty    : constant Entity_Id :=
                        (if Is_Class_Wide_Type (Ty)
                         then Retysp (Get_Specific_Type_From_Classwide (Ty))
-                        else Ty);
+                        else Retysp (Ty));
                   begin
 
                      --  If Ty is constrained, we need to check its
@@ -12778,7 +12822,7 @@ package body Gnat2Why.Expr is
                      --  It is also the case if Ty's specific type is
                      --  constrained, see RM 3.9 (14)
 
-                     if Root_Type (Spec_Ty) /= Spec_Ty and then
+                     if Root_Record_Type (Spec_Ty) /= Spec_Ty and then
                        Count_Discriminants (Spec_Ty) > 0 and then
                        Is_Constrained (Spec_Ty)
                      then
@@ -12915,7 +12959,7 @@ package body Gnat2Why.Expr is
       Var       : constant Node_Id := Left_Opnd (Expr);
       Result    : W_Expr_Id;
       Base_Type : W_Type_Id :=
-        (if Has_Record_Type (Etype (Var)) then
+        (if Is_Record_Type_In_Why (Etype (Var)) then
             EW_Abstract (Root_Record_Type (Etype (Var)))
          else Base_Why_Type (Var));
       --  For records, checks are done on the root type.
@@ -15440,7 +15484,7 @@ package body Gnat2Why.Expr is
      (Stmt_Or_Decl : Node_Id;
       Prev_Prog    : W_Prog_Id) return W_Prog_Id
    is
-      Result        : W_Prog_Id := Prev_Prog;
+      Result        : W_Prog_Id;
       Cut_Assertion_Expr : Node_Id;
       Cut_Assertion : W_Pred_Id;
       Prog          : constant W_Prog_Id :=
@@ -15451,7 +15495,7 @@ package body Gnat2Why.Expr is
    begin
       Result :=
         Sequence
-          (Result,
+          (Prev_Prog,
            New_Label (Labels =>
                         Name_Id_Sets.To_Set
                           (New_Located_Label (Stmt_Or_Decl)),
@@ -15782,11 +15826,13 @@ package body Gnat2Why.Expr is
          --  /\ ..
 
          declare
-            Discr  : Node_Id := (if Count_Discriminants (Ty_Ext) > 0
+            Num_Discr : constant Natural := Count_Discriminants (Ty_Ext);
+
+            Discr  : Node_Id := (if Num_Discr > 0
                                  then First_Discriminant (Ty_Ext)
                                  else Empty);
             Elmt   : Elmt_Id :=
-              (if Count_Discriminants (Ty_Ext) > 0
+              (if Num_Discr > 0
                and then Is_Constrained (Ty_Ext)
                then First_Elmt (Stored_Constraint (Ty_Ext))
                else No_Elmt);

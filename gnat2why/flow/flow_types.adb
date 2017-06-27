@@ -31,10 +31,9 @@ with Gnat2Why_Args;
 with Hashing;                        use Hashing;
 with Interfaces;
 with Namet;                          use Namet;
-with Output;                         use Output;
+with Output;
 with Sem_Util;                       use Sem_Util;
 with Snames;                         use Snames;
-with SPARK_Frame_Conditions;         use SPARK_Frame_Conditions;
 
 package body Flow_Types is
 
@@ -133,7 +132,6 @@ package body Flow_Types is
               (Integer (N.Node) + Variable_Facet_T'Pos (N.Facet));
          when Record_Field =>
             declare
-               use type Ada.Containers.Hash_Type;
                use Interfaces;
 
                H : Unsigned_32 :=
@@ -216,10 +214,9 @@ package body Flow_Types is
                       Node      => <>,
                       Facet     => Facet,
                       Component => Entity_Vectors.Empty_Vector);
-      P : Node_Id;
+      P : Node_Id := N;
    begin
-      P := N;
-      while Nkind (P) = N_Selected_Component loop
+      loop
          declare
             Selector : constant Entity_Id := Entity (Selector_Name (P));
          begin
@@ -229,6 +226,8 @@ package body Flow_Types is
                else Selector);
          end;
          P := Prefix (P);
+
+         exit when Nkind (P) /= N_Selected_Component;
       end loop;
       F.Component.Reverse_Elements;
 
@@ -514,8 +513,11 @@ package body Flow_Types is
          when Direct_Mapping | Record_Field =>
             return Is_Constant_Object (F.Node);
 
+         --  Constants (without variable input) are filtered in phase 1 and
+         --  never appear in the contracts written to the ALI file.
+
          when Magic_String =>
-            return Is_Constant (F.Name);
+            return False;
 
          when Synthetic_Null_Export =>
             return False;
@@ -942,13 +944,17 @@ package body Flow_Types is
    -- To_Flow_Id_Set --
    --------------------
 
-   function To_Flow_Id_Set (S : Node_Sets.Set) return Flow_Id_Sets.Set is
+   function To_Flow_Id_Set
+     (S    : Node_Sets.Set;
+      View : Flow_Id_Variant := Normal_Use)
+      return Flow_Id_Sets.Set
+   is
       FS : Flow_Id_Sets.Set := Flow_Id_Sets.Empty_Set;
    begin
       for E of S loop
-         FS.Include (if Nkind (E) = N_Selected_Component
-                     then Record_Field_Id (E)
-                     else Direct_Mapping_Id (E));
+         FS.Insert (if Nkind (E) = N_Selected_Component
+                    then Record_Field_Id (E, View)
+                    else Direct_Mapping_Id (E, View));
       end loop;
       return FS;
    end To_Flow_Id_Set;

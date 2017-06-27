@@ -56,13 +56,9 @@ package SPARK_Frame_Conditions is
       Hash                => File_Name_Hash,
       Equivalent_Elements => "=",
       "="                 => "=");
-   use File_Name_Set;
 
    function Is_Heap_Variable (Ent : Entity_Name) return Boolean;
    --  Return True iff Ent is the special variable "__HEAP"
-
-   function Is_Constant (Ent : Entity_Name) return Boolean;
-   --  Return True iff Ent is a constant (or an IN parameter, etc.)
 
    procedure Display_Maps;
    --  Send maps to output for debug
@@ -70,9 +66,7 @@ package SPARK_Frame_Conditions is
    function Computed_Calls (E_Name : Entity_Name) return Name_Sets.Set;
    --  Get subprograms directly called by subprogram E_Name
 
-   function Computed_Reads
-     (E                 : Entity_Id;
-      Include_Constants : Boolean) return Name_Sets.Set
+   function Computed_Reads (E : Entity_Id) return Name_Sets.Set
    with Pre => Ekind (E) in Entry_Kind
                           | E_Function
                           | E_Procedure

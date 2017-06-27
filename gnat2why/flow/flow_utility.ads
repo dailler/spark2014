@@ -53,12 +53,12 @@ is
      (N                  : Node_Id;
       Functions_Called   : out Node_Sets.Set;
       Tasking            : in out Tasking_Info;
-      Include_Predicates : Boolean)
+      Generating_Globals : Boolean)
    with Pre => Present (N);
    --  For an expression N collect its called functions and update the set of
    --  protected objects that are read-locked when evaluating these functions.
    --
-   --  When Include_Predicates is set, then the implicit calls to predicate
+   --  When Generating_Globals is set, then the implicit calls to predicate
    --  functions appear in the set of subprograms called. This is what we
    --  use in phase 1; in phase 2 this should not be set as we add the
    --  global effects directly.
@@ -162,9 +162,7 @@ is
    procedure Get_Globals (Subprogram             : Entity_Id;
                           Scope                  : Flow_Scope;
                           Classwide              : Boolean;
-                          Proof_Ins              : out Flow_Id_Sets.Set;
-                          Reads                  : out Flow_Id_Sets.Set;
-                          Writes                 : out Flow_Id_Sets.Set;
+                          Globals                : out Global_Flow_Ids;
                           Consider_Discriminants : Boolean := False;
                           Use_Deduced_Globals    : Boolean := True;
                           Ignore_Depends         : Boolean := False)
@@ -172,11 +170,11 @@ is
                                       E_Function  |
                                       E_Procedure |
                                       E_Task_Type,
-        Post => (for all G of Proof_Ins =>
+        Post => (for all G of Globals.Proof_Ins =>
                    Is_Entire_Variable (G) and then G.Variant = In_View)
-       and then (for all G of Reads =>
+       and then (for all G of Globals.Reads =>
                    Is_Entire_Variable (G) and then G.Variant = In_View)
-       and then (for all G of Writes =>
+       and then (for all G of Globals.Writes =>
                    Is_Entire_Variable (G) and then G.Variant = Out_View);
    --  Given a subprogram, work out globals from the appropriate global aspect
    --  (relative to Scope), or the depends aspect (if no global aspect is
@@ -468,7 +466,7 @@ is
    with Pre => Ekind (Get_Type (N, Scope)) in Record_Kind | Private_Kind
                  and then Map_Root.Kind in Direct_Mapping | Record_Field
                  and then Nkind (Map_Type) in N_Defining_Identifier
-                 and then Ekind (Map_Type) in Type_Kind;
+                 and then Is_Type (Map_Type);
    --  Process a record or aggregate N and return a map which can be used
    --  to work out which fields will depend on what inputs.
    --
@@ -747,6 +745,20 @@ is
      Pre => No (T) or else Is_Type (T);
    --  Similar to Is_Null_Record_Type, but also returns true if this is a null
    --  extension of a null record type (or extension).
+
+   function Canonical_Entity
+     (Ref     : Entity_Id;
+      Context : Entity_Id)
+      return Entity_Id
+   with Pre => Ekind (Context) in Entry_Kind
+                                | E_Function
+                                | E_Package
+                                | E_Procedure
+                                | E_Task_Type;
+   --  Subsidiary to the parsing of contracts [Refined_]Depends, [Refined_]
+   --  Global and Initializes. If entity Ref denotes the current instance of
+   --  a concurrent type, as seen from Context, then returns the entity of that
+   --  concurrent type; otherwise, returns Unique_Entity of E.
 
 private
    Init_Done : Boolean := False;
