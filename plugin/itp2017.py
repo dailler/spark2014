@@ -411,6 +411,7 @@ def start_ITP(target, args=[]):
     default_objdir = objdirs[0]
     obj_subdir_name = "gnatprove"
     dir_name = os.path.join(default_objdir, obj_subdir_name)
+    os.chdir(dir_name)
     mlw_file = ""
     for dir_name, sub_dir_name, files in os.walk(dir_name):
         for file in files:
