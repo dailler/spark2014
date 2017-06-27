@@ -44,4 +44,5 @@ feature requests:
 - command prompt for the commandline 
 - put a toolbar with some tactics
 - in the proof tree, add some nice image for "proved" "obsolete" etc... The same as why3ide ?
-- get ideas from other proof assistant. 
+- get ideas from other proof assistant,
+- look at other provers, for example Atelier B.

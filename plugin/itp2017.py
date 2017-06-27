@@ -39,6 +39,7 @@ def print_message(message):
     console.write(message)
     console.write("\n> ")
 
+
 # This functions takes a Json object and a proof tree and treat it as a
 # notification on the prooft tree
 # TODO add exceptions
@@ -56,7 +57,7 @@ def parse_notif(j, tree, proof_task):
     if notif_type == "New_node":
         node_id = j["node_ID"]
         parent_id = j["parent_ID"]
-        node_type = j["node_type"] # TODO further change this
+        node_type = j["node_type"]  # TODO further change this
         name = j["name"]
         detached = j["detached"]
         tree.add_iter(node_id, parent_id, name, node_type, "Invalid")
@@ -68,13 +69,13 @@ def parse_notif(j, tree, proof_task):
             if update["proved"]:
                 tree.update_iter(node_id, 4, "Proved")
             else:
-                tree.update_iter(node_id, 4, "Not Proved")# TODO
+                tree.update_iter(node_id, 4, "Not Proved")  # TODO
         elif update["update_info"] == "Proof_status_change":
             proof_attempt = update["proof_attempt"]
             obsolete = update["obsolete"]
             limit = update["limit"]
             if obsolete:
-                tree.update_iter(node_id, 4, "Obsolete")# TODO
+                tree.update_iter(node_id, 4, "Obsolete")  # TODO
             else:
                 proof_attempt_result = proof_attempt["proof_attempt"]
                 if proof_attempt_result == "Done":
@@ -86,10 +87,10 @@ def parse_notif(j, tree, proof_task):
                         tree.update_iter(node_id, 4, "Not Valid")
                 elif proof_attempt_result == "Uninstalled":
                     tree.update_iter(node_id, 4, "Not Installed")
-                else: # In this case it is necessary just a string
+                else:  # In this case it is necessary just a string
                     tree.update_iter(node_id, 4, "proof_attempt")
         else:
-            #TODO
+            # TODO
             print "TODO"
         print "Node_change"
     elif notif_type == "Remove":
@@ -99,7 +100,7 @@ def parse_notif(j, tree, proof_task):
     elif notif_type == "Next_Unproven_Node_Id":
         from_node = j["node_ID1"]
         to_node = j["node_ID2"]
-        node_jump_select (tree, from_node, to_node)
+        node_jump_select(tree, from_node, to_node)
     elif notif_type == "Initialized":
         print_message("Initialization done")
     elif notif_type == "Saved":
@@ -119,7 +120,7 @@ def parse_notif(j, tree, proof_task):
     elif notif_type == "File_contents":
         print notif_type
     else:
-        print("Else") # TODO
+        print("Else")  # TODO
 
     # TODO next_unproven_node_ID is called too many times... Find a way to solve this
     if not (notif_type == "Next_Unproven_Node_Id" or notif_type == "Task"):
@@ -131,33 +132,34 @@ def parse_message(j):
     message = j["message"]
     message_type = message["mess_notif"]
     if message_type == "Proof_error":
-        print_error (message["error"])
+        print_error(message["error"])
     elif message_type == "Transf_error":
-        print_error (message["error"])
+        print_error(message["error"])
     elif message_type == "Strat_error":
-        print_error (message["error"])
+        print_error(message["error"])
     elif message_type == "Replay_Info":
-        print_message (message["replay_info"])
+        print_message(message["replay_info"])
     elif message_type == "Query_Info":
-        print_message (message["qinfo"])
+        print_message(message["qinfo"])
     elif message_type == "Query_Error":
-        print_error (message["qerror"])
+        print_error(message["qerror"])
     elif message_type == "Help":
-        print_message (message["qhelp"])
+        print_message(message["qhelp"])
     elif message_type == "Information":
-        print_message (message["information"])
+        print_message(message["information"])
     elif message_type == "Task_Monitor":
-        print notif_type # TODO
+        print notif_type  # TODO
     elif message_type == "Parse_Or_Type_Error":
-        print_error (message["error"])
+        print_error(message["error"])
     elif message_type == "Error":
-        print_error (message["error"])
+        print_error(message["error"])
     elif message_type == "Open_File_Error":
-        print_error (message["open_error"])
+        print_error(message["open_error"])
     elif message_type == "File_Saved":
-        print_message (message["information"])
+        print_message(message["information"])
     else:
-        print("Else") # TODO
+        print("Else")  # TODO
+
 
 def node_jump_select(tree, from_node, to_node):
     # TODO this should be a function
@@ -180,17 +182,14 @@ def command_request(command, node_id):
     if command == "Save":
         return "{\"ide_request\": \"Save_req\" " + " }"
     elif command == "Remove":
-        return "{\"ide_request\": \"Remove_subtree\", \"node_ID\":" + str(node_id) + " }"
+        return ("{\"ide_request\": \"Remove_subtree\", \"node_ID\":" +
+        str(node_id) + " }")
     else:
-        return "{\"ide_request\": \"Command_req\", \"node_ID\":" + str(node_id) + ", \"command\" : " + json.dumps(command) + " }"
+        return ("{\"ide_request\": \"Command_req\", \"node_ID\":" +
+        str(node_id) + ", \"command\" : " + json.dumps(command) + " }")
+
 
 class Tree:
-
-    # We have a dictionnary from node_id to row_references because we want an
-    # "efficient" way to get/remove/etc a particular row and we are not going
-    # to go through the whole tree each time: O(n) vs O (ln n)
-    # TODO find something that do exactly this in Gtk).
-    # TODO unused node_id_to_row_ref = {}
 
     def __init__(self):
         # Create a tree that can be appended anywhere
@@ -242,35 +241,48 @@ class Tree:
         self.view.append_column(col)
 
         # TODO reinitialize the map from node_id to row_ref
+        # We have a dictionnary from node_id to row_references because we want an
+        # "efficient" way to get/remove/etc a particular row and we are not going
+        # to go through the whole tree each time: O(n) vs O (ln n)
+        # TODO find something that do exactly this in Gtk).
+        # TODO unused node_id_to_row_ref = {}
         self.node_id_to_row_ref = {}
 
         # Make the tree in an independant window of gps
         # TODO not needed anymore. Should not use it in python and prefer group
-        #GPS.execute_action(action="Split horizontally")
+        # GPS.execute_action(action="Split horizontally")
+
+    def get_iter(self, node):
+        try:
+            row = self.node_id_to_row_ref[node]
+            path = row.get_path()
+            return (self.model.get_iter(path))
+        except:
+            if debug_mode:
+                print ("get_iter error: node does not exists %d", node)
+            return None
+
+    #  Associate the corresponding row of an iter to its node in node_id_to_row_ref
+    def set_iter(self, new_iter, node):
+        path = self.model.get_path(new_iter)
+        row = Gtk.TreeRowReference.new(self.model, path)
+        self.node_id_to_row_ref[node] = row
 
     def add_iter(self, node, parent, name, node_type, proved):
         if parent == 0:
             parent_iter = self.model.get_iter_first()
         else:
-            try:
-                parent_row = self.node_id_to_row_ref[parent]
-                parent_path = parent_row.get_path()
-                parent_iter = self.model.get_iter(parent_path)
-            except:
-                print ("TODO BAD remove this")
+            parent_iter = self.get_iter(parent)
+            if parent_iter is None:
+                if debug_mode:
+                    print ("add_iter error: parent does not exists %d", parent)
                 parent_iter = self.model.get_iter_first()
 
-
-        iter = self.model.append(parent_iter)
-        self.model[iter] = [str(node), str(parent), name, node_type, proved]
-        path = self.model.get_path(iter)
-
-        row = Gtk.TreeRowReference.new(self.model, path)
-        self.node_id_to_row_ref[node] = row
-        if self.model.iter_has_child(iter):
-            print (True)
-        else:
-            print (False)
+        # Append as a child of parent_iter
+        new_iter = self.model.append(parent_iter)
+        self.model[new_iter] = [str(node), str(parent), name, node_type, proved]
+        self.set_iter(new_iter, node)
+        # TODO expand all at the end ???
         self.view.expand_all()
 
     def update_iter(self, node_id, field, value):
@@ -286,18 +298,12 @@ class Tree:
         self.model.remove(iter)
         self.node_id_to_row_ref.remove(node_id)
 
-    # TODO this is debug
-    def print_notifications(self, notification):
-        a = GPS.Console("Notifications")
-        a.write(notification)
-        GPS.Console()
-
 n = 0
 nb_notif = 0
 
 
 # TODO this is also a send_request
-def get_task (p, node_id):
+def get_task(p, node_id):
     global n
     request = "{\"ide_request\": \"Get_task\", \"node_ID\":" + str(node_id) + "}"
     p.send(request)
