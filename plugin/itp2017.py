@@ -338,7 +338,7 @@ class Tree_with_process:
         #init the tree
         self.tree = Tree()
         self.process = GPS.Process(command, regexp=">>>>", on_match=self.check_notifications)
-        self.console = GPS.Console("ITP_interactive", on_input=self.interactive_console_input2)
+        self.console = GPS.Console("ITP_interactive", on_input=self.interactive_console_input)
         self.console.write("> ")
         #Back to the Messages console
         GPS.Console()
@@ -378,16 +378,13 @@ class Tree_with_process:
         get_task(self.process, model[tree_iter][0])
         return True
 
-    def interactive_console_input2(self, console, command):
+    def interactive_console_input(self, console, command):
         # TODO
         tree_selection = self.tree.view.get_selection()
         node_id = 0
         tree_selection.selected_foreach (lambda tree_model, tree_path, tree_iter:
             self.send_request(self.process, tree_model[tree_iter][0], command))
         print (node_id)
-
-        #interactive_console_input(self.process, self.tree, console, command)
-
 
     def send_request(self, timeout, node_id, command):
         global n
@@ -397,11 +394,12 @@ class Tree_with_process:
         n = n + 1
         print("TODO" + str(n))
 
+
 # TODO never put extra_args because they cannot be removed
 # TODO remove this function which comes from SPARK plugin
 def start_ITP(target, args=[]):
     #TODO remove
-    print "Launched"
+    print "[ITP] Launched"
     GPS.Locations.remove_category("Builder results")
     #GPS.execute_action(action="Split horizontally")
 
@@ -429,7 +427,7 @@ def interactive_proof(self):
     start_ITP(examine_root_project)
 
 # TODO use this part of the tuto for interactivity. Not necessary right now.
-def example1():
+"""def example1():
     def on_clicked(*args):
         GPS.Console().write("button was pressed\n")
 
@@ -456,5 +454,5 @@ def example1():
 
 
     create()
-
+"""
 
