@@ -39,6 +39,24 @@ def print_message(message):
     console.write(message)
     console.write("\n> ")
 
+# This function converts a string "Not proved" etc into a color for the background of the goal tree
+def create_color(s):
+    if s == "Proved":
+        return (Gdk.RGBA(0, 10, 0, 5))
+    elif s == "Invalid":
+        return (Gdk.RGBA(10, 0, 0, 5))
+    elif s == "Not Proved":
+        return (Gdk.RGBA(10, 0, 0, 5))
+    elif s == "Obsolete":
+        return (Gdk.RGBA(10, 0, 0, 5))
+    elif s == "Valid":
+        return (Gdk.RGBA(0, 10, 0, 5))
+    elif s == "Not Valid":
+        return (Gdk.RGBA(10, 0, 0, 5))
+    elif s == "Not Installed":
+        return (Gdk.RGBA(10, 0, 0, 5))
+    else:
+        return (Gdk.RGBA(10, 0, 0, 5))
 
 # This functions takes a Json object and a proof tree and treat it as a
 # notification on the prooft tree
@@ -188,7 +206,6 @@ def command_request(command, node_id):
         return ("{\"ide_request\": \"Command_req\", \"node_ID\":" +
         str(node_id) + ", \"command\" : " + json.dumps(command) + " }")
 
-
 class Tree:
 
     def __init__(self):
@@ -196,7 +213,7 @@ class Tree:
         self.box = Gtk.VBox()
         scroll = Gtk.ScrolledWindow()
         # TODO decide which data we want in this tree
-        self.model = Gtk.TreeStore(str, str, str, str, str)
+        self.model = Gtk.TreeStore(str, str, str, str, str, Gdk.RGBA)
         # Create the view as a function of the model
         self.view = Gtk.TreeView(self.model)
         self.view.set_headers_visible(True)
@@ -208,20 +225,21 @@ class Tree:
         # TODO by default append this box to the GPS.MDI
         GPS.MDI.add(self.box, "Proof Tree", "Proof Tree", group=101, position=4) # TODO find the correct group
 
-        # TODO ???
         cell = Gtk.CellRendererText(xalign=0)
         col2 = Gtk.TreeViewColumn("Name")
         col2.pack_start(cell, True)
         col2.add_attribute(cell, "text", 2)
+        # TODO test
+        col2.add_attribute(cell, "background_rgba", 5)
         col2.set_expand(True)
         self.view.append_column(col2)
-
 
         # Populate with columns we want
         cell = Gtk.CellRendererText(xalign=0)
         self.close_col = Gtk.TreeViewColumn("ID")
         self.close_col.pack_start(cell, True)
         self.close_col.add_attribute(cell, "text", 0)
+        self.close_col.add_attribute(cell, "background_rgba", 5)
         self.view.append_column(self.close_col)
 
         # TODO ???
@@ -230,6 +248,7 @@ class Tree:
         col.pack_start(cell, True)
         col.add_attribute(cell, "text", 1)
         col.set_expand(True)
+        col.add_attribute(cell, "background_rgba", 5)
         self.view.append_column(col)
 
         # TODO ???
@@ -237,6 +256,7 @@ class Tree:
         col = Gtk.TreeViewColumn("Status")
         col.pack_start(cell, True)
         col.add_attribute(cell, "text", 4)
+        col.add_attribute(cell, "background_rgba", 5)
         col.set_expand(True)
         self.view.append_column(col)
 
@@ -280,7 +300,8 @@ class Tree:
 
         # Append as a child of parent_iter
         new_iter = self.model.append(parent_iter)
-        self.model[new_iter] = [str(node), str(parent), name, node_type, proved]
+        color = create_color (proved)
+        self.model[new_iter] = [str(node), str(parent), name, node_type, proved, color]
         self.set_iter(new_iter, node)
         # TODO expand all at the end ???
         self.view.expand_all()
@@ -289,6 +310,9 @@ class Tree:
         row = self.node_id_to_row_ref[node_id]
         path = row.get_path()
         iter = self.model.get_iter(path)
+        if field == 4:
+            color = create_color (value)
+            self.model[iter][5] = color
         self.model[iter][field] = value
 
     def remove_iter(self, node_id):
@@ -300,7 +324,6 @@ class Tree:
 
 n = 0
 nb_notif = 0
-
 
 # TODO this is also a send_request
 def get_task(p, node_id):
