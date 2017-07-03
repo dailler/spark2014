@@ -247,10 +247,12 @@ package body Flow.Control_Flow_Graph is
       Equivalent_Keys => "=",
       "="             => "=");
 
-   procedure Copy_Connections (CM  : in out Connection_Maps.Map;
+   procedure Move_Connections (CM  : in out Connection_Maps.Map;
                                Dst : Union_Id;
-                               Src : Union_Id);
-   --  Create the connection map for Dst and copies all fields from Src to it
+                               Src : Union_Id)
+   with Pre  => CM.Contains (Src) and not CM.Contains (Dst),
+        Post => CM.Contains (Dst) and not CM.Contains (Src);
+   --  Create the connection map for Dst and moves all fields from Src to it
 
    procedure fndi (E : Entity_Id; N : Node_Id);
    --  This is a debug procedure that is called whenever we add a vertex N to
@@ -337,7 +339,7 @@ package body Flow.Control_Flow_Graph is
       --  Set to True iff the current loop has been proven to terminate
 
       Entry_References       : Node_Graphs.Map;
-      --  A map from loops -> 'loop_entry references
+      --  A map from loops -> 'Loop_Entry references
 
       Folded_Function_Checks : Node_Graphs.Map;
       --  A set of nodes we need to separately check for uninitialized
@@ -397,10 +399,11 @@ package body Flow.Control_Flow_Graph is
      (FA    : in out Flow_Analysis_Graphs;
       CM    : in out Connection_Maps.Map;
       Nodes : Union_Lists.List;
-      Block : out Graph_Connections);
+      Block : out Graph_Connections)
+   with Post => CM.Length = CM.Length'Old - Nodes.Length;
    --  Join up the standard entry and standard exits of the given nodes.
    --  Block contains the combined standard entry and exits of the joined
-   --  up sequence.
+   --  up sequence. Entries for the nodes are removed from the connection map.
 
    procedure Create_Record_Tree
      (F        : Flow_Id;
@@ -912,16 +915,40 @@ package body Flow.Control_Flow_Graph is
    ------------------------------------------------------------
 
    ----------------------
-   -- Copy_Connections --
+   -- Move_Connections --
    ----------------------
 
-   procedure Copy_Connections (CM  : in out Connection_Maps.Map;
+   procedure Move_Connections (CM  : in out Connection_Maps.Map;
                                Dst : Union_Id;
                                Src : Union_Id)
    is
+      Dst_Position : Connection_Maps.Cursor;
+      Src_Position : Connection_Maps.Cursor;
+      Inserted : Boolean;
    begin
-      CM.Insert (Dst, CM.Element (Src));
-   end Copy_Connections;
+      --  This code is subtle, but efficient. It does only 2 lookups in the
+      --  map (for Src and Dst) while avoiding tampering with cursors. Also, it
+      --  avoids extra memory re-allocation by reusing the container from Src.
+
+      CM.Insert (Key      => Dst,
+                 Position => Dst_Position,
+                 Inserted => Inserted);
+
+      pragma Assert (Inserted);
+
+      Src_Position := CM.Find (Src);
+
+      declare
+         New_Connections : Graph_Connections renames CM (Dst_Position);
+         Old_Connections : Graph_Connections renames CM (Src_Position);
+      begin
+         New_Connections.Standard_Entry := Old_Connections.Standard_Entry;
+         Vertex_Sets.Move (Target => New_Connections.Standard_Exits,
+                           Source => Old_Connections.Standard_Exits);
+      end;
+
+      CM.Delete (Src_Position);
+   end Move_Connections;
 
    ----------------------
    -- Add_Dummy_Vertex --
@@ -1062,12 +1089,16 @@ package body Flow.Control_Flow_Graph is
                        CM (Nodes (Prev)).Standard_Exits,
                        CM (Nodes (Curr)).Standard_Entry);
 
+               CM.Delete (Nodes (Prev));
+
                Prev := Curr;
                Curr := Union_Lists.Next (Curr);
             end loop;
          end;
 
          Block.Standard_Exits := CM (Nodes.Last_Element).Standard_Exits;
+
+         CM.Delete (Nodes.Last_Element);
       end if;
    end Join;
 
@@ -1907,7 +1938,7 @@ package body Flow.Control_Flow_Graph is
       Stmts : constant List_Id := Statements (N);
    begin
       Process_Statement_List (Stmts, FA, CM, Ctx);
-      Copy_Connections (CM,
+      Move_Connections (CM,
                         Dst => Union_Id (N),
                         Src => Union_Id (Stmts));
    end Do_Handled_Sequence_Of_Statements;
@@ -2968,7 +2999,7 @@ package body Flow.Control_Flow_Graph is
          end;
       end if;
 
-      --  Now we need to glue the 'loop_entry checks to the front of the loop
+      --  Now we need to glue the 'Loop_Entry checks to the front of the loop
       declare
          Augmented_Loop : Union_Lists.List := Union_Lists.Empty_List;
          V              : Flow_Graphs.Vertex_Id;
@@ -2998,13 +3029,13 @@ package body Flow.Control_Flow_Graph is
          --  Then we stick the actual loop at the end
          Augmented_Loop.Append (Union_Id (N));
 
-         --  And connect up the dots, and finally replacing the
-         --  connection map we have for N with the new augmented one.
+         --  Connect up the dots, and finally re-insert the connection to the
+         --  block with 'Loop_Entry checks.
          Join (FA    => FA,
                CM    => CM,
                Nodes => Augmented_Loop,
                Block => Block);
-         CM (Union_Id (N)) := Block;
+         CM.Insert (Union_Id (N), Block);
       end;
 
       Ctx.Entry_References.Delete (Loop_Id);
@@ -3747,7 +3778,7 @@ package body Flow.Control_Flow_Graph is
          --  the connections of N from Visible_Decls.
 
          else
-            Copy_Connections (CM,
+            Move_Connections (CM,
                               Dst => Union_Id (N),
                               Src => Union_Id (Visible_Decls));
          end if;
@@ -3801,17 +3832,17 @@ package body Flow.Control_Flow_Graph is
          if Elaboration_Has_Effect then
             --  Traverse package body declarations
             Process_Statement_List (Pkg_Body_Declarations, FA, CM, Ctx);
-
-            Copy_Connections (CM,
-                              Dst => Union_Id (N),
-                              Src => Union_Id (Pkg_Body_Declarations));
          end if;
 
          --  The package has been now elaborated and vertices for the variables
          --  in the package body declarations are created. Now apply the
          --  Initializes aspect, if present.
 
-         if not DM.Is_Empty then
+         if DM.Is_Empty then
+            Move_Connections (CM,
+                              Dst => Union_Id (N),
+                              Src => Union_Id (Pkg_Body_Declarations));
+         else
             declare
                Verts          : Union_Lists.List := Union_Lists.Empty_List;
                Initializes_CM : Graph_Connections;
@@ -3852,19 +3883,18 @@ package body Flow.Control_Flow_Graph is
                   Linkup
                     (FA,
                      CM (Union_Id (Pkg_Body_Declarations)).Standard_Exits,
-                     CM (Verts.First_Element).Standard_Entry);
+                     Initializes_CM.Standard_Entry);
 
                   --  We set the standard entry of N to the standard entry
                   --  of the body's declarations and the standard exists of N
                   --  to the standard exists of the last element in the Verts
                   --  union list.
-                  --  ??? this overwrites the CM entry for N
-                  CM (Union_Id (N)) :=
-                    Graph_Connections'
-                      (Standard_Entry => CM.Element
-                         (Union_Id (Pkg_Body_Declarations)).Standard_Entry,
-                       Standard_Exits => CM.Element
-                         (Verts.Last_Element).Standard_Exits);
+                  CM.Insert
+                    (Union_Id (N),
+                     Graph_Connections'
+                       (Standard_Entry => CM.Element
+                            (Union_Id (Pkg_Body_Declarations)).Standard_Entry,
+                        Standard_Exits => Initializes_CM.Standard_Exits));
                else
                   --  Since we do not process any declarations all we have to
                   --  do is to connect N to the Initializes_CM.
@@ -4794,17 +4824,26 @@ package body Flow.Control_Flow_Graph is
 
          when N_Package_Body      |
               N_Package_Body_Stub =>
-            --  Skip generic package bodies
-            case Ekind (Unique_Defining_Entity (N)) is
-               when E_Generic_Package =>
-                  Add_Dummy_Vertex (N, FA, CM);
+            --  Skip bodies of generic packages and bodies of wrappers with
+            --  instances of generic subprograms.
+            declare
+               E : constant Entity_Id := Unique_Defining_Entity (N);
+            begin
+               case Ekind (E) is
+                  when E_Generic_Package =>
+                     Add_Dummy_Vertex (N, FA, CM);
 
-               when E_Package =>
-                  Do_Package_Body_Or_Stub (N, FA, CM, Ctx);
+                  when E_Package =>
+                     if Is_Wrapper_Package (E) then
+                        Add_Dummy_Vertex (N, FA, CM);
+                     else
+                        Do_Package_Body_Or_Stub (N, FA, CM, Ctx);
+                     end if;
 
-               when others =>
-                  raise Program_Error;
-            end case;
+                  when others =>
+                     raise Program_Error;
+               end case;
+            end;
 
          when N_Package_Declaration =>
             Do_Package_Declaration (N, FA, CM, Ctx);
