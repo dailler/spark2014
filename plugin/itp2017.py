@@ -441,7 +441,8 @@ def start_ITP(target, args=[]):
     if mlw_file == "":
         print "TODO error"
 
-    command = gnat_server + " " + mlw_file
+    options = "--limit-line test.adb:79:16:VC_POSTCONDITION "
+    command = gnat_server + " " + options + mlw_file
     print(command)
     tree = Tree_with_process(command)
 
