@@ -126,6 +126,8 @@ def parse_notif(j, tree, proof_task):
         print_message("Initialization done")
     elif notif_type == "Saved":
         print_message("Session saved")
+        if abs_tree.save_and_exit:
+            abs_tree.kill()
     elif notif_type == "Message":
         parse_message(j)
     elif notif_type == "Dead":
@@ -144,7 +146,7 @@ def parse_notif(j, tree, proof_task):
         print("Else")  # TODO
 
     # TODO next_unproven_node_ID is called too many times... Find a way to solve this
-    if not (notif_type == "Next_Unproven_Node_Id" or notif_type == "Task"):
+    if not (notif_type == "Next_Unproven_Node_Id" or notif_type == "Task" or abs_tree.save_and_exit):
         get_next_id(abs_tree)
 
 
@@ -352,22 +354,17 @@ def get_next_id(tree):
             it = model[cur_iter][0]
             p.send("{\"ide_request\": \"Get_first_unproven_node\", \"node_ID\":" + it + "}")
 
-# TODO replaced by the stuff in the class Tree_with_process
-def interactive_console_input(process, tree, console, command):
-    # TODO
-    tree_selection = tree.view.get_selection()
-    node_id = 0
-    tree_selection.selected_foreach (lambda tree_model, tree_path, tree_iter:
-                                        send_request(process, tree_model[tree_iter][0], command))
-    print (node_id)
-
-
 
 class Tree_with_process:
     def __init__(self):
+        # init local variables
+        self.save_and_exit = False
         print ("ITP launched")
 
     def start(self, command):
+        # init local variables
+        self.save_and_exit = False
+
         #init the tree
         self.tree = Tree()
         self.process = GPS.Process(command, regexp=">>>>", on_match=self.check_notifications)
@@ -387,12 +384,19 @@ class Tree_with_process:
         # TODO should prefer using group and position
         GPS.execute_action(action="Split horizontally")
 
-    def exit(self):
+    def kill(self):
         a = GPS.Console("ITP_interactive")
         a.destroy()
-        self.proof_task.close() # TODO force ?
+        self.proof_task.close()  # TODO force ?
         self.tree.exit()
         self.process.kill()
+
+    def exit(self):
+        if GPS.MDI.yes_no_dialog("Do you want to save session before exit?"):
+            self.send_request(0, "Save")
+            self.save_and_exit = True
+        else:
+            self.kill()
 
     def check_notifications(self, unused, delimiter, notification):
         global nb_notif
@@ -423,10 +427,10 @@ class Tree_with_process:
         tree_selection = self.tree.view.get_selection()
         node_id = 0
         tree_selection.selected_foreach (lambda tree_model, tree_path, tree_iter:
-            self.send_request(self.process, tree_model[tree_iter][0], command))
+            self.send_request(tree_model[tree_iter][0], command))
         print (node_id)
 
-    def send_request(self, timeout, node_id, command):
+    def send_request(self, node_id, command):
         global n
         request = command_request (command, node_id)
         print (request)
@@ -434,6 +438,7 @@ class Tree_with_process:
         n = n + 1
         print("TODO" + str(n))
 
+# TODO put this somewhere where it makes sense
 tree = Tree_with_process()
 
 # TODO never put extra_args because they cannot be removed
