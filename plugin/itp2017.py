@@ -39,24 +39,27 @@ def print_message(message):
     console.write(message)
     console.write("\n> ")
 
+green = Gdk.RGBA(0, 1, 0, 0.2)
+red = Gdk.RGBA(1, 0, 0, 0.2)
+
 # This function converts a string "Not proved" etc into a color for the background of the goal tree
 def create_color(s):
     if s == "Proved":
-        return (Gdk.RGBA(0, 10, 0, 5))
+        return green
     elif s == "Invalid":
-        return (Gdk.RGBA(10, 0, 0, 5))
+        return red
     elif s == "Not Proved":
-        return (Gdk.RGBA(10, 0, 0, 5))
+        return red
     elif s == "Obsolete":
-        return (Gdk.RGBA(10, 0, 0, 5))
+        return red
     elif s == "Valid":
-        return (Gdk.RGBA(0, 10, 0, 5))
+        return green
     elif s == "Not Valid":
-        return (Gdk.RGBA(10, 0, 0, 5))
+        return red
     elif s == "Not Installed":
-        return (Gdk.RGBA(10, 0, 0, 5))
+        return red
     else:
-        return (Gdk.RGBA(10, 0, 0, 5))
+        return red
 
 # This functions takes a Json object and a proof tree and treat it as a
 # notification on the prooft tree
@@ -235,21 +238,23 @@ class Tree:
         self.view.append_column(col2)
 
         # Populate with columns we want
-        cell = Gtk.CellRendererText(xalign=0)
-        self.close_col = Gtk.TreeViewColumn("ID")
-        self.close_col.pack_start(cell, True)
-        self.close_col.add_attribute(cell, "text", 0)
-        self.close_col.add_attribute(cell, "background_rgba", 5)
-        self.view.append_column(self.close_col)
+        if debug_mode:
+            cell = Gtk.CellRendererText(xalign=0)
+            self.close_col = Gtk.TreeViewColumn("ID")
+            self.close_col.pack_start(cell, True)
+            self.close_col.add_attribute(cell, "text", 0)
+            self.close_col.add_attribute(cell, "background_rgba", 5)
+            self.view.append_column(self.close_col)
 
         # TODO ???
-        cell = Gtk.CellRendererText(xalign=0)
-        col = Gtk.TreeViewColumn("parent")
-        col.pack_start(cell, True)
-        col.add_attribute(cell, "text", 1)
-        col.set_expand(True)
-        col.add_attribute(cell, "background_rgba", 5)
-        self.view.append_column(col)
+        if debug_mode:
+            cell = Gtk.CellRendererText(xalign=0)
+            col = Gtk.TreeViewColumn("parent")
+            col.pack_start(cell, True)
+            col.add_attribute(cell, "text", 1)
+            col.set_expand(True)
+            col.add_attribute(cell, "background_rgba", 5)
+            self.view.append_column(col)
 
         # TODO ???
         cell = Gtk.CellRendererText(xalign=0)
@@ -271,6 +276,9 @@ class Tree:
         # Make the tree in an independant window of gps
         # TODO not needed anymore. Should not use it in python and prefer group
         # GPS.execute_action(action="Split horizontally")
+
+    def exit(self):
+        self.box.destroy()
 
     def get_iter(self, node):
         try:
@@ -356,8 +364,10 @@ def interactive_console_input(process, tree, console, command):
 
 
 class Tree_with_process:
-    def __init__(self, command):
+    def __init__(self):
+        print ("ITP launched")
 
+    def start(self, command):
         #init the tree
         self.tree = Tree()
         self.process = GPS.Process(command, regexp=">>>>", on_match=self.check_notifications)
@@ -375,7 +385,14 @@ class Tree_with_process:
         self.proof_task = GPS.EditorBuffer.get(proof_task_file, force=True, open=True)
         self.proof_task.set_read_only()
         # TODO should prefer using group and position
-        #GPS.execute_action(action="Split horizontally")
+        GPS.execute_action(action="Split horizontally")
+
+    def exit(self):
+        a = GPS.Console("ITP_interactive")
+        a.destroy()
+        self.proof_task.close() # TODO force ?
+        self.tree.exit()
+        self.process.kill()
 
     def check_notifications(self, unused, delimiter, notification):
         global nb_notif
@@ -417,10 +434,12 @@ class Tree_with_process:
         n = n + 1
         print("TODO" + str(n))
 
+tree = Tree_with_process()
 
 # TODO never put extra_args because they cannot be removed
 # TODO remove this function which comes from SPARK plugin
-def start_ITP(target, args=[]):
+def start_ITP(context, args=[]):
+    global tree
     #TODO remove
     print "[ITP] Launched"
     GPS.Locations.remove_category("Builder results")
@@ -441,14 +460,27 @@ def start_ITP(target, args=[]):
     if mlw_file == "":
         print "TODO error"
 
-    options = "--limit-line test.adb:79:16:VC_POSTCONDITION "
+    # TODO this context stuff should be done in SPARK and better done...
+    print (context)
+    msg = context.location()
+    print (msg)
+    # TODO inside generic unit stuff ???
+    #GPS.Locations.remove_category("Builder results")
+    #GPS.BuildTarget(prove_check()).execute(extra_args=args,
+    #                                       synchronous=False)
+    options = "--limit-line " +  str(msg) + ":VC_POSTCONDITION "
+    # "test.adb:79:16:VC_POSTCONDITION "
     command = gnat_server + " " + options + mlw_file
     print(command)
-    tree = Tree_with_process(command)
+    tree.start(command)
 
-def interactive_proof(self):
+def interactive_proof(context):
     # TODO use examine_root_project
-    start_ITP(examine_root_project)
+    start_ITP(context)
+
+def exit_ITP():
+    global tree
+    tree.exit()
 
 # TODO use this part of the tuto for interactivity. Not necessary right now.
 """def example1():
