@@ -82,6 +82,8 @@ def parse_notif(j, tree, proof_task):
         name = j["name"]
         detached = j["detached"]
         tree.add_iter(node_id, parent_id, name, node_type, "Invalid")
+        if abs_tree.first_node <= 0:
+            abs_tree.first_node = node_id
         print "New_node"
     elif notif_type == "Node_change":
         node_id = j["node_ID"]
@@ -89,6 +91,9 @@ def parse_notif(j, tree, proof_task):
         if update["update_info"] == "Proved":
             if update["proved"]:
                 tree.update_iter(node_id, 4, "Proved")
+                if node_id == abs_tree.first_node:
+                    if GPS.MDI.yes_no_dialog("All proved. Do you want to exit ?"):
+                        abs_tree.exit()
             else:
                 tree.update_iter(node_id, 4, "Not Proved")  # TODO
         elif update["update_info"] == "Proof_status_change":
@@ -364,6 +369,9 @@ class Tree_with_process:
     def start(self, command):
         # init local variables
         self.save_and_exit = False
+        # We need to know the first_node returned by itp_server so that when
+        # it is proved, we can send a message to the user.
+        self.first_node = -1
 
         #init the tree
         self.tree = Tree()
