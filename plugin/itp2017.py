@@ -394,10 +394,22 @@ class Tree_with_process:
 
     def kill(self):
         a = GPS.Console("ITP_interactive")
-        a.destroy()
-        self.proof_task.close()  # TODO force ?
-        self.tree.exit()
-        self.process.kill()
+        try:
+            a.destroy()
+        except:
+            print ("Cannot close console")
+        try:
+            self.proof_task.close()  # TODO force ?
+        except:
+            print ("Cannot close proof_task")
+        try:
+            self.tree.exit()
+        except:
+            print ("Cannot close tree")
+        try:
+            self.process.kill()
+        except:
+            print ("Cannot kill why3_server process")
 
     def exit(self):
         if GPS.MDI.yes_no_dialog("Do you want to save session before exit?"):
