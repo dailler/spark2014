@@ -341,15 +341,14 @@ n = 0
 nb_notif = 0
 
 # TODO this is also a send_request
-def get_task(p, node_id):
+def get_task(tree, node_id):
     global n
-    request = "{\"ide_request\": \"Get_task\", \"node_ID\":" + str(node_id) + "}"
-    p.send(request)
+    request = "{\"ide_request\": \"Get_task\", \"node_ID\":" + str(node_id) + ", \"do_intros\": false}"
+    tree.send(request)
     n= n + 1
     print("TODO" + str(n))
 
 def get_next_id(tree):
-    p = tree.process
     selection = tree.tree.view.get_selection()
     model, paths = selection.get_selected_rows ()
     print (paths)
@@ -357,7 +356,7 @@ def get_next_id(tree):
         for i in paths:
             cur_iter = model.get_iter(i)
             it = model[cur_iter][0]
-            p.send("{\"ide_request\": \"Get_first_unproven_node\", \"node_ID\":" + it + "}")
+            tree.send("{\"ide_request\": \"Get_first_unproven_node\", \"node_ID\":" + it + "}")
 
 
 class Tree_with_process:
@@ -373,15 +372,16 @@ class Tree_with_process:
         # it is proved, we can send a message to the user.
         self.first_node = -1
 
-        #init the tree
+        # init the tree
         self.tree = Tree()
         self.process = GPS.Process(command, regexp=">>>>", on_match=self.check_notifications)
         self.console = GPS.Console("ITP_interactive", on_input=self.interactive_console_input)
         self.console.write("> ")
-        #Back to the Messages console
+        # Back to the Messages console
         GPS.Console()
 
-        # Query task each time something is clicked TODO see if it is more efficient to save task in GPS
+        # Query task each time something is clicked
+        # TODO see if it is more efficient to save task in GPS
         tree_selection = self.tree.view.get_selection()
         tree_selection.set_select_function(self.select_function)
 
@@ -394,6 +394,8 @@ class Tree_with_process:
 
     def kill(self):
         a = GPS.Console("ITP_interactive")
+        # Any closing destroying can fail so try are needed to avoid killing
+        # nothing when the first exiting function fail.
         try:
             a.destroy()
         except:
@@ -421,7 +423,7 @@ class Tree_with_process:
     def check_notifications(self, unused, delimiter, notification):
         global nb_notif
         if debug_mode:
-            self.print_notifications(notification)
+            print(notification)
         nb_notif = nb_notif + 1
         try:
             # Remove remaining stderr output (stderr and stdout are mixed) by
@@ -439,7 +441,7 @@ class Tree_with_process:
     def select_function (self, select, model, path, currently_selected):
         tree_iter = model.get_iter(path)
         #TODO get task instead
-        get_task(self.process, model[tree_iter][0])
+        get_task(self, model[tree_iter][0])
         return True
 
     def interactive_console_input(self, console, command):
@@ -450,11 +452,17 @@ class Tree_with_process:
             self.send_request(tree_model[tree_iter][0], command))
         print (node_id)
 
+    # This is used as a wrapper that actually send the message
+    def send (self, s):
+        if debug_mode:
+            print_message (s)
+        self.process.send(s)
+
     def send_request(self, node_id, command):
         global n
         request = command_request (command, node_id)
         print (request)
-        self.process.send(request)
+        self.send(request)
         n = n + 1
         print("TODO" + str(n))
 
@@ -493,7 +501,8 @@ def start_ITP(context, args=[]):
     #GPS.Locations.remove_category("Builder results")
     #GPS.BuildTarget(prove_check()).execute(extra_args=args,
     #                                       synchronous=False)
-    options = "--limit-line " +  str(msg) + ":VC_POSTCONDITION "
+    options = ""
+    # options = "--limit-line " +  str(msg) + ":VC_POSTCONDITION "
     # "test.adb:79:16:VC_POSTCONDITION "
     command = gnat_server + " " + options + mlw_file
     print(command)
@@ -506,34 +515,3 @@ def interactive_proof(context):
 def exit_ITP():
     global tree
     tree.exit()
-
-# TODO use this part of the tuto for interactivity. Not necessary right now.
-"""def example1():
-    def on_clicked(*args):
-        GPS.Console().write("button was pressed\n")
-
-    def create():
-        button = Gtk.Button('press')
-        button.connect('clicked', on_clicked)
-        GPS.MDI.add(button, "From testgtk", "testgtk")
-
-
-        for w in GPS.MDI.children():
-            print "toto in MDI"
-            a = w.name()
-            print (a)
-
-        hbox = Gtk.HBox()
-        #add(widget, title='', short='', group=0, position=0, save_desktop=None)
-        GPS.MDI.add (widget=hbox,
-                    title="Interactive Theorem Proving",
-                    short = "ITP",
-                    group = 1,
-                    position = 1)
-        vbox = Gtk.VBox(parent=GPS.MDI.current().pywidget().get_toplevel())
-        GPS.MDI.add (vbox, "Proof Tree", "ITPtree")
-
-
-    create()
-"""
-
