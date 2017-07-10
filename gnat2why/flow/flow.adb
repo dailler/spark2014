@@ -40,6 +40,7 @@ with Flow_Generated_Globals.Partial;
 with Flow_Generated_Globals.Traversal; use Flow_Generated_Globals.Traversal;
 with Flow_Generated_Globals.Phase_2;   use Flow_Generated_Globals.Phase_2;
 with Flow_Error_Messages;              use Flow_Error_Messages;
+with Flow_Refinement;                  use Flow_Refinement;
 with Flow_Utility;                     use Flow_Utility;
 with Gnat2Why.Assumptions;             use Gnat2Why.Assumptions;
 with Gnat2Why_Args;
@@ -497,6 +498,16 @@ package body Flow is
          elsif A.Pretty_Print_Kind = Pretty_Print_DIC then
             Rv.Shape := Shape_None;
             Write_Str ("Default Initial Condition: ");
+            Print_Node (A.Error_Location);
+
+         elsif A.Pretty_Print_Kind = Pretty_Print_Predicate then
+            Rv.Shape := Shape_None;
+            Write_Str ("Predicate: ");
+            Print_Node (A.Error_Location);
+
+         elsif A.Pretty_Print_Kind = Pretty_Print_Invariant then
+            Rv.Shape := Shape_None;
+            Write_Str ("Invariant: ");
             Print_Node (A.Error_Location);
 
          elsif A.Pretty_Print_Kind = Pretty_Print_Record_Field then

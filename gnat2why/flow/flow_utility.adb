@@ -50,6 +50,7 @@ with Why;
 with Flow_Classwide;                  use Flow_Classwide;
 with Flow_Debug;                      use Flow_Debug;
 with Flow_Generated_Globals.Phase_2;  use Flow_Generated_Globals.Phase_2;
+with Flow_Refinement;                 use Flow_Refinement;
 with Graphs;
 
 package body Flow_Utility is
@@ -226,7 +227,14 @@ package body Flow_Utility is
                   Called_Func : constant Entity_Id := Get_Called_Entity (N);
 
                begin
-                  Functions_Called.Include (Called_Func);
+                  --  We include the called function only if it is visible from
+                  --  the scope. For example, the call might not be visible
+                  --  when it happens in the type invariant of an externally
+                  --  visible type and the function called is declared in the
+                  --  private part.
+                  if Is_Visible (Called_Func, Scop) then
+                     Functions_Called.Include (Called_Func);
+                  end if;
 
                   --  Only external calls to protected functions trigger
                   --  priority ceiling protocol checks; internal calls do not.
@@ -430,17 +438,18 @@ package body Flow_Utility is
                            end if;
 
                         --  Pick the Part_Of constituents from the private part
-                        --  of the package, if visible.
+                        --  of the package and private child packages, but only
+                        --  if they are visible (which is equivalent to being
+                        --  marked as in-SPARK).
 
-                        elsif Present
-                          (Private_Declarations (Package_Specification (Pkg)))
-                          and then Private_Spec_In_SPARK (Pkg)
-                        then
+                        else
                            for C of Iter (Part_Of_Constituents (E)) loop
-                              Result.Union
-                                (Expand_Abstract_State
-                                   (Direct_Mapping_Id (C, F.Variant),
-                                    Erase_Constants));
+                              if Entity_In_SPARK (C) then
+                                 Result.Union
+                                   (Expand_Abstract_State
+                                      (Direct_Mapping_Id (C, F.Variant),
+                                       Erase_Constants));
+                              end if;
                            end loop;
 
                            --  There might be more constituents in the package
@@ -450,12 +459,6 @@ package body Flow_Utility is
                            Result.Insert (F);
 
                            return Result;
-
-                        --  None of the constituents are visible. The state
-                        --  will behave as a blob of data.
-
-                        else
-                           return Flow_Id_Sets.To_Set (F);
                         end if;
                      end if;
                   end;
@@ -949,7 +952,8 @@ package body Flow_Utility is
                       Scope               => Scope,
                       Classwide           => False,
                       Globals             => Globals,
-                      Use_Deduced_Globals => Use_Computed_Globals);
+                      Use_Deduced_Globals => Use_Computed_Globals,
+                      Ignore_Depends      => True);
 
          --  Remove generic formals without variable input
          Remove_Constants (Globals.Proof_Ins, Only_Generic_Formals => True);
@@ -1959,8 +1963,14 @@ package body Flow_Utility is
          Expand_Synthesized_Constants    => Expand_Synthesized_Constants,
          Consider_Extensions             => Consider_Extensions,
          Quantified_Variables_Introduced => Node_Sets.Empty_Set);
+
+      Vars : constant Flow_Id_Sets.Set := Get_Variables_Internal (N, Ctx);
+
+      Projected, Partial : Flow_Id_Sets.Set;
+
    begin
-      return Get_Variables_Internal (N, Ctx);
+      Up_Project (Vars, Scope, Projected, Partial);
+      return Projected or Partial;
    end Get_Variables;
 
    function Get_Variables
@@ -1984,8 +1994,14 @@ package body Flow_Utility is
          Expand_Synthesized_Constants    => Expand_Synthesized_Constants,
          Consider_Extensions             => False,
          Quantified_Variables_Introduced => Node_Sets.Empty_Set);
+
+      Vars : constant Flow_Id_Sets.Set := Get_Variables_Internal (L, Ctx);
+
+      Projected, Partial : Flow_Id_Sets.Set;
+
    begin
-      return Get_Variables_Internal (L, Ctx);
+      Up_Project (Vars, Scope, Projected, Partial);
+      return Projected or Partial;
    end Get_Variables;
 
    ----------------------------
@@ -2834,11 +2850,10 @@ package body Flow_Utility is
       Traverse (N);
 
       return S : Flow_Id_Sets.Set do
-         --  We need to do some post-processing on the result here. First
-         --  we check each variable to see if it is the result of an
-         --  action. For flow analysis its more helpful to talk about the
-         --  original variables, so we undo these actions whenever
-         --  possible.
+         --  We need to do some post-processing on the result here. First we
+         --  check each variable to see if it is the result of an action. For
+         --  flow analysis its more helpful to talk about the original
+         --  variables, so we undo these actions whenever possible.
          for F of Variables loop
             case F.Kind is
                when Direct_Mapping | Record_Field =>
@@ -2858,8 +2873,8 @@ package body Flow_Utility is
                                       (Node =>
                                          Unique_Entity (Entity (Expr))));
 
-                           when others =>
-                              S.Union (Recurse (Expr));
+                              when others =>
+                                 S.Union (Recurse (Expr));
                            end case;
                         end;
                      else
@@ -3025,6 +3040,36 @@ package body Flow_Utility is
          return True;
       end if;
    end Has_Variable_Input;
+
+   ----------------
+   -- Has_Bounds --
+   ----------------
+
+   function Has_Bounds
+     (F     : Flow_Id;
+      Scope : Flow_Scope)
+      return Boolean
+   is
+      T : Entity_Id;
+   begin
+      case F.Kind is
+         when Null_Value | Synthetic_Null_Export | Magic_String =>
+            return False;
+
+         when Direct_Mapping =>
+            T := Get_Type (F.Node, Scope);
+
+         when Record_Field =>
+            if F.Facet /= Normal_Part then
+               return False;
+            else
+               T := Get_Type (F.Component.Last_Element, Scope);
+            end if;
+      end case;
+
+      return Is_Array_Type (T)
+        and then not Is_Constrained (T);
+   end Has_Bounds;
 
    ----------------
    -- Initialize --
@@ -3316,36 +3361,6 @@ package body Flow_Utility is
       end case;
    end Is_Initialized_In_Specification;
 
-   --------------------------------
-   -- Is_Non_Visible_Constituent --
-   --------------------------------
-
-   function Is_Non_Visible_Constituent
-     (F     : Flow_Id;
-      Scope : Flow_Scope)
-      return Boolean
-   is
-   begin
-      if F.Kind = Direct_Mapping then
-         declare
-            E : constant Entity_Id := Get_Direct_Mapping_Id (F);
-         begin
-            --  Up-projecting makes sense only if the following is True
-            --  ??? use Is_Constituent here
-            return Ekind (E) in E_Abstract_State | E_Constant | E_Variable
-              and then (Present (Encapsulating_State (E))
-                          or else Belongs_To_Concurrent_Type (F))
-              and then not Is_Visible (E, Scope);
-         end;
-
-      --  We can't possibly up-project something that does not correspond to a
-      --  direct mapping.
-
-      else
-         return False;
-      end if;
-   end Is_Non_Visible_Constituent;
-
    ---------------------------
    -- Is_Precondition_Check --
    ---------------------------
@@ -3408,6 +3423,28 @@ package body Flow_Utility is
             raise Program_Error;
       end case;
    end Is_Variable;
+
+   --------------------
+   -- Is_Constituent --
+   --------------------
+
+   function Is_Constituent (N : Node_Id) return Boolean
+   is
+      (Nkind (N) in N_Entity
+       and then Ekind (N) in E_Abstract_State
+                           | E_Constant
+                           | E_Variable
+       and then Present (Encapsulating_State (N))
+       and then Ekind (Encapsulating_State (N)) = E_Abstract_State);
+
+   -----------------------
+   -- Is_Abstract_State --
+   -----------------------
+
+   function Is_Abstract_State (N : Node_Id) return Boolean
+   is
+     (Nkind (N) in N_Entity
+      and then Ekind (N) = E_Abstract_State);
 
    -----------------------
    -- Loop_Writes_Known --
@@ -3583,12 +3620,11 @@ package body Flow_Utility is
                      when N_Null | N_Aggregate =>
                         O := Empty;
                      when N_Numeric_Or_String_Literal =>
-                        --  We should only ever get here if we are
-                        --  dealing with a rewritten constant.
+                        --  We should only ever get here if we are dealing with
+                        --  a rewritten constant.
                         pragma Assert (Tmp /= Original_Node (Tmp));
 
-                        --  We process the entity of the
-                        --  Original_Node instead
+                        --  We process the entity of the Original_Node instead
                         O := Entity (Original_Node (Tmp));
 
                      when others =>
@@ -3621,14 +3657,13 @@ package body Flow_Utility is
                                  when N_Null | N_Aggregate =>
                                     I := Empty;
                                  when N_Numeric_Or_String_Literal =>
-                                    --  We should only ever get here
-                                    --  if we are dealing with a
-                                    --  rewritten constant.
+                                    --  We should only ever get here if we are
+                                    --  dealing with a rewritten constant.
                                     pragma Assert
                                       (Tmp2 /= Original_Node (Tmp2));
 
                                     --  We process the entity of the
-                                    --  Original_Node instead
+                                    --  Original_Node instead.
                                     I := Entity (Original_Node (Tmp2));
 
                                  when others =>
@@ -3641,12 +3676,12 @@ package body Flow_Utility is
                               Tmp2 := Next (Tmp2);
                            end loop;
                         when N_Numeric_Or_String_Literal =>
-                           --  We should only ever get here if we are
-                           --  dealing with a rewritten constant.
+                           --  We should only ever get here if we are dealing
+                           --  with a rewritten constant.
                            pragma Assert (Tmp2 /= Original_Node (Tmp2));
 
-                           --  We process the entity of the
-                           --  Original_Node instead
+                           --  We process the entity of the Original_Node
+                           --  instead.
                            I := Entity (Original_Node (Tmp2));
 
                         when others =>
@@ -3664,12 +3699,12 @@ package body Flow_Utility is
                return Skip;
 
             when N_Aggregate =>
-               --  We only want to process the aggregate if it hangs
-               --  directly under the pragma.
+               --  We only want to process the aggregate if it hangs directly
+               --  under the pragma.
                --
-               --  Note that in this kind of tree we cannot possibly
-               --  find an Input (since no inputs exist). We can at
-               --  best find the Output.
+               --  Note that in this kind of tree we cannot possibly find an
+               --  Input (since no inputs exist). We can at best find the
+               --  Output.
                if Nkind (Parent (N)) /= N_Pragma_Argument_Association then
                   return OK;
                end if;
@@ -3684,12 +3719,11 @@ package body Flow_Utility is
                      when N_Null | N_Aggregate =>
                         O := Empty;
                      when N_Numeric_Or_String_Literal =>
-                        --  We should only ever get here if we are
-                        --  dealing with a rewritten constant.
+                        --  We should only ever get here if we are dealing with
+                        --  a rewritten constant.
                         pragma Assert (Tmp /= Original_Node (Tmp));
 
-                        --  We process the entity of the Original_Node
-                        --  instead.
+                        --  We process the entity of the Original_Node instead
                         O := Entity (Original_Node (Tmp));
 
                      when others =>
@@ -3715,6 +3749,8 @@ package body Flow_Utility is
    begin
       case Contract is
          when Pragma_Depends =>
+            --  ??? Picking the Depends or the Refined_Depends should be rather
+            --  based on the visiblity of the Input and Ouput.
             Contract_N := Find_Contract (Unit, Pragma_Refined_Depends);
 
             if No (Contract_N) then
@@ -3732,8 +3768,8 @@ package body Flow_Utility is
          Find_Export_Internal (Contract_N);
 
          return (if Present (Needle)
-                   then Needle
-                   else Contract_N);
+                 then Needle
+                 else Contract_N);
       else
          return Unit;
       end if;
@@ -4004,9 +4040,9 @@ package body Flow_Utility is
                  Ekind (Entity (N)) = E_Constant and then
                  not Local_Constants.Contains (Entity (N));
                --  We're assigning a local constant; and currently we just
-               --  use get_variable_set to "look through" it. We simply
-               --  assign all fields of the LHS to the RHS. Not as precise
-               --  as it could be, but it works for now...
+               --  use Get_Variables to "look through" it. We simply assign all
+               --  fields of the LHS to the RHS. Not as precise as it could be,
+               --  but it works for now...
 
                LHS : constant Flow_Id_Sets.Set :=
                  Flatten_Variable (Map_Root, Scope);
@@ -4790,6 +4826,30 @@ package body Flow_Utility is
          Vars_Defined.Include (Base_Node'Update (Facet => Extension_Part));
       end if;
 
+      declare
+         Projected, Partial : Flow_Id_Sets.Set;
+
+      begin
+         Up_Project (Vars_Used, Scope, Projected, Partial);
+         Vars_Used := Projected or Partial;
+
+         Up_Project (Vars_Defined, Scope, Projected, Partial);
+         for State of Partial loop
+            if Is_Abstract_State (State)
+              and then not (State_Refinement_Is_Visible (State, Scope)
+                            and then Is_Fully_Contained (State, Vars_Defined))
+            then
+               Vars_Used.Include (State);
+            end if;
+         end loop;
+         Vars_Defined := Projected or Partial;
+
+         Up_Project (Vars_Proof, Scope, Projected, Partial);
+         Vars_Proof :=
+           (Projected or Partial) -
+           (Change_Variant (Vars_Defined, In_View) or Vars_Used);
+      end;
+
       if Debug_Trace_Untangle then
          Write_Str ("Variables ");
          if Partial_Definition then
@@ -4807,34 +4867,6 @@ package body Flow_Utility is
          Outdent;
       end if;
    end Untangle_Assignment_Target;
-
-   ----------------------------
-   -- Up_Project_Constituent --
-   ----------------------------
-
-   function Up_Project_Constituent
-     (F     : Flow_Id;
-      Scope : Flow_Scope)
-      return Flow_Id
-   is
-      Enclosing_F : Flow_Id;
-      Enclosing_E : Entity_Id;
-   begin
-      Enclosing_F := F;
-      Enclosing_E := Get_Direct_Mapping_Id (F);
-      while Is_Non_Visible_Constituent (Enclosing_F, Scope) loop
-         declare
-            State : constant Entity_Id := Encapsulating_State (Enclosing_E);
-         begin
-            Enclosing_E := (if Present (State)
-                            then State
-                            else Enclosing_Concurrent_Type (F));
-         end;
-         Enclosing_F := Direct_Mapping_Id (Enclosing_E, Variant => F.Variant);
-      end loop;
-
-      return Enclosing_F;
-   end Up_Project_Constituent;
 
    ----------------------
    -- Replace_Flow_Ids --
@@ -4906,17 +4938,6 @@ package body Flow_Utility is
 
       return False;
    end Is_Empty_Record_Type;
-
-   ------------------
-   -- Parent_State --
-   ------------------
-
-   function Parent_State (E : Entity_Id) return Entity_Id is
-     (if Ekind (E) in E_Abstract_State |
-                      E_Constant       |
-                      E_Variable
-      then Encapsulating_State (E)
-      else Empty);
 
    ----------------------
    -- Canonical_Entity --
