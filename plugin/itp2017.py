@@ -36,7 +36,7 @@ def print_error(message):
 
 def print_message(message):
     console = GPS.Console("ITP_interactive")
-    console.write(message)
+    console.write(message, mode="text")
     console.write("\n> ")
 
 green = Gdk.RGBA(0, 1, 0, 0.2)
