@@ -345,7 +345,7 @@ package body Gnat2Why.Error_Messages is
          Append (Buf, " (");
          for C in Stats.Iterate loop
             declare
-               Elt : constant Prover_Stat := Element (C);
+               Elt : Prover_Stat renames Stats (C);
             begin
                Append (Buf, Key (C));
                Append (Buf, ':');
@@ -355,7 +355,7 @@ package body Gnat2Why.Error_Messages is
                   Append (Buf, " in max ");
                   Append (Buf, Nice_Float (Elt.Max_Time));
                   Append (Buf, " seconds and");
-                  Append (Buf, Integer'Image (Elt.Max_Steps));
+                  Append (Buf, Positive'Image (Elt.Max_Steps));
                   Append (Buf, " step");
                   if Elt.Max_Steps /= 1 then
                      Append (Buf, 's');
