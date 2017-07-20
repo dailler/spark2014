@@ -132,7 +132,7 @@ def parse_notif(j, tree, proof_task):
     elif notif_type == "Next_Unproven_Node_Id":
         from_node = j["node_ID1"]
         to_node = j["node_ID2"]
-        node_jump_select(tree, from_node, to_node)
+        tree.node_jump_select(from_node, to_node)
     elif notif_type == "Initialized":
         print_message("Initialization done")
     elif notif_type == "Saved":
@@ -195,32 +195,8 @@ def parse_message(j):
         print_debug("TODO")
 
 
-#  Automatically jumps from from_node to to_node if from_node is selected
-def node_jump_select(tree, from_node, to_node):
-    tree_selection = tree.view.get_selection()
-    from_node_row = tree.node_id_to_row_ref[from_node]
-    from_node_path = from_node_row.get_path()
-    from_node_iter = tree.model.get_iter(from_node_path)
-    if (tree_selection.path_is_selected(from_node_path)):
-        tree_selection.unselect_all()
-        to_node_row = tree.node_id_to_row_ref[to_node]
-        to_node_path = to_node_row.get_path()
-        to_node_iter = tree.model.get_iter(to_node_path)
-        tree_selection.select_path(to_node_path)
 
 
-def command_request(command, node_id):
-    # TODO if remove do something els if save also do something else
-    # TODO very ad hoc
-    print_message("")
-    if command == "Save":
-        return "{\"ide_request\": \"Save_req\" " + " }"
-    elif command == "Remove":
-        return ("{\"ide_request\": \"Remove_subtree\", \"node_ID\":" +
-                str(node_id) + " }")
-    else:
-        return ("{\"ide_request\": \"Command_req\", \"node_ID\":" +
-                str(node_id) + ", \"command\" : " + json.dumps(command) + " }")
 
 
 class Tree:
@@ -339,6 +315,21 @@ class Tree:
         self.model.remove(iter)
         self.node_id_to_row_ref.remove(node_id)
 
+    #  Automatically jumps from from_node to to_node if from_node is selected
+    def node_jump_select(self, from_node, to_node):
+        tree_selection = self.view.get_selection()
+        from_node_row = self.node_id_to_row_ref[from_node]
+        from_node_path = from_node_row.get_path()
+        from_node_iter = self.model.get_iter(from_node_path)
+        if (tree_selection.path_is_selected(from_node_path)):
+            tree_selection.unselect_all()
+            to_node_row = self.node_id_to_row_ref[to_node]
+            to_node_path = to_node_row.get_path()
+            to_node_iter = self.model.get_iter(to_node_path)
+            tree_selection.select_path(to_node_path)
+
+
+
 n = 0
 
 
@@ -436,8 +427,21 @@ class Tree_with_process:
             print_message(s)
         self.process.send(s)
 
+    def command_request(self, command, node_id):
+        # TODO if remove do something els if save also do something else
+        # TODO very ad hoc
+        print_message("")
+        if command == "Save":
+            return "{\"ide_request\": \"Save_req\" " + " }"
+        elif command == "Remove":
+            return ("{\"ide_request\": \"Remove_subtree\", \"node_ID\":" +
+                    str(node_id) + " }")
+        else:
+            return ("{\"ide_request\": \"Command_req\", \"node_ID\":" +
+                    str(node_id) + ", \"command\" : " + json.dumps(command) + " }")
+
     def send_request(self, node_id, command):
-        request = command_request(command, node_id)
+        request = self.command_request(command, node_id)
         print_debug(request)
         self.send(request)
 
@@ -500,11 +504,10 @@ class Tree_with_process:
 tree = Tree_with_process()
 
 
-
-
 def interactive_proof(context):
     # TODO use examine_root_project
     tree.start_ITP(context)
+
 
 def exit_ITP():
     global tree
