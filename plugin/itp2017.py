@@ -447,62 +447,64 @@ class Tree_with_process:
         self.send(request)
 
     def get_next_id(self):
-        selection = tree.tree.view.get_selection()
+        selection = self.tree.view.get_selection()
         model, paths = selection.get_selected_rows()
         print_debug(paths)
         if len(paths) == 1:
             for i in paths:
                 cur_iter = model.get_iter(i)
                 it = model[cur_iter][0]
-                tree.send("{\"ide_request\": \"Get_first_unproven_node\", \"node_ID\":" + it + "}")
+                self.send("{\"ide_request\": \"Get_first_unproven_node\", \"node_ID\":" + it + "}")
+
+    # TODO this does not need to exists inside this class
+    # TODO never put extra_args because they cannot be removed
+    # TODO remove this function which comes from SPARK plugin
+    def start_ITP(self, context, args=[]):
+        print_debug("[ITP] Launched")
+        # TODO what is this ????
+        GPS.Locations.remove_category("Builder results")
+        # GPS.execute_action(action="Split horizontally")
+
+        # TODO all these options are already in spark2014.py
+        gnat_server = os_utils.locate_exec_on_path("gnat_server")
+        objdirs = GPS.Project.root().object_dirs()
+        default_objdir = objdirs[0]
+        obj_subdir_name = "gnatprove"
+        dir_name = os.path.join(default_objdir, obj_subdir_name)
+        os.chdir(dir_name)
+        mlw_file = ""
+        for dir_name, sub_dir_name, files in os.walk(dir_name):
+            for file in files:
+                if fnmatch.fnmatch(file, '*.mlw') and mlw_file == "":
+                    mlw_file = os.path.join(dir_name, file)
+        if mlw_file == "":
+            print_debug("TODO")
+
+        # TODO this context stuff should be done in SPARK and better done...
+        print (context)
+        msg = context.location()
+        print (msg)
+        # TODO inside generic unit stuff ???
+        #GPS.Locations.remove_category("Builder results")
+        #GPS.BuildTarget(prove_check()).execute(extra_args=args,
+        #                                       synchronous=False)
+        options = ""
+        # options = "--limit-line " +  str(msg) + ":VC_POSTCONDITION "
+        # "test.adb:79:16:VC_POSTCONDITION "
+        command = gnat_server + " " + options + mlw_file
+        print(command)
+        self.start(command)
 
 
 # TODO put this somewhere where it makes sense
 tree = Tree_with_process()
 
 
-# TODO never put extra_args because they cannot be removed
-# TODO remove this function which comes from SPARK plugin
-def start_ITP(context, args=[]):
-    global tree
-    print_debug("[ITP] Launched")
-    # TODO what is this ????
-    GPS.Locations.remove_category("Builder results")
-    # GPS.execute_action(action="Split horizontally")
 
-    # TODO all these options are already in spark2014.py
-    gnat_server = os_utils.locate_exec_on_path("gnat_server")
-    objdirs = GPS.Project.root().object_dirs()
-    default_objdir = objdirs[0]
-    obj_subdir_name = "gnatprove"
-    dir_name = os.path.join(default_objdir, obj_subdir_name)
-    os.chdir(dir_name)
-    mlw_file = ""
-    for dir_name, sub_dir_name, files in os.walk(dir_name):
-        for file in files:
-            if fnmatch.fnmatch(file, '*.mlw') and mlw_file == "":
-                mlw_file = os.path.join (dir_name, file)
-    if mlw_file == "":
-        print_debug("TODO")
-
-    # TODO this context stuff should be done in SPARK and better done...
-    print (context)
-    msg = context.location()
-    print (msg)
-    # TODO inside generic unit stuff ???
-    #GPS.Locations.remove_category("Builder results")
-    #GPS.BuildTarget(prove_check()).execute(extra_args=args,
-    #                                       synchronous=False)
-    options = ""
-    # options = "--limit-line " +  str(msg) + ":VC_POSTCONDITION "
-    # "test.adb:79:16:VC_POSTCONDITION "
-    command = gnat_server + " " + options + mlw_file
-    print(command)
-    tree.start(command)
 
 def interactive_proof(context):
     # TODO use examine_root_project
-    start_ITP(context)
+    tree.start_ITP(context)
 
 def exit_ITP():
     global tree
