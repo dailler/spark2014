@@ -3660,10 +3660,7 @@ package body Flow.Control_Flow_Graph is
       --  If this type has a Default_Initial_Condition then we need to
       --  create a vertex to check for uninitialized variables within the
       --  Default_Initial_Condition's expression.
-      if Has_DIC (Typ)
-        or else Has_Inherited_DIC (Typ)
-        --  and then not Has_Inherited_DIC (Typ)
-      then
+      if Has_DIC (Typ) then
          declare
             DIC_Proc : constant Entity_Id := Get_Initial_DIC_Procedure (Typ);
 
@@ -4558,9 +4555,7 @@ package body Flow.Control_Flow_Graph is
       --  If the type has a Default_Initial_Condition then we:
       --    * check if the full type is as the aspect suggested
       --      and issue a warning if not
-      if Has_DIC (Typ)
-        or else Has_Inherited_DIC (Typ)
-      then
+      if Has_DIC (Typ) then
          --  Issue a warning if the declared type promised to be
          --  default initialized but is not.
          --
@@ -5875,14 +5870,36 @@ package body Flow.Control_Flow_Graph is
                      Equivalent_Keys => "=",
                      "="             => "=");
 
-                  My_Globals : Global_Flow_Ids;
-                  Globals   : Global_Maps.Map := Global_Maps.Empty_Map;
+                  Current_Globals : Global_Flow_Ids;
+                  My_Globals      : Global_Flow_Ids;
+                  Globals         : Global_Maps.Map := Global_Maps.Empty_Map;
 
                begin
                   Get_Globals (Subprogram => FA.Analyzed_Entity,
                                Scope      => FA.B_Scope,
                                Classwide  => False,
-                               Globals    => My_Globals);
+                               Globals    => Current_Globals);
+
+                  --  For subprograms, we up project the globals in case they
+                  --  are too refined for the current scope.
+                  --
+                  --  ??? In some situations (for example in a generic
+                  --  subprogram instantiated in a different package or
+                  --  subprogram) flow does not correctly deal with visibility.
+                  --  For things happening in this subprogram
+                  --  (FA.Analyzed_Entity) we project mistakenly to state, not
+                  --  constituents we should be able to see. But, calling
+                  --  Get_Globals on this subprogram would look directly at the
+                  --  contract and no projection occurs. This projection here
+                  --  makes sure the globals produced by Get_Global have the
+                  --  same loss of precision.
+                  --  Once the issues with flow scopes are resolved we should
+                  --  remove this workaround for PA18-012.
+                  if FA.Kind = Kind_Subprogram then
+                     Up_Project (Current_Globals, My_Globals, FA.B_Scope);
+                  else
+                     My_Globals := Current_Globals;
+                  end if;
 
                   for G of My_Globals.Proof_Ins loop
                      Globals.Insert (Change_Variant (G, Normal_Use),

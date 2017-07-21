@@ -2018,8 +2018,8 @@ package body Flow_Utility is
       ----------------------------------------------------
 
       function Do_Subprogram_Call (Callsite : Node_Id) return Flow_Id_Sets.Set
-      with Pre => Nkind (Callsite) in N_Entry_Call_Statement |
-                                      N_Subprogram_Call;
+      with Pre => Nkind (Callsite) in N_Entry_Call_Statement
+                                    | N_Subprogram_Call;
       --  Work out which variables (including globals) are used in the
       --  entry/subprogram call and add them to the given set. Do not follow
       --  children after calling this.
@@ -2722,18 +2722,18 @@ package body Flow_Utility is
                   declare
                      M : constant Flow_Id_Maps.Map :=
                        Untangle_Record_Assignment
-                       (N,
-                        Map_Root                     =>
-                          Direct_Mapping_Id (Etype (N)),
-                        Map_Type                     =>
-                          Get_Type (N, Ctx.Scope),
-                        Scope                        => Ctx.Scope,
-                        Local_Constants              => Ctx.Local_Constants,
-                        Fold_Functions               => Ctx.Fold_Functions,
-                        Use_Computed_Globals         =>
-                          Ctx.Use_Computed_Globals,
-                        Expand_Synthesized_Constants =>
-                          Ctx.Expand_Synthesized_Constants);
+                         (N,
+                          Map_Root                     =>
+                            Direct_Mapping_Id (Etype (N)),
+                          Map_Type                     =>
+                            Get_Type (N, Ctx.Scope),
+                          Scope                        => Ctx.Scope,
+                          Local_Constants              => Ctx.Local_Constants,
+                          Fold_Functions               => Ctx.Fold_Functions,
+                          Use_Computed_Globals         =>
+                            Ctx.Use_Computed_Globals,
+                          Expand_Synthesized_Constants =>
+                            Ctx.Expand_Synthesized_Constants);
                   begin
                      for FS of M loop
                         Variables.Union (Filter (FS));
@@ -2850,7 +2850,7 @@ package body Flow_Utility is
 
       procedure Traverse is new Traverse_Proc (Process => Proc);
 
-   --  Start of processing for Get_Variables
+   --  Start of processing for Get_Variables_Internal
 
    begin
       Traverse (N);
@@ -3869,8 +3869,7 @@ package body Flow_Utility is
       procedure Merge (Component : Entity_Id;
                        Input     : Node_Id)
       with Pre => Nkind (Component) in N_Entity
-                  and then Ekind (Component) in E_Component | E_Discriminant
-                  and then Present (Input);
+                  and then Ekind (Component) in E_Component | E_Discriminant;
       --  Merge the assignment map for Input into our current assignment
       --  map M. For example, if the input is (X => A, Y => B) and
       --  Component is C, and Map_Root is Obj, then we include in M the
@@ -3879,6 +3878,9 @@ package body Flow_Utility is
       --  If Input is not some kind of record, we simply include a single
       --  field. For example if the input is simply Foo, then (all other
       --  things being equal to the example above) we include Obj.C => Foo.
+      --
+      --  If the Input is Empty (because we're looking at a box in an
+      --  aggregate), then we don't do anything.
 
       M : Flow_Id_Maps.Map := Flow_Id_Maps.Empty_Map;
 
@@ -3917,7 +3919,11 @@ package body Flow_Utility is
       begin
          case Ekind (Get_Type (Component, Scope)) is
             when Record_Kind =>
-               Tmp := Recurse_On (Input, F);
+               if Present (Input) then
+                  Tmp := Recurse_On (Input, F);
+               else
+                  Tmp := Flow_Id_Maps.Empty_Map;
+               end if;
 
                for C in Tmp.Iterate loop
                   declare
@@ -3987,7 +3993,11 @@ package body Flow_Utility is
 
                Ptr := First (Component_Associations (N));
                while Present (Ptr) loop
-                  Input  := Expression (Ptr);
+                  if Box_Present (Ptr) then
+                     Input := Empty;
+                  else
+                     Input := Expression (Ptr);
+                  end if;
                   Target := First (Choices (Ptr));
                   while Present (Target) loop
                      Merge (Entity (Target), Input);
