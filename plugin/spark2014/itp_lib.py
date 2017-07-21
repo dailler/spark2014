@@ -182,7 +182,6 @@ def parse_message(j):
         print_debug("TODO")
 
 
-
 class Tree:
 
     def __init__(self):

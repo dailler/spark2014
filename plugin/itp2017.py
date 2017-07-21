@@ -30,8 +30,10 @@ examine_root_project = 'ITP'
 # Path to this executable
 cur_exec_path = os.path.dirname(os.path.abspath(__file__))
 
-# The xml information are under spark2014
-spark2014_dir = os.path.join (cur_exec_path, "spark2014")
+# The library for itp is under spark2014/
+# TODO this is ugly to use module in python as there is no known form of
+# static checking a.b("x") is always statically valid. Sigh !
+spark2014_dir = os.path.join(cur_exec_path, "spark2014")
 print(spark2014_dir)
 sys.path.append(spark2014_dir)
 import itp_lib
@@ -69,8 +71,8 @@ def start_ITP(tree, context, args=[]):
     msg = context.location()
     print (msg)
     # TODO inside generic unit stuff ???
-    #GPS.Locations.remove_category("Builder results")
-    #GPS.BuildTarget(prove_check()).execute(extra_args=args,
+    # GPS.Locations.remove_category("Builder results")
+    # GPS.BuildTarget(prove_check()).execute(extra_args=args,
     #                                       synchronous=False)
     options = ""
     # options = "--limit-line " +  str(msg) + ":VC_POSTCONDITION "
