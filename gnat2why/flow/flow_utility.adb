@@ -1002,27 +1002,42 @@ package body Flow_Utility is
 
          for C in Contract_Relation.Iterate loop
             declare
-               D_Out : constant Flow_Id_Sets.Set :=
-                 (if Present (Dependency_Maps.Key (C)) then
-                     To_Flow_Id_Set (Down_Project
-                                       (Get_Direct_Mapping_Id
-                                          (Dependency_Maps.Key (C)),
-                                        Scope))
-                  else
-                     Flow_Id_Sets.To_Set (Dependency_Maps.Key (C)));
+               Output : Flow_Id          renames Dependency_Maps.Key (C);
+               Input  : Flow_Id_Sets.Set renames Contract_Relation (C);
 
-               D_In  : Flow_Id_Sets.Set :=
-                 To_Flow_Id_Set
-                   (Down_Project (To_Node_Set (Contract_Relation (C)), Scope));
+               Refined_Output : constant Flow_Id_Sets.Set :=
+                 (if Present (Output)
+                  then Down_Project (Output, Scope)
+                  else Flow_Id_Sets.To_Set (Null_Flow_Id));
+
+               Refined_Input  : constant Flow_Id_Sets.Set :=
+                 Down_Project (Input, Scope);
+
+               Trimmed_Output : Flow_Id_Sets.Set :=
+                 Refined_Output.Intersection (Globals.Writes);
 
             begin
-               for O of D_Out loop
-                  if Globals.Writes.Contains (O) then
-                     D_In.Intersection (if O = Null_Flow_Id
-                                        then Globals.Proof_Ins
-                                        else Globals.Reads);
-                     Depends.Insert (O, D_In);
-                  end if;
+               --  If the outputs in the depends are not in the globals written
+               --  we still want to keep them in the Refined_Depends. Most
+               --  likely there will be an error in the Depends contract.
+               if Trimmed_Output.Is_Empty then
+                  Trimmed_Output := Refined_Output;
+               end if;
+
+               for O of Trimmed_Output loop
+                  declare
+                     Trimmed_Input : constant Flow_Id_Sets.Set :=
+                       Refined_Input.Intersection (if O = Null_Flow_Id
+                                                   then Globals.Proof_Ins
+                                                   else Globals.Reads);
+
+                  begin
+                     if Trimmed_Input.Is_Empty then
+                        Depends.Insert (O, Refined_Input);
+                     else
+                        Depends.Insert (O, Trimmed_Input);
+                     end if;
+                  end;
                end loop;
             end;
          end loop;
@@ -1032,17 +1047,12 @@ package body Flow_Utility is
          for C in Contract_Relation.Iterate loop
             declare
                D_Out : constant Flow_Id_Sets.Set :=
-                 (if Present (Dependency_Maps.Key (C)) then
-                     To_Flow_Id_Set
-                        (Down_Project
-                           (Get_Direct_Mapping_Id (Dependency_Maps.Key (C)),
-                            Scope))
-                  else
-                     Flow_Id_Sets.To_Set (Dependency_Maps.Key (C)));
+                 (if Present (Dependency_Maps.Key (C))
+                  then Down_Project (Dependency_Maps.Key (C), Scope)
+                  else Flow_Id_Sets.To_Set (Null_Flow_Id));
 
                D_In  : constant Flow_Id_Sets.Set :=
-                 To_Flow_Id_Set
-                   (Down_Project (To_Node_Set (Contract_Relation (C)), Scope));
+                 Down_Project (Contract_Relation (C), Scope);
 
             begin
                for O of D_Out loop
@@ -1100,10 +1110,9 @@ package body Flow_Utility is
             The_PO : constant Entity_Id :=
               Get_Enclosing_Object (Prefix (Name (Callsite)));
 
-            PO_Type : constant Entity_Id := Etype (The_PO);
+            PO_Type : constant Entity_Id := Sinfo.Scope (Subprogram);
 
-            pragma Assert (Ekind (The_PO) = E_Variable and then
-                           Ekind (PO_Type) = E_Protected_Type);
+            pragma Assert (Ekind (The_PO) = E_Variable);
 
          begin
             --  Substitute reference on LHS
@@ -1128,14 +1137,14 @@ package body Flow_Utility is
             end if;
 
             --  Substitute references on RHS
-            for D in Depends.Iterate loop
+            for Inputs of Depends loop
                declare
                   C : constant Flow_Id_Sets.Cursor :=
-                    Depends (D).Find (Direct_Mapping_Id (PO_Type));
+                    Inputs.Find (Direct_Mapping_Id (PO_Type));
 
                begin
                   if Flow_Id_Sets.Has_Element (C) then
-                     Depends (D).Replace_Element
+                     Inputs.Replace_Element
                        (Position => C,
                         New_Item => Direct_Mapping_Id (The_PO));
                   end if;
