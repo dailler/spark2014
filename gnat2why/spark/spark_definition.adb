@@ -36,6 +36,7 @@ with Gnat2Why.Annotate;               use Gnat2Why.Annotate;
 with Gnat2Why_Args;
 with Gnat2Why.Assumptions;            use Gnat2Why.Assumptions;
 with Gnat2Why.Util;
+with Lib;                             use Lib;
 with Namet;                           use Namet;
 with Nlists;                          use Nlists;
 with Nmake;                           use Nmake;
@@ -460,7 +461,7 @@ package body SPARK_Definition is
          return False;
       end Restriction_No_Dependence;
 
-   --  Start of processing for Ravenscar_Profile
+   --  Start of processing for GNATprove_Tasking_Profile
 
    begin
       if Ravenscar_Profile_Cached then
@@ -687,6 +688,9 @@ package body SPARK_Definition is
 
    procedure Mark_Call                        (N : Node_Id) with
      Pre => Nkind (N) in N_Subprogram_Call | N_Entry_Call_Statement;
+
+   procedure Mark_Address                     (E : Entity_Id)
+     with Pre => Ekind (E) in Object_Kind | E_Function | E_Procedure;
 
    procedure Mark_Component_Declaration       (N : Node_Id);
    procedure Mark_Handled_Statements          (N : Node_Id);
@@ -1107,6 +1111,8 @@ package body SPARK_Definition is
    --  Start of processing for Mark
 
    begin
+      Current_Error_Node := N;
+
       --  If present, the type of N should be in SPARK. This also allows
       --  marking Itypes and class-wide types at their first occurrence
       --  (inside In_SPARK).
@@ -1334,6 +1340,19 @@ package body SPARK_Definition is
             Mark_Entity (Defining_Identifier (N));
 
          when N_Loop_Statement =>
+            --  Detect loops coming from rewritten GOTO statements (see
+            --  Find_Natural_Loops in the parser) and reject them by marking
+            --  the original node.
+            declare
+               Orig : constant Node_Id := Original_Node (N);
+            begin
+               if Orig /= N
+                 and then Nkind (Orig) = N_Goto_Statement
+               then
+                  Mark (Orig);
+               end if;
+            end;
+
             Check_Loop_Invariant_Placement (Statements (N));
             Check_Unrolled_Loop (N);
 
@@ -1383,6 +1402,7 @@ package body SPARK_Definition is
                end if;
 
                Mark_Object_Declaration (N);
+               Mark_Address (E);
             end;
 
          when N_Package_Body =>
@@ -2104,6 +2124,18 @@ package body SPARK_Definition is
       Inside_Actions := Save_Inside_Actions;
    end Mark_Actions;
 
+   ------------------
+   -- Mark_Address --
+   ------------------
+
+   procedure Mark_Address (E : Entity_Id) is
+      Address : constant Node_Id := Get_Rep_Item (E, Name_Address);
+   begin
+      if Present (Address) then
+         Mark (Expression (Address));
+      end if;
+   end Mark_Address;
+
    ---------------------------------------------
    -- Mark_Aspect_Clauses_And_Pragmas_In_List --
    ---------------------------------------------
@@ -2242,6 +2274,18 @@ package body SPARK_Definition is
               and then SPARK_Pragma_Is (Opt.On)
             then
                Error_Msg_F ("?attribute Valid is assumed to return True", N);
+            end if;
+
+         when Attribute_Address =>
+            --  As per SPARK RM 15.2 attribute Address in only allowed in
+            --  attribute definition clauses.
+            if Nkind (Parent (N)) /= N_Attribute_Definition_Clause then
+               Violation_Detected := True;
+               if Emit_Messages and then SPARK_Pragma_Is (Opt.On) then
+                  Error_Msg_Name_1 := Aname;
+                  Error_Msg_N ("attribute % is only permitted in SPARK " &
+                                 "inside an attribute definition clause", N);
+               end if;
             end if;
 
          when others =>
@@ -2550,9 +2594,15 @@ package body SPARK_Definition is
 
       Mark_Actuals (N);
 
+      --  There should not be calls to default initial condition and invariant
+      --  procedures.
+
+      if Subprogram_Is_Ignored_For_Proof (E) then
+         raise Program_Error;
+
       --  Call is in SPARK only if the subprogram called is in SPARK
 
-      if not In_SPARK (E) then
+      elsif not In_SPARK (E) then
          Mark_Violation (N,
                          From => (if Ekind (E) = E_Function
                                     and then Is_Predicate_Function (E)
@@ -2565,12 +2615,6 @@ package body SPARK_Definition is
       then
          Mark_Violation
            ("dispatching call on primitive of untagged private", N);
-
-      --  There should not be calls to default initial condition and invariant
-      --  procedures.
-
-      elsif Subprogram_Is_Ignored_For_Proof (E) then
-         raise Program_Error;
 
       --  Warn about calls to predefined and imported subprograms with no
       --  manually-written Global or Depends contracts. Exempt calls to pure
@@ -5623,13 +5667,10 @@ package body SPARK_Definition is
       elsif Subprogram_Is_Ignored_For_Proof (E) then
          return;
 
-      --  Ignore subprograms that front-end generates to analyze default
-      --  expressions. They have no spec, only body and whose Is_Eliminated
-      --  flag is set. Unlike user's subprograms with pragma Eliminated, they
-      --  do come not from source. See Freeze.Process_Default_Expressions for
-      --  details.
+      --  Ignore subprograms annotated with pragma Eliminate; this includes
+      --  subprograms that front-end generates to analyze default expressions.
 
-      elsif Is_Eliminated (E) and then not Comes_From_Source (E) then
+      elsif Is_Eliminated (E) then
          return;
 
       else
@@ -5828,13 +5869,10 @@ package body SPARK_Definition is
       elsif Subprogram_Is_Ignored_For_Proof (E) then
          return;
 
-      --  Ignore subprograms that front-end generates to analyze default
-      --  expressions. They have no spec, only body and whose Is_Eliminated
-      --  flag is set. Unlike user's subprograms with pragma Eliminated, they
-      --  do come not from source. See Freeze.Process_Default_Expressions for
-      --  details.
+      --  Ignore subprograms annotated with pragma Eliminate; this includes
+      --  subprograms that front-end generates to analyze default expressions.
 
-      elsif Is_Eliminated (E) and then not Comes_From_Source (E) then
+      elsif Is_Eliminated (E) then
          return;
 
       --  Mark entity
@@ -5882,8 +5920,10 @@ package body SPARK_Definition is
 
             Current_SPARK_Pragma := Save_SPARK_Pragma;
          end;
+         if Ekind (E) in E_Procedure | E_Function then
+            Mark_Address (E);
+         end if;
       end if;
-
    end Mark_Subprogram_Declaration;
 
    -----------------------------

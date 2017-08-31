@@ -115,7 +115,7 @@ be analyzed by |GNATprove|:
   This is intended for the day-to-day command-line or IDE use of
   |GNATprove| when implementing a project.
 
-|GNATprove| consists of two distinct analyses, flow analysis and proof.
+|GNATprove| consists of two distinct analyses: flow analysis and proof.
 Flow analysis checks the correctness of aspects related to data flow
 (``Global``, ``Depends``, ``Abstract_State``, ``Initializes``, and
 refinement versions of these), and verifies the initialization of
@@ -136,7 +136,7 @@ and ``gold``, you can choose which analysis is performed:
   side-effects in functions. Mode ``check_all`` includes mode ``check``.
 
 * In mode ``flow`` (``bronze`` is a synonym for this mode), |GNATprove| checks
-  that no uninitialized data is read in the program, and that the specified
+  that no uninitialized data are read in the program, and that the specified
   data dependencies and flow dependencies are respected in the implementation.
   Mode ``flow`` includes mode ``check_all``.  This phase is called *flow
   analysis*.
@@ -145,7 +145,7 @@ and ``gold``, you can choose which analysis is performed:
   |GNATprove| checks that the program is free from run-time errors, and that
   the specified functional contracts are respected in the implementation. Mode
   ``prove`` includes mode ``check_all``, as well as the part of mode ``flow``
-  which checks that no uninitialized data is read, to guarantees soundness of
+  that checks that no uninitialized data are read, to guarantee soundness of
   the proof results. This phase is called *proof*.
 
 * In the default mode ``all``, |GNATprove| does both flow analysis and proof.
@@ -223,7 +223,7 @@ the value set through ``--level``.
 Note that using ``--level`` does not provide results that are reproducible
 accross different machines. For nightly builds or shared repositories, consider
 using the ``--steps`` or ``--replay`` switches instead. The number of steps
-required to proved an example can be accessed by running |GNATprove| the option
+required to proved an example can be accessed by running |GNATprove| with the option
 ``--report=statistics``.
 
 |GNATprove| also supports using the static analysis tool |CodePeer| as an
@@ -258,115 +258,17 @@ are any violations of Ada legality rules, |GNATprove| does not attempt any
 analysis. If there are violations of |SPARK| legality rules, |GNATprove| stops
 after the checking phase and does not attempt flow analysis or proof.
 
-When an error is detected (which does not included issuing check messages),
+When an error is detected (which does not include issuing check messages),
 |GNATprove| returns with a non-zero exit status. Otherwise, |GNATprove| returns
 with an exit status of zero, even when warnings and check messages are issued.
 
-Using the GNAT Target Runtime Directory
----------------------------------------
+Specifying the Run-Time Library and Target
+------------------------------------------
 
-If you are using GNAT as your target compiler, and the runtime used is
-not compatible with |GNATprove|'s default runtime, you can use the GNAT
-runtime directory from your GNAT installation, either directly or by
-copying it to the |SPARK| installation.
-
-To find the location of the target GNAT runtime, you can use the
-``<target>-gnatls -v`` command, and if you are using the ``--RTS`` switch,
-specify it also when running ``gnatls``.
-
-If the argument of the ``--RTS`` switch passed to |GNATprove| is a valid
-absolute or relative directory name, then |GNATprove| will use this directory
-as the runtime directory.
-
-Otherwise, |GNATprove| will search the runtime library in predefined
-locations. There are two possible cases, depending on the kind of runtime used:
-
-* Full runtime
-
-  For example, if you are using ``powerpc-vxworks-gnatmake`` as your builder
-  and ``--RTS=kernel``, then you can use:
-
-  .. code-block:: sh
-
-    powerpc-vxworks-gnatls -v --RTS=kernel | grep adalib
-
-  This command gives the path to :file:`rts-kernel` directory.
-
-  You then need to copy (or make a symbolic link under Unix with `ln -s` or
-  under Windows with `mklink /D`) this directory to the |SPARK| installation, under
-  :file:`<spark-install>/share/spark/runtimes`, removing the trailing `rts-` in
-  the name. For example using `bash` syntax:
-
-  .. code-block:: sh
-
-    cp -pr $(dirname $(powerpc-vxworks-gnatls -v --RTS=kernel | grep adalib)) \
-      <spark-install>/share/spark/runtimes/kernel
-
-  Then if not already present in your project file, you can then add
-  the following:
-
-  .. code-block:: ada
-
-     package Builder is
-        for Switches ("Ada") use ("--RTS=kernel");
-     end Builder;
-
-  Or alternatively if you are using a recent version of GNAT and |SPARK|,
-  you can specify instead the runtime via the `Runtime` project attribute:
-
-  .. code-block:: ada
-
-    for Runtime ("Ada") use "kernel";
-
-* Configurable runtime
-
-  The simplest way to use configurable runtimes in |SPARK| is to install
-  both |SPARK| and your cross GNAT compiler under the same root directory.
-
-  If you do that and have in your project file the Target and Runtime
-  properties set, then |GNATprove| (starting with version 16.0.1) will find the
-  runtime automatically, e.g.:
-
-  .. code-block:: ada
-
-     for Target use "arm-eabi";
-     for Runtime ("Ada") use "ravenscar-sfp-stm32f4";
-
-  If you cannot use the above simple solution then you will first need to
-  find the location of the GNAT configurable runtime using the following
-  command:
-
-  .. code-block:: sh
-
-     <target>-gnatls -v --RTS=<runtime> | grep adalib
-
-  which gives the path to :file:`<runtime directory>/adalib`.
-
-  In the following example we want to use the ravenscar-sfp-stm32f4
-  runtime library on arm-eabi target architecture:
-
-  .. code-block:: sh
-
-     arm-eabi-gnatls -v --RTS=ravenscar-sfp-stm32f4 | grep adalib
-
-  This command gives the path to :file:`<ravenscar-sfp-stm32f4 runtime>/adalib`.
-
-  You then need to copy (or make a symbolic link under Unix with `ln -s` or
-  under Windows with `mklink /D`) the <ravenscar-sfp-stm32f4 runtime> directory
-  to the |SPARK| installation, under
-  :file:`<spark-prefix>/share/spark/runtimes`, for example using `bash` syntax:
-
-  .. code-block:: sh
-
-    cp -pr $(dirname $(arm-eabi-gnatls -v --RTS=ravenscar-sfp-stm32f4 | grep adalib)) \
-      <spark-prefix>/share/spark/runtimes
-
-  Then if not already present in your project file, you need to add the
-  following:
-
-  .. code-block:: ada
-
-    for Runtime ("Ada") use "ravenscar-sfp-stm32f4";
+The handling of runtimes of SPARK is now unified with that of the GNAT
+compiler. See "GNAT User's Guide Supplement for Cross Platforms",
+Section 3. If you specify a target, note that SPARK requires
+additional configuration, see the next section.
 
 .. _implementation_defined:
 
@@ -401,10 +303,10 @@ endianness or sizes and alignments of standard types.  If your target is not
 the same as the host on which you run |GNATprove|, you have to tell
 |GNATprove| the specificities of your target.
 
-Note that the ``Target`` attribute of project files is ignored with a warning
-by |GNATprove|. Instead, you need to add the following to your project file,
-under a scenario variable as seen in :ref:`Having Different Switches for
-Compilation and Verification`:
+Note that specifying the ``Target`` attribute of project files is
+not enough for |GNATprove|. In addition, you need to add the
+following to your project file, under a scenario variable as seen in
+:ref:`Having Different Switches for Compilation and Verification`:
 
 .. code-block:: gpr
 
@@ -466,13 +368,6 @@ processor configured as big-endian::
   float          6  I  32  32
   double        15  I  64  64
   long double   15  I  64  64
-
-Also by default, |GNATprove| uses the host run-time library, which may not be
-suitable for your target when doing cross-compilation. A different run-time
-library can be specified by calling |GNATprove| with the switch ``--RTS=dir``
-where ``dir`` is the default location of the run-time library. The choice of
-run-time library is described in the |GNAT Pro| User's Guide as part of the
-description of switch ``--RTS`` for tool ``gnatmake``.
 
 .. _Parenthesized Arithmetic Operations:
 

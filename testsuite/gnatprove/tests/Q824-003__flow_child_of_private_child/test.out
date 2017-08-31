@@ -1,0 +1,4 @@
+foo-pc-c.adb:5:04: info: initialization of "B" constituent of "State" proved
+foo-pc-c.ads:8:22: info: initialization of "Y" proved
+foo.adb:8:04: info: initialization of "A" constituent of "State_A" proved
+foo.adb:11:24: info: initialization of "Y" proved

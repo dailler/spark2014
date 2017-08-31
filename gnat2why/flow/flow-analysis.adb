@@ -359,13 +359,24 @@ package body Flow.Analysis is
 
       function Search_Expr (N : Node_Id) return Traverse_Result is
       begin
-         if Get_Variables (N,
-                           Scope                => Scope,
-                           Local_Constants      => FA.Local_Constants,
-                           Reduced              => not Precise,
-                           Assume_In_Expression => False,
-                           Fold_Functions       => False,
-                           Use_Computed_Globals => True).Contains (Var_Tgt)
+         if Nkind (N) not in N_Subprogram_Call
+                           | N_Entry_Call_Statement
+                           | N_Expanded_Name
+                           | N_Identifier
+                           | N_Selected_Component
+         then
+            --  Calling Get_Variables can be very slow. Let's only do it on
+            --  nodes that actually make sense to flag up in an check/info
+            --  message from flow; i.e. nodes that describe a
+            --  variable/constant or might use a global.
+            return OK;
+         elsif Get_Variables (N,
+                              Scope                => Scope,
+                              Local_Constants      => FA.Local_Constants,
+                              Reduced              => not Precise,
+                              Assume_In_Expression => False,
+                              Fold_Functions       => False,
+                              Use_Computed_Globals => True).Contains (Var_Tgt)
          then
             First_Use := N;
             return OK;
@@ -758,17 +769,7 @@ package body Flow.Analysis is
                  To_Entire_Variables
                    (Get_Variables
                       (Expr,
-                       Scope                => (case FA.Kind is
-                                                when Kind_Subprogram =>
-                                                   Get_Flow_Scope (Expr),
-
-                                                when Kind_Package
-                                                   | Kind_Package_Body =>
-                                                     Private_Scope
-                                                     (Get_Flow_Scope (Expr)),
-
-                                                when Kind_Task =>
-                                                   raise Program_Error),
+                       Scope                => Get_Flow_Scope (Expr),
                        Local_Constants      => FA.Local_Constants,
                        Fold_Functions       => False,
                        Reduced              => True,
@@ -1176,7 +1177,8 @@ package body Flow.Analysis is
                --  * the variable is a formal parameter of a null subprogram of
                --    a generic unit.
                declare
-                  E : constant Entity_Id := Get_Direct_Mapping_Id (F);
+                  E     : constant Entity_Id := Get_Direct_Mapping_Id (F);
+                  E_Typ : constant Entity_Id := Etype (E);
 
                   Msg : constant String :=
                     (if Ekind (Scope (E)) = E_Function
@@ -1185,10 +1187,10 @@ package body Flow.Analysis is
                      else "unused variable &");
 
                begin
-                  if Is_Concurrent_Type (Etype (E))
+                  if Is_Concurrent_Type (E_Typ)
                     or else Belongs_To_Concurrent_Type (F)
-                    or else (Is_Type (Etype (E))
-                             and then Is_Empty_Record_Type (Etype (E)))
+                    or else (Is_Type (E_Typ)
+                             and then Is_Empty_Record_Type (E_Typ))
                     or else Has_Pragma_Un (E)
                     or else Is_Param_Of_Null_Subp_Of_Generic (E)
                   then
@@ -1481,7 +1483,7 @@ package body Flow.Analysis is
       function Is_In_Pragma_Un (S : Flow_Id_Sets.Set)
                                 return Boolean;
       --  Checks if variables in the set Variables_Defined have been
-      --  mentioned in a pragma Unreferenced, Unused or Unreferenced.
+      --  mentioned in a pragma Unmodified, Unused or Unreferenced.
 
       function Other_Fields_Are_Ineffective (V : Flow_Graphs.Vertex_Id)
                                              return Boolean;
@@ -1976,6 +1978,40 @@ package body Flow.Analysis is
       function Consider_Vertex (V : Flow_Graphs.Vertex_Id) return Boolean;
       --  Returns True iff V should be considered for uninitialized variables
 
+      procedure Emit_Message (Var              : Flow_Id;
+                              Vertex           : Flow_Graphs.Vertex_Id;
+                              Is_Initialized   : Boolean;
+                              Is_Uninitialized : Boolean)
+      with Pre => Is_Initialized or Is_Uninitialized;
+      --  Produces an appropriately worded info/low/high message for the given
+      --  variable Var at the given location Vertex.
+      --
+      --  Is_Initialized should be set if there is at least one sensible read
+      --
+      --  Is_Uninitialized should be set if there is at least one read from an
+      --  uninitialized variable.
+      --
+      --  They can be both set, in which case we're most likely going to
+      --  produce a medium check, but this is not always the case in loops.
+
+      function Has_Only_Infinite_Execution (V_Final : Flow_Graphs.Vertex_Id)
+                                            return Boolean;
+      --  Returns True iff every path from V_Final going backwards in the CFG
+      --  contains an infinite loop.
+
+      function Expand_Initializes return Node_Sets.Set
+      with Pre  => FA.Kind in Kind_Package | Kind_Package_Body
+                   and then Present (FA.Initializes_N),
+           Post => (for all E of Expand_Initializes'Result =>
+                      Ekind (E) in E_Abstract_State | E_Constant | E_Variable);
+      --  Returns entities that appear (either directly or as immediate
+      --  constituents of an abstract state) on the LHS of the Initializes
+      --  contract of the currently analyzed package.
+      --
+      --  In other words, this routine down-projects the LHS of the Initializes
+      --  contract to the scope of the private part or body of the current
+      --  package (depending on the SPARK_Mode barrier).
+
       procedure Mark_Definition_Free_Path
         (From      : Flow_Graphs.Vertex_Id;
          To        : Flow_Graphs.Vertex_Id;
@@ -2000,27 +2036,6 @@ package body Flow.Analysis is
       --  Sets Found when the variable corresponding to V_Initial is defined on
       --  a path that leads to V_Use. V_Error is the vertex where the message
       --  should be emitted.
-
-      function Has_Only_Infinite_Execution (V_Final : Flow_Graphs.Vertex_Id)
-                                            return Boolean;
-      --  Returns True iff every path from V_Final going backwards in the CFG
-      --  contains an infinite loop.
-
-      procedure Emit_Message (Var              : Flow_Id;
-                              Vertex           : Flow_Graphs.Vertex_Id;
-                              Is_Initialized   : Boolean;
-                              Is_Uninitialized : Boolean)
-      with Pre => Is_Initialized or Is_Uninitialized;
-      --  Produces an appropriately worded info/low/high message for the given
-      --  variable Var at the given location Vertex.
-      --
-      --  Is_Initialized should be set if there is at least one sensible read
-      --
-      --  Is_Uninitialized should be set if there is at least one read from an
-      --  uninitialized variable.
-      --
-      --  They can be both set, in which case we're most likely going to
-      --  produce a medium check, but this is not always the case in loops.
 
       ---------------------------------
       -- AS_In_Generated_Initializes --
@@ -2060,6 +2075,302 @@ package body Flow.Analysis is
          return True;
       end Consider_Vertex;
 
+      ------------------
+      -- Emit_Message --
+      ------------------
+
+      procedure Emit_Message (Var              : Flow_Id;
+                              Vertex           : Flow_Graphs.Vertex_Id;
+                              Is_Initialized   : Boolean;
+                              Is_Uninitialized : Boolean)
+      is
+         type Msg_Kind is (Init, Unknown, Err);
+
+         V_Key         : Flow_Id renames FA.PDG.Get_Key (Vertex);
+
+         V_Initial     : constant Flow_Graphs.Vertex_Id :=
+           FA.PDG.Get_Vertex (Change_Variant (Var, Initial_Value));
+
+         Kind          : Msg_Kind :=
+           (if Is_Initialized and Is_Uninitialized then Unknown
+            elsif Is_Initialized                   then Init
+            else                                        Err);
+
+         N             : Node_Or_Entity_Id;
+         Msg           : Unbounded_String;
+
+         V_Error       : Flow_Graphs.Vertex_Id;
+         V_Goal        : Flow_Graphs.Vertex_Id;
+         V_Allowed     : Flow_Graphs.Vertex_Id := Flow_Graphs.Null_Vertex;
+
+         Is_Final_Use  : constant Boolean := V_Key.Variant = Final_Value;
+         Is_Global     : constant Boolean := FA.Atr (V_Initial).Is_Global;
+         Default_Init  : constant Boolean := Is_Default_Initialized (Var);
+         Is_Function   : constant Boolean := Is_Function_Entity (Var);
+
+      begin
+         case Kind is
+            when Unknown | Err =>
+               declare
+                  Defined_Elsewhere : Boolean;
+               begin
+                  Might_Be_Defined_In_Other_Path
+                    (V_Initial => V_Initial,
+                     V_Use     => Vertex,
+                     Found     => Defined_Elsewhere,
+                     V_Error   => V_Error);
+                  if not Defined_Elsewhere then
+                     --  Upgrade check to high if a more detailed path
+                     --  analysis shows we can't feasibly set it.
+                     Kind := Err;
+                  end if;
+               end;
+            when others =>
+               V_Error := Vertex;
+         end case;
+
+         --  Assemble appropriate message for failed initialization. We deal
+         --  with a bunch of special cases first, but if they don't trigger we
+         --  create the standard message.
+         if Kind = Init then
+            Msg := To_Unbounded_String ("initialization of & proved");
+         elsif Is_Function then
+            Msg := To_Unbounded_String ("function & does not return on ");
+            if Has_Only_Infinite_Execution (Vertex) then
+               Append (Msg, "any path");
+            else
+               Append (Msg, "some paths");
+            end if;
+         else
+            Msg := To_Unbounded_String ("&");
+            if Kind = Err then
+               Append (Msg, " is not");
+            else
+               Append (Msg, " might not be");
+            end if;
+            if Default_Init then
+               Append (Msg, " set");
+            elsif Has_Async_Readers (Var) then
+               Append (Msg, " written");
+            else
+               Append (Msg, " initialized");
+            end if;
+            if Is_Final_Use and not Is_Global then
+               Append (Msg, " in &");
+            end if;
+         end if;
+
+         if not Is_Final_Use then
+            V_Goal    := V_Error;
+            V_Allowed := Vertex;
+            N         := First_Variable_Use
+              (N        => Error_Location (FA.PDG, FA.Atr, V_Error),
+               FA       => FA,
+               Scope    => FA.B_Scope,
+               Var      => Var,
+               Precise  => True,
+               Targeted => True);
+         elsif Is_Global then
+            V_Goal := FA.Helper_End_Vertex;
+            N      := Find_Global (FA.Analyzed_Entity, Var);
+         else
+            V_Goal := V_Error;
+            N      := FA.Atr (Vertex).Error_Location;
+         end if;
+
+         if Kind = Init and then Is_Function_Entity (Var) then
+            pragma Assert (Get_Direct_Mapping_Id (Var) = FA.Analyzed_Entity);
+            --  We special case this, so we don't emit "X" is initialized
+            --  messages for the "variable" that represents the function's
+            --  result.
+            return;
+         end if;
+
+         Error_Msg_Flow
+           (FA        => FA,
+            Tracefile => Tracefile,
+            Msg       => To_String (Msg),
+            N         => N,
+            F1        => Var,
+            F2        => Direct_Mapping_Id (FA.Analyzed_Entity),
+            Tag       => Uninitialized,
+            Severity  => (case Kind is
+                          when Init    => Info_Kind,
+                          when Unknown => (if Default_Init
+                                           then Low_Check_Kind
+                                           else Medium_Check_Kind),
+                          when Err     => (if Default_Init
+                                           then Medium_Check_Kind
+                                           else High_Check_Kind)),
+            Vertex    => Vertex);
+
+         if Is_Constituent (Var)
+           and then Kind in Unknown | Err
+           and then FA.Kind in Kind_Package | Kind_Package_Body
+           and then Present (FA.Initializes_N)
+         then
+            Error_Msg_Flow
+              (FA           => FA,
+               Tracefile    => Tracefile,
+               Msg          => "initialization of & is specified @",
+               N            => N,
+               F1           => Direct_Mapping_Id
+                                 (Encapsulating_State
+                                    (Get_Direct_Mapping_Id (Var))),
+               F2           => Direct_Mapping_Id (FA.Initializes_N),
+               Tag          => Uninitialized,
+               Severity     => (case Kind is
+                                when Init    => Info_Kind,
+                                when Unknown => Medium_Check_Kind,
+                                when Err     => High_Check_Kind),
+               Vertex       => Vertex,
+               Continuation => True);
+         end if;
+
+         if Kind /= Init then
+            Mark_Definition_Free_Path
+              (From      => FA.Start_Vertex,
+               To        => V_Goal,
+               Var       => Var,
+               V_Allowed => V_Allowed);
+         end if;
+
+         --  In case of a subprogram with an output global which is actually
+         --  used as an input in its body, we add more information to the error
+         --  message.
+         if Kind = Err
+           and then not Default_Init
+           and then Is_Global
+         then
+            Error_Msg_Flow (FA           => FA,
+                            Msg          => "& is not an input " &
+                              "in the Global contract of subprogram " &
+                              "#",
+                            Severity     => High_Check_Kind,
+                            N            => N,
+                            F1           => Var,
+                            F2           =>
+                              Direct_Mapping_Id (FA.Spec_Entity),
+                            Tag          => Uninitialized,
+                            Continuation => True);
+
+            declare
+               Msg : constant String :=
+                 (if Has_Async_Readers (Var)
+                  then "either make & an input in the Global contract or " &
+                    "write to it before use"
+                  else "either make & an input in the Global contract or " &
+                    "initialize it before use");
+
+            begin
+               Error_Msg_Flow (FA           => FA,
+                               Msg          => Msg,
+                               Severity     => High_Check_Kind,
+                               N            => N,
+                               F1           => Var,
+                               Tag          => Uninitialized,
+                               Continuation => True);
+            end;
+         end if;
+      end Emit_Message;
+
+      ------------------------
+      -- Expand_Initializes --
+      ------------------------
+
+      function Expand_Initializes return Node_Sets.Set is
+         Results : Node_Sets.Set;
+
+         Initializes : constant Dependency_Maps.Map :=
+           Parse_Initializes (FA.Spec_Entity, Null_Flow_Scope);
+         --  Initializes aspect parsed into Flow_Ids; the second parameter is
+         --  irrelevant, as Parse_Initializes only uses it when dealing with a
+         --  generated contract.
+
+      begin
+         for Clause in Initializes.Iterate loop
+            declare
+               E : constant Entity_Id :=
+                 Get_Direct_Mapping_Id (Dependency_Maps.Key (Clause));
+            begin
+               --  ??? here we basically down-project items on the LHS to the
+               --  FA.B_Scope, but we can't reuse the Down_Project routine yet,
+               --  as it trumps over the SPARK_Mode barrier (which is explained
+               --  in a ??? comment there).
+
+               if Ekind (E) = E_Abstract_State then
+                  if Entity_Body_In_SPARK (FA.Spec_Entity) then
+                     if not Has_Null_Refinement (E) then
+                        for C of Iter (Refinement_Constituents (E)) loop
+                           Results.Insert (C);
+                        end loop;
+                     end if;
+                  elsif Private_Spec_In_SPARK (FA.Spec_Entity) then
+                     for C of Iter (Part_Of_Constituents (E)) loop
+                        Results.Insert (C);
+                     end loop;
+                  end if;
+               else
+                  pragma Assert (Ekind (E) in E_Constant | E_Variable);
+                  Results.Insert (E);
+               end if;
+            end;
+         end loop;
+
+         return Results;
+      end Expand_Initializes;
+
+      ---------------------------------
+      -- Has_Only_Infinite_Execution --
+      ---------------------------------
+
+      function Has_Only_Infinite_Execution (V_Final : Flow_Graphs.Vertex_Id)
+                                            return Boolean
+      is
+         Only_Inf_Exec : Boolean := True;
+
+         procedure Vertex_Has_Infinite_Execution
+           (V  : Flow_Graphs.Vertex_Id;
+            TV : out Flow_Graphs.Simple_Traversal_Instruction);
+
+         -----------------------------------
+         -- Vertex_Has_Infinite_Execution --
+         -----------------------------------
+
+         procedure Vertex_Has_Infinite_Execution
+           (V  : Flow_Graphs.Vertex_Id;
+            TV : out Flow_Graphs.Simple_Traversal_Instruction)
+         is
+         begin
+            if V = FA.Start_Vertex then
+               --  If we reach the start vertex (remember that we are going
+               --  backwards) it means that there is at least one path without
+               --  an infinite loop and we can set Only_Inf_Exec to false and
+               --  abort the traversal.
+               Only_Inf_Exec := False;
+               TV := Flow_Graphs.Abort_Traversal;
+
+            elsif FA.Atr (V).Execution = Infinite_Loop then
+               --  If we find a vertex with Infinite_Loop execution then we set
+               --  Only_Inf_Exec to true and jump to another path.
+               TV := Flow_Graphs.Skip_Children;
+
+            else
+               TV := Flow_Graphs.Continue;
+            end if;
+         end Vertex_Has_Infinite_Execution;
+
+      --  Start of processing for Has_Only_Infinite_Execution
+
+      begin
+         FA.CFG.DFS (Start         => V_Final,
+                     Include_Start => True,
+                     Visitor       => Vertex_Has_Infinite_Execution'Access,
+                     Reversed      => True);
+
+         return Only_Inf_Exec;
+      end Has_Only_Infinite_Execution;
+
       -------------------------------
       -- Mark_Definition_Free_Path --
       -------------------------------
@@ -2076,10 +2387,10 @@ package body Flow.Analysis is
          procedure Are_We_There_Yet
            (V           : Flow_Graphs.Vertex_Id;
             Instruction : out Flow_Graphs.Traversal_Instruction);
-         --  Visitor procedure for Shortest_Path.
+         --  Visitor procedure for Shortest_Path
 
          procedure Add_Loc (V : Flow_Graphs.Vertex_Id);
-         --  Step procedure for Shortest_Path.
+         --  Step procedure for Shortest_Path
 
          ----------------------
          -- Are_We_There_Yet --
@@ -2140,14 +2451,7 @@ package body Flow.Analysis is
         (Var : Flow_Id)
          return Boolean
       is
-         DM : constant Dependency_Maps.Map :=
-           GG_Get_Initializes (FA.Spec_Entity, FA.S_Scope);
-
-      begin
-         return
-           (for some Init_Var in DM.Iterate =>
-              Dependency_Maps.Key (Init_Var) = Var);
-      end Mentioned_On_Generated_Initializes;
+         (GG_Get_Initializes (FA.Spec_Entity, FA.S_Scope).Contains (Var));
 
       ------------------------------------
       -- Might_Be_Defined_In_Other_Path --
@@ -2405,254 +2709,21 @@ package body Flow.Analysis is
          end if;
       end Might_Be_Defined_In_Other_Path;
 
-      ---------------------------------
-      -- Has_Only_Infinite_Execution --
-      ---------------------------------
+      --  Local variables:
 
-      function Has_Only_Infinite_Execution (V_Final : Flow_Graphs.Vertex_Id)
-                                            return Boolean
-      is
-         Only_Inf_Exec : Boolean := True;
-
-         procedure Vertex_Has_Inf_Execution
-           (V  : Flow_Graphs.Vertex_Id;
-            TV :  out Flow_Graphs.Simple_Traversal_Instruction);
-
-         ------------------------------
-         -- Vertex_Has_Inf_Execution --
-         ------------------------------
-
-         procedure Vertex_Has_Inf_Execution
-           (V  : Flow_Graphs.Vertex_Id;
-            TV : out Flow_Graphs.Simple_Traversal_Instruction)
-         is
-         begin
-            if V = FA.Start_Vertex then
-               --  If we reach the start vertex (remember that we are going
-               --  backwards) it means that there is at least one path without
-               --  an infinite loop and we can set Only_Inf_Exec to false and
-               --  abort the traversal.
-               Only_Inf_Exec := False;
-               TV := Flow_Graphs.Abort_Traversal;
-
-            elsif FA.Atr (V).Execution = Infinite_Loop then
-               --  If we find a vertex with Infinite_Loop execution then we set
-               --  Only_Inf_Exec to true and jump to another path.
-               TV := Flow_Graphs.Skip_Children;
-
-            else
-               TV := Flow_Graphs.Continue;
-            end if;
-         end Vertex_Has_Inf_Execution;
-
-      --  Start of processing for Has_Only_Infinite_Execution
-
-      begin
-         FA.CFG.DFS (Start         => V_Final,
-                     Include_Start => True,
-                     Visitor       => Vertex_Has_Inf_Execution'Access,
-                     Reversed      => True);
-
-         return Only_Inf_Exec;
-      end Has_Only_Infinite_Execution;
-
-      ------------------
-      -- Emit_Message --
-      ------------------
-
-      procedure Emit_Message (Var              : Flow_Id;
-                              Vertex           : Flow_Graphs.Vertex_Id;
-                              Is_Initialized   : Boolean;
-                              Is_Uninitialized : Boolean)
-      is
-         type Msg_Kind is (Init, Unknown, Err);
-
-         V_Key         : Flow_Id renames FA.PDG.Get_Key (Vertex);
-
-         V_Initial     : constant Flow_Graphs.Vertex_Id :=
-           FA.PDG.Get_Vertex (Change_Variant (Var, Initial_Value));
-
-         Kind          : Msg_Kind :=
-           (if Is_Initialized and Is_Uninitialized then Unknown
-            elsif Is_Initialized                   then Init
-            else                                        Err);
-
-         N             : Node_Or_Entity_Id := FA.Atr (Vertex).Error_Location;
-         Msg           : Unbounded_String;
-
-         V_Error       : Flow_Graphs.Vertex_Id;
-         V_Goal        : Flow_Graphs.Vertex_Id;
-         V_Allowed     : Flow_Graphs.Vertex_Id := Flow_Graphs.Null_Vertex;
-
-         Is_Final_Use  : constant Boolean := V_Key.Variant = Final_Value;
-         Is_Global     : constant Boolean := FA.Atr (V_Initial).Is_Global;
-         Default_Init  : constant Boolean := Is_Default_Initialized (Var);
-         Is_Function   : constant Boolean := Is_Function_Entity (Var);
-
-      begin
-         case Kind is
-            when Unknown | Err =>
-               declare
-                  Defined_Elsewhere : Boolean;
-               begin
-                  Might_Be_Defined_In_Other_Path
-                    (V_Initial => V_Initial,
-                     V_Use     => Vertex,
-                     Found     => Defined_Elsewhere,
-                     V_Error   => V_Error);
-                  if not Defined_Elsewhere then
-                     --  Upgrade check to high if a more detailed path
-                     --  analysis shows we can't feasibly set it.
-                     Kind := Err;
-                  end if;
-               end;
-            when others =>
-               V_Error := Vertex;
-         end case;
-
-         --  Assemble appropriate message for failed initialization. We deal
-         --  with a bunch of special cases first, but if they don't trigger we
-         --  create the standard message.
-         if Kind = Init then
-            Msg := To_Unbounded_String ("initialization of & proved");
-         elsif Is_Function then
-            Msg := To_Unbounded_String ("function & does not return on ");
-            if Has_Only_Infinite_Execution (Vertex) then
-               Append (Msg, "any path");
-            else
-               Append (Msg, "some paths");
-            end if;
-         else
-            Msg := To_Unbounded_String ("&");
-            if Kind = Err then
-               Append (Msg, " is not");
-            else
-               Append (Msg, " might not be");
-            end if;
-            if Default_Init then
-               Append (Msg, " set");
-            elsif Has_Async_Readers (Var) then
-               Append (Msg, " written");
-            else
-               Append (Msg, " initialized");
-            end if;
-            if Is_Final_Use and not Is_Global then
-               Append (Msg, " in &");
-            end if;
-         end if;
-
-         if not Is_Final_Use then
-            V_Goal    := V_Error;
-            V_Allowed := Vertex;
-            N         := First_Variable_Use
-              (N        => Error_Location (FA.PDG, FA.Atr, V_Error),
-               FA       => FA,
-               Scope    => FA.B_Scope,
-               Var      => Var,
-               Precise  => True,
-               Targeted => True);
-         elsif Is_Global then
-            V_Goal := FA.Helper_End_Vertex;
-            N      := Find_Global (FA.Analyzed_Entity, Var);
-         else
-            V_Goal := V_Error;
-         end if;
-
-         if Kind = Init and then Is_Function_Entity (Var) then
-            pragma Assert (Get_Direct_Mapping_Id (Var) = FA.Analyzed_Entity);
-            --  We special case this, so we don't emit "X" is initialized
-            --  messages for the "variable" that represents the function's
-            --  result.
-            return;
-         end if;
-
-         Error_Msg_Flow
-           (FA        => FA,
-            Tracefile => Tracefile,
-            Msg       => To_String (Msg),
-            N         => N,
-            F1        => Var,
-            F2        => Direct_Mapping_Id (FA.Analyzed_Entity),
-            Tag       => Uninitialized,
-            Severity  => (case Kind is
-                          when Init    => Info_Kind,
-                          when Unknown => (if Default_Init
-                                           then Low_Check_Kind
-                                           else Medium_Check_Kind),
-                          when Err     => (if Default_Init
-                                           then Medium_Check_Kind
-                                           else High_Check_Kind)),
-            Vertex    => Vertex);
-
-         if Is_Constituent (Var)
-           and then Kind in Unknown | Err
-           and then FA.Kind in Kind_Package | Kind_Package_Body
+      Expanded_Initializes : constant Node_Sets.Set :=
+        (if FA.Kind in Kind_Package | Kind_Package_Body
            and then Present (FA.Initializes_N)
-         then
-            Error_Msg_Flow
-              (FA           => FA,
-               Tracefile    => Tracefile,
-               Msg          => "initialization of & is specified @",
-               N            => N,
-               F1           => Direct_Mapping_Id
-                                 (Encapsulating_State
-                                    (Get_Direct_Mapping_Id (Var))),
-               F2           => Direct_Mapping_Id (FA.Initializes_N),
-               Tag          => Uninitialized,
-               Severity     => (case Kind is
-                                when Init    => Info_Kind,
-                                when Unknown => Medium_Check_Kind,
-                                when Err     => High_Check_Kind),
-               Vertex       => Vertex,
-               Continuation => True);
-         end if;
-
-         if Kind /= Init then
-            Mark_Definition_Free_Path
-              (From      => FA.Start_Vertex,
-               To        => V_Goal,
-               Var       => Var,
-               V_Allowed => V_Allowed);
-         end if;
-
-         --  In case of a subprogram with an output global which is actually
-         --  used as an input in its body, we add more information to the error
-         --  message.
-         if Kind = Err
-           and then not Default_Init
-           and then Is_Global
-         then
-            Error_Msg_Flow (FA           => FA,
-                            Msg          => "& is not an input " &
-                              "in the Global contract of subprogram " &
-                              "#",
-                            Severity     => High_Check_Kind,
-                            N            => N,
-                            F1           => Var,
-                            F2           =>
-                              Direct_Mapping_Id (FA.Spec_Entity),
-                            Tag          => Uninitialized,
-                            Continuation => True);
-
-            declare
-               Msg : constant String :=
-                 (if Has_Async_Readers (Var)
-                  then "either make & an input in the Global contract or " &
-                    "write to it before use"
-                  else "either make & an input in the Global contract or " &
-                    "initialize it before use");
-
-            begin
-               Error_Msg_Flow (FA           => FA,
-                               Msg          => Msg,
-                               Severity     => High_Check_Kind,
-                               N            => N,
-                               F1           => Var,
-                               Tag          => Uninitialized,
-                               Continuation => True);
-            end;
-         end if;
-      end Emit_Message;
+         then Expand_Initializes
+         else Node_Sets.Empty_Set);
+      --  Objects that appear (either directly or via an abstract state) in LHS
+      --  of the Initializes contract of the currently analyzed pacakge, if
+      --  any.
+      --
+      --  Note: expanding the Initializes contract is much simpler and more
+      --  robust than locating an object there (or rather an abstract state
+      --  that contains such an object). Also, expansion saves us from dealing
+      --  with anomalies like Part_Of in private child units.
 
    --  Start of processing for Find_Use_Of_Uninitialized_Variables
 
@@ -2688,25 +2759,36 @@ package body Flow.Analysis is
                begin
                   if (FA.Atr (Initial_Value_Of_Var_Used).Is_Initialized
                       and then not AS_In_Generated_Initializes (Var_Used))
+
+                    --  Skip this check for objects written when elaborating a
+                    --  package, unless they appear in the explicit Initializes
+                    --  contract. For them we either emit an "info:
+                    --  initialization proved" message here, or an error in
+                    --  Check_Initializes_Contract.
                     or else
-                      (FA.Kind in Kind_Package | Kind_Package_Body
-                       and then
-                         (Is_Abstract_State (Var_Used)
-                          or else
-                            (Final_Value_Of_Var_Used = V
-                             and then
-                               Mentioned_On_Generated_Initializes (Var_Used))))
+                      (Final_Value_Of_Var_Used = V
+                         and then
+                       FA.Kind in Kind_Package | Kind_Package_Body
+                         and then
+                       not Expanded_Initializes.Contains
+                              (Get_Direct_Mapping_Id (Var_Used)))
+
+                    --  Skip obvious messages about initialization of constants
+
+                    or else
+                      Is_Constant (Var_Used)
+
+                    --  Skip annoying message about initialization of records
+                    --  that carry no data.
+
                     or else
                       (Var_Used.Kind in Direct_Mapping | Record_Field
                        and then
-                         (Is_Constant_Object (Get_Direct_Mapping_Id (Var_Used))
-                          or else
-                            (Is_Type (Etype (Get_Direct_Mapping_Id (Var_Used)))
+                         ((Is_Type (Etype (Get_Direct_Mapping_Id (Var_Used)))
                              and then
-                               (Is_Empty_Record_Type
-                                  (Etype
-                                     (Get_Direct_Mapping_Id (Var_Used)))))
-                          or else
+                           (Is_Empty_Record_Type
+                              (Etype (Get_Direct_Mapping_Id (Var_Used)))))
+                            or else
                             (Var_Used.Kind = Record_Field
                              and then Var_Used.Facet = Normal_Part
                              and then
@@ -2725,12 +2807,6 @@ package body Flow.Analysis is
                      --  they define it. We record initialized / uninitialized
                      --  reads accordingly.
                      --
-                     --  Note we skip this check for abstract state iff we
-                     --  analyze a package, since it is OK to leave some state
-                     --  uninitialized (Check_Initializes_Contract will pick
-                     --  this up). We also skip this check when checking final
-                     --  vertices of variables mentioned in the generated
-                     --  Initializes aspect.
                      for V_Def of
                        FA.DDG.Get_Collection (V, Flow_Graphs.In_Neighbours)
                      loop
@@ -3007,7 +3083,7 @@ package body Flow.Analysis is
                              (FA        => FA,
                               Tracefile => Tracefile,
                               Msg       => "export & must not depend " &
-                                "on Proof_In &",
+                                           "on Proof_In &",
                               SRM_Ref   => "6.1.4(17)",
                               N         => Find_Global (FA.Analyzed_Entity,
                                                         Input),
@@ -3181,6 +3257,7 @@ package body Flow.Analysis is
       --  Start of processing for Warn_About_Unreferenced_Constants
 
       begin
+
          --  Sanity check that we do have a Refined_State aspect
          pragma Assert (Present (Refined_State_N));
 
@@ -3199,11 +3276,15 @@ package body Flow.Analysis is
 
    begin
       if Present (Abstract_States (FA.Spec_Entity)) then
-         --  If the package has an abstract state aspect then issue high
-         --  checks for every constant with variable input that is part of
+         --  If the package has a non-null abstract state aspect then issue
+         --  high checks for every constant with variable input that is part of
          --  the package's hidden state and is not exposed through a state
          --  abstraction.
-         if Entity_Body_In_SPARK (FA.Spec_Entity) then
+         --  For a null abstract state the front end will check the absence of
+         --  state variables.
+         if not Has_Null_Abstract_State (FA.Spec_Entity)
+           and then Entity_Body_In_SPARK (FA.Spec_Entity)
+         then
             Warn_About_Unreferenced_Constants (FA.Spec_Entity);
          end if;
 

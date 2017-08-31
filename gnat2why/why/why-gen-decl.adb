@@ -49,10 +49,11 @@ package body Why.Gen.Decl is
      (Section       : W_Section_Id;
       Param_Ty_Name : W_Name_Id;
       Field_Id      : W_Identifier_Id;
-      SPARK_Node    : Node_Or_Entity_Id := Empty);
+      SPARK_Node    : Node_Or_Entity_Id := Empty)
+   with Pre => Field_Id /= Why_Empty;
    --  Emit declaration of a projection for a Why3 record type. The projection
    --  projects values of the record type to given field of this type.
-   --  The declaration consists of a declaration  of a function that returns a
+   --  The declaration consists of a declaration of a function that returns a
    --  value of a field Field_Id of a value of the type Param_Ty_Name and
    --  declaration projection metas (see Emit_Projection_Metas).
    --  @param Section the section where the projection declaration will be
@@ -60,7 +61,7 @@ package body Why.Gen.Decl is
    --  @param Param_Ty_Name the name of the record type being projected.
    --  @param Field_Id the identifier of the field to that the record is
    --      projected. Its type is the type to that the record type is projected
-   --      and must be different from Why_Empty.
+   --      (and must be different from Why_Empty).
    --  @param SPARK_Node if the projection projects SPARK record to the SPARK
    --      field, the AST node corresponding to the field, Empty otherwise.
    --      The string "." & Node_Or_Entity_Id'Image (SPARK_Node) will be
@@ -148,9 +149,7 @@ package body Why.Gen.Decl is
       "<"          => Standard."<",
       "="          => Standard."=");
 
-   use Projection_Names;
-
-   Projection_Names_Decls : Map;
+   Projection_Names_Decls : Projection_Names.Map;
    --  Map from the name of projection to the number of declarations of
    --  projections with this name.
    --  The name of the projection is composed from the name of the type that
@@ -173,6 +172,8 @@ package body Why.Gen.Decl is
       Field_Id      : W_Identifier_Id;
       SPARK_Node    : Node_Or_Entity_Id := Empty)
    is
+      use Projection_Names;
+
       --  Projection function name
       Param_Ty_Name_Str : constant String :=
         Get_Name_String (Get_Symbol (Param_Ty_Name));
@@ -191,7 +192,7 @@ package body Why.Gen.Decl is
         Proj_Name
         & (if Proj_Name_Decls_Num = 1
            then ""
-           else Image (Proj_Name_Decls_Num, 1))
+           else "__" & Image (Proj_Name_Decls_Num, 1))
         & "__projection";
 
       --  Parameter type and identifier

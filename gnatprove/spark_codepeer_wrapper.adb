@@ -23,8 +23,8 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters;             use Ada.Characters;
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Characters;
+with Ada.Characters.Handling;
 with Ada.Command_Line;           use Ada.Command_Line;
 with Ada.Containers.Hashed_Sets;
 with Ada.Directories;            use Ada.Directories;
@@ -63,6 +63,10 @@ procedure SPARK_CodePeer_Wrapper is
 
    RTS_Arg      : String_Access;
    --  contains the argument --RTS=<path> (including the --RTS prefix), if
+   --  present
+
+   Target_Arg      : String_Access;
+   --  contains the argument --target=targ (including the --target prefix), if
    --  present
 
    Library      : String_Access;
@@ -301,6 +305,10 @@ procedure SPARK_CodePeer_Wrapper is
          Append_Arg (RTS_Arg.all);
       end if;
 
+      if Target_Arg /= null then
+         Append_Arg (Target_Arg.all);
+      end if;
+
       --  Compilation switch -gnateF ensures that CodePeer interprets
       --  floating-point overflows as errors even for the predefined
       --  floating-point types.
@@ -509,6 +517,10 @@ procedure SPARK_CodePeer_Wrapper is
             elsif Starts_With (S, "--RTS=") then
 
                RTS_Arg := new String'(S);
+
+            elsif Starts_With (S, "--target=") then
+
+               Target_Arg := new String'(S);
 
             elsif Starts_With (S, "-j") then
                Num_Procs := new String'(S (3 .. S'Last));
