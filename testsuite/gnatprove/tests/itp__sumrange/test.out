@@ -1,0 +1,28 @@
+sum.adb:9:24: info: overflow check proved (CVC4: 1 VC)
+sum.adb:9:26: info: precondition proved (CVC4: 1 VC)
+sum.adb:9:36: info: range check proved (CVC4: 1 VC)
+sum.adb:17:33: info: loop invariant initialization proved (CVC4: 1 VC)
+sum.adb:17:33: info: loop invariant preservation proved (CVC4: 1 VC)
+sum.adb:17:33: info: overflow check proved (CVC4: 1 VC)
+sum.adb:17:38: info: initialization of "S" proved
+sum.adb:17:46: info: overflow check proved (CVC4: 1 VC)
+sum.adb:18:33: info: initialization of "S" proved
+sum.adb:18:33: medium: loop invariant might fail after first iteration, cannot prove S = Sum (A, I, K) (e.g. when A = (others => 0) and I = 0 and K = 2 and S = -1)
+sum.adb:18:33: medium: loop invariant might fail in first iteration, cannot prove S = Sum (A, I, K) (e.g. when A = (others => 0) and I = 0 and K = 0 and S = 0)
+sum.adb:18:37: info: function contract not available for proof ("Sum" is recursive)
+sum.adb:18:37: info: precondition proved (CVC4: 1 VC)
+sum.adb:18:48: info: range check proved (CVC4: 1 VC)
+sum.adb:19:15: info: initialization of "S" proved
+sum.adb:19:17: info: overflow check proved (CVC4: 1 VC)
+sum.adb:21:14: info: initialization of "S" proved
+sum.ads:11:13: medium: subprogram "Sum" might not terminate, terminating annotation could be incorrect
+sum.ads:14:14: info: overflow check proved (CVC4: 1 VC)
+sum.ads:14:14: info: postcondition proved (CVC4: 3 VC)
+sum.ads:14:42: info: overflow check proved (CVC4: 1 VC)
+sum.ads:15:42: info: overflow check proved (CVC4: 1 VC)
+sum.ads:15:44: info: function contract not available for proof ("Sum" is recursive)
+sum.ads:15:44: info: precondition proved (CVC4: 1 VC)
+sum.ads:15:54: info: range check proved (CVC4: 1 VC)
+sum.ads:28:14: medium: postcondition might fail, cannot prove Simple_Sum'Result = Sum (A, I, J) (e.g. when A = (others => 0) and I = 0 and J = 2 and Simple_Sum'Result = -1)
+sum.ads:28:34: info: function contract not available for proof ("Sum" is recursive)
+sum.ads:28:34: info: precondition proved (CVC4: 1 VC)
