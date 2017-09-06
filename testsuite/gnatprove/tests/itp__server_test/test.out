@@ -3,99 +3,44 @@ test.adb:11:16: medium: postcondition might fail
 
 {"ide_request": "Get_first_unproven_node", "node_ID":91}
 
-{"ide_request": "Get_task", "node_ID":91, "do_intros": false}
+{"ide_request": "Get_task", "node_ID":91, "do_intros": false, "loc": false}
 
-{"ide_request": "Get_task", "node_ID":94, "do_intros": false}
+{"ide_request": "Get_task", "node_ID":94, "do_intros": false, "loc": false}
 
-{"detached":false, "name":"WP_parameter def.0 [postcondition]", "node_ID":91,
-"node_type":"NGoal", "notification":"New_node",
-"parent_ID":90}>>>>
-{"node_ID":91, "notification":"Node_change", "update":{"proved":false,
-"update_info":"Proved"}}>>>>
-{"detached":false, "name":"CVC4 (1.5-gnatprove)", "node_ID":92,
-"node_type":"NProofAttempt", "notification":"New_node",
-"parent_ID":91}>>>>
-{"node_ID":92, "notification":"Node_change",
-"update":{"limit":{"limit_mem":0, "limit_steps":22000, "limit_time":120},
-"obsolete":false, "proof_attempt":{"proof_attempt":"Done",
-"prover_result":{"pr_answer":"Unknown", "pr_model":"", "pr_output":"",
-"pr_status":"WEXITED", "pr_steps":14, "pr_time":0.000000}},
-"update_info":"Proof_status_change"}}>>>>
-{"detached":false, "name":"introduce_premises", "node_ID":93,
-"node_type":"NTransformation", "notification":"New_node",
-"parent_ID":91}>>>>
-{"node_ID":93, "notification":"Node_change", "update":{"proved":false,
-"update_info":"Proved"}}>>>>
-{"detached":false, "name":"WP_parameter def.0.0 [postcondition]",
-"node_ID":94, "node_type":"NGoal", "notification":"New_node",
-"parent_ID":93}>>>>
-{"node_ID":94, "notification":"Node_change", "update":{"proved":false,
-"update_info":"Proved"}}>>>>
-{"node_ID1":91, "node_ID2":94,
-"notification":"Next_Unproven_Node_Id"}>>>>
-{"list_loc":[{"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":11}}, {"color":"Goal_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":11}}, {"color":"Goal_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":11}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":11}}, {"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":11}}, {"color":"Goal_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":11}}, {"color":"Goal_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":11}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":11}}, {"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":11}}, {"color":"Goal_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":11}}, {"color":"Goal_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":11}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":11}}, {"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":11}}, {"color":"Goal_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":11}}, {"color":"Goal_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":11}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":11}}, {"color":"Premise_color", "loc":{"col1":2, "col2":636,
-"file":"..//test.mlw", "line":2281}}, {"color":"Premise_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":15}},
-{"color":"Premise_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":15}}, {"color":"Premise_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":8}}, {"color":"Premise_color", "loc":{"col1":2,
-"col2":897, "file":"..//test.mlw", "line":2274}}, {"color":"Premise_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":8}},
-{"color":"Premise_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":8}}, {"color":"Premise_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":8}}, {"color":"Premise_color", "loc":{"col1":2,
-"col2":973, "file":"..//test.mlw", "line":2273}}, {"color":"Premise_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":3}},
-{"color":"Premise_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":3}}, {"color":"Premise_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":3}}, {"color":"Premise_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":3}}, {"color":"Premise_color",
-"loc":{"col1":2, "col2":1488, "file":"..//test.mlw", "line":2262}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":3}}], "node_ID":91, "notification":"Task",
-"task":"----------------------------- Local context ---------------------------/n/n----------------------------- Goal ---------------------------/n/nforall 'test__parity__result:int, 'result:int, 'test__parity__result1:int,/n'test__parity__result2:int, 'test__parity__result3:int,/n'test__parity__result4:int, 'test__parity__result5:int./nforall 'result1:int./n'dynamic_property 'first 'last 'A /////n(('A >  0)) /////n((((('test__parity__result1 = 'test__parity__result2)) /////n   (('test__parity__result3 = 'test__parity__result1))) /////n  (('result = 'test__parity__result)) //// (('test__parity__result1 = 'A))) /////n (('mk_int__ref 'test__parity__result4 = 'mk_int__ref 'test__parity__result2)) /////n (('test__parity__result5 = 'test__parity__result3))) /////n(('result1 = 'test__parity__result4)) ->/n(exists 'x:int./n (((0 <= 'x)) //// (('x <= 255))) /////n ((('A = ('x + 'x))) //// (('A = (('x + 'x) + 1)))))"}>>>>
-{"list_loc":[{"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":11}}, {"color":"Goal_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":11}}, {"color":"Goal_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":11}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":11}}, {"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":11}}, {"color":"Goal_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":11}}, {"color":"Goal_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":11}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":11}}, {"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":11}}, {"color":"Goal_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":11}}, {"color":"Goal_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":11}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":11}}, {"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":11}}, {"color":"Goal_color", "loc":{"col1":0,
-"col2":0, "file":"..//test.adb", "line":11}}, {"color":"Goal_color",
-"loc":{"col1":0, "col2":0, "file":"..//test.adb", "line":11}},
-{"color":"Goal_color", "loc":{"col1":0, "col2":0, "file":"..//test.adb",
-"line":11}}, {"color":"Goal_color", "loc":{"col1":0, "col2":0,
-"file":"..//test.adb", "line":3}}], "node_ID":94, "notification":"Task",
-"task":"----------------------------- Local context ---------------------------/n/nfunction 'Parity5 : int/n/nfunction 'result1 : int/n/nfunction 'Parity4 : int/n/nfunction 'Parity3 : int/n/nfunction 'Parity2 : int/n/nfunction 'Parity1 : int/n/nfunction 'Parity : int/n/nfunction 'result : int/n/naxiom 'H : 'dynamic_property 'first 'last 'A/n/naxiom 'H1 : ('A >  0)/n/naxiom 'H2 : ('Parity4 = 'Parity3)/n/naxiom 'H3 : ('Parity2 = 'Parity4)/n/naxiom 'H4 : ('result1 = 'Parity5)/n/naxiom 'H5 : ('Parity4 = 'A)/n/naxiom 'H6 : ('mk_int__ref 'Parity1 = 'mk_int__ref 'Parity3)/n/naxiom 'H7 : ('Parity = 'Parity2)/n/naxiom 'H8 : ('result = 'Parity1)/n/n----------------------------- Goal ---------------------------/n/nexists 'x:int./n(((0 <= 'x)) //// (('x <= 255))) /////n((('A = ('x + 'x))) //// (('A = (('x + 'x) + 1))))"}>>>>
+{"detached" : false , "name" : "WP_parameter def.0 [postcondition]" ,
+"node_ID" : 91 , "node_type" : "NGoal" , "notification" : "New_node" ,
+"parent_ID" : 90 }>>>>
+{"node_ID" : 91 , "notification" : "Node_change" ,
+"update" : {"proved" : false ,
+"update_info" : "Proved" } }>>>>
+{"detached" : false , "name" : "CVC4 (1.5-gnatprove)" , "node_ID" : 92 ,
+"node_type" : "NProofAttempt" , "notification" : "New_node" ,
+"parent_ID" : 91 }>>>>
+{"node_ID" : 92 , "notification" : "Node_change" ,
+"update" : {"limit" : {"limit_mem" : 0 , "limit_steps" : 22000 ,
+"limit_time" : 120 } , "obsolete" : false ,
+"proof_attempt" : {"proof_attempt" : "Done" ,
+"prover_result" : {"pr_answer" : "Unknown" , "pr_model" : "" ,
+"pr_output" : "" , "pr_status" : "WEXITED" , "pr_steps" : 14 ,
+"pr_time" : 0.000000 } } ,
+"update_info" : "Proof_status_change" } }>>>>
+{"detached" : false , "name" : "introduce_premises" , "node_ID" : 93 ,
+"node_type" : "NTransformation" , "notification" : "New_node" ,
+"parent_ID" : 91 }>>>>
+{"node_ID" : 93 , "notification" : "Node_change" ,
+"update" : {"proved" : false ,
+"update_info" : "Proved" } }>>>>
+{"detached" : false , "name" : "WP_parameter def.0.0 [postcondition]" ,
+"node_ID" : 94 , "node_type" : "NGoal" , "notification" : "New_node" ,
+"parent_ID" : 93 }>>>>
+{"node_ID" : 94 , "notification" : "Node_change" ,
+"update" : {"proved" : false ,
+"update_info" : "Proved" } }>>>>
+{"node_ID1" : 91 , "node_ID2" : 94 ,
+"notification" : "Next_Unproven_Node_Id" }>>>>
+{"list_loc" : [] , "node_ID" : 91 , "notification" : "Task" ,
+"task" : "----------------------------- Local context ---------------------------/n/n----------------------------- Goal ---------------------------/n/ngoal WP_parameter def :/n  forall test__parity__result:int, result:int, test__parity__result1:int,/n   test__parity__result2:int, test__parity__result3:int,/n   test__parity__result4:int, test__parity__result5:int./n   forall result1:int./n    dynamic_property first last A /////n    A > 0 /////n    (((test__parity__result1 = test__parity__result2 /////n       test__parity__result3 = test__parity__result1) /////n      result = test__parity__result //// test__parity__result1 = A) /////n     mk int__ref test__parity__result4 = mk int__ref test__parity__result2 /////n     test__parity__result5 = test__parity__result3) /////n    result1 = test__parity__result4 ->/n    (exists x:int. (0 <= x //// x <= 255) //// (A = (x + x) //// A = ((x + x) + 1)))" }>>>>
+{"list_loc" : [] , "node_ID" : 94 , "notification" : "Task" ,
+"task" : "----------------------------- Local context ---------------------------/n/nconstant Parity5 : int/n/nconstant result1 : int/n/nconstant Parity4 : int/n/nconstant Parity3 : int/n/nconstant Parity2 : int/n/nconstant Parity1 : int/n/nconstant Parity : int/n/nconstant result : int/n/naxiom H : dynamic_property first last A/n/naxiom H1 : A > 0/n/naxiom H2 : Parity4 = Parity3/n/naxiom H3 : Parity2 = Parity4/n/naxiom H4 : result1 = Parity5/n/naxiom H5 : Parity4 = A/n/naxiom H6 : mk int__ref Parity1 = mk int__ref Parity3/n/naxiom H7 : Parity = Parity2/n/naxiom H8 : result = Parity1/n/n----------------------------- Goal ---------------------------/n/ngoal WP_parameter def :/n  exists x:int. (0 <= x //// x <= 255) //// (A = (x + x) //// A = ((x + x) + 1))" }>>>>
 rlimit: Real time limit (20 s) exceeded
 
