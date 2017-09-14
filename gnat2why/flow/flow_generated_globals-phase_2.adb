@@ -1293,6 +1293,10 @@ package body Flow_Generated_Globals.Phase_2 is
                when EK_Remote_States =>
                   State_Abstractions.Union (V.The_Remote_States);
 
+               when EK_Predef_Init_Vars =>
+                  Initialized_Vars_And_States.Union
+                    (V.The_Predef_Init_Vars);
+
                when EK_Volatiles =>
                   Async_Writers_Vars.Union (V.The_Async_Writers);
                   Volatile_Vars.Union (V.The_Async_Writers);
@@ -1812,7 +1816,9 @@ package body Flow_Generated_Globals.Phase_2 is
                         null;
 
                      when E_Package =>
-                        Dump (Indent & "Initializes  ", Contr.Initializes);
+                        --  ??? by reusing the Dump procedure defined for
+                        --  Input/Ouput/Proof_In, we get an extra indentation
+                        Dump ("Initializes  ", Contr.Initializes);
 
                      when others =>
                         null;
@@ -2075,7 +2081,13 @@ package body Flow_Generated_Globals.Phase_2 is
                   Initialized_Vars_And_States.Union (II.LHS);
                   Initialized_Vars_And_States.Union (II.LHS_Proof);
 
+                  --  ??? here we put the contract into the old-gg container;
+                  --  this should be removed as part of moving synthesis of the
+                  --  Initializes contract to the new-gg (but this can be done
+                  --  merely as a refactoring)
                   Initializes_Aspects.Insert (P.Name, II);
+
+                  Update.Initializes := II.LHS or II.LHS_Proof;
                end;
             end if;
 
@@ -2519,20 +2531,17 @@ package body Flow_Generated_Globals.Phase_2 is
    --  Start of processing for Directly_Called_Protected_Objects
 
    begin
-      --  Vertex V might be null if we only have a spec for entity Ent
-      if V /= Null_Vertex then
-         --  Collect objects from the caller subprogram itself
-         Collect_Objects_From_Subprogram (EN);
+      --  Collect objects from the caller subprogram itself
+      Collect_Objects_From_Subprogram (EN);
 
-         --  and from all its callees
-         for Obj of Call_Graph.Get_Collection (V, Out_Neighbours) loop
-            declare
-               Callee : constant Entity_Name := Call_Graph.Get_Key (Obj);
-            begin
-               Collect_Objects_From_Subprogram (Callee);
-            end;
-         end loop;
-      end if;
+      --  and from all its callees
+      for Obj of Call_Graph.Get_Collection (V, Out_Neighbours) loop
+         declare
+            Callee : constant Entity_Name := Call_Graph.Get_Key (Obj);
+         begin
+            Collect_Objects_From_Subprogram (Callee);
+         end;
+      end loop;
 
       return Res;
    end Directly_Called_Protected_Objects;

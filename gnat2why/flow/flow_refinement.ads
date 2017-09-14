@@ -277,10 +277,9 @@ package Flow_Refinement is
    function Is_Initialized_At_Elaboration (E : Checked_Entity_Id;
                                            S : Flow_Scope)
                                            return Boolean
-   with Pre => Ekind (E) in Object_Kind
-                          | E_Abstract_State
-                          | E_Protected_Type
-                          | E_Task_Type;
+   with Pre => Ekind (E) in E_Abstract_State
+                          | E_Constant
+                          | E_Variable;
    --  Checks if the given entity E is initialized at elaboration, as seen from
    --  scope S. For example if you have a nested package where:
    --
@@ -320,5 +319,11 @@ package Flow_Refinement is
                                              Typ        : Type_Id)
                                              return Boolean
    with Pre => Has_Invariants_In_SPARK (Typ);
+   --  Returns True iff Subprogram is a boundary subprogram for Typ, i.e. if it
+   --  is declared inside the immediate scope of Typ, and it is visible outside
+   --  the immediate scope of Typ.
+   --  Because we currently do not support invariants on types declared in a
+   --  nested package it is enough to use Is_Globally_Visible to determine if
+   --  Subprogram is a boundary subprogram for type Typ.
 
 end Flow_Refinement;

@@ -32,6 +32,7 @@ with Output;
 with Pprint;                             use Pprint;
 with Sem_Ch12;                           use Sem_Ch12;
 with Sem_Eval;                           use Sem_Eval;
+with Sem_Type;                           use Sem_Type;
 with SPARK_Definition;                   use SPARK_Definition;
 with SPARK_Util.Types;                   use SPARK_Util.Types;
 with Stand;                              use Stand;
@@ -1413,6 +1414,9 @@ package body SPARK_Util is
    function Is_Package_State (E : Entity_Id) return Boolean is
      (case Ekind (E) is
          when E_Abstract_State => True,
+         when E_Constant       => Ekind (Scope (E)) = E_Package
+                                  and then not In_Generic_Actual (E)
+                                  and then Has_Variable_Input (E),
          when E_Variable       => Ekind (Scope (E)) = E_Package,
          when others           => False);
 
@@ -1480,6 +1484,37 @@ package body SPARK_Util is
    function Is_Predicate_Function_Call (N : Node_Id) return Boolean is
      (Nkind (N) = N_Function_Call
         and then Is_Predicate_Function (Entity (Name (N))));
+
+   ----------------------------------------
+   -- Is_Predefined_Initialized_Variable --
+   ----------------------------------------
+
+   function Is_Predefined_Initialized_Variable (E : Entity_Id) return Boolean
+   is
+   begin
+      if Ekind (E) = E_Variable
+        and then In_Predefined_Unit (E)
+      then
+         --  In general E might not be in SPARK (e.g. if it came from the front
+         --  end globals), so we prefer not to risk a precise check and crash
+         --  by an accident. Instead, we do a simple and robust check that is
+         --  known to be potentially incomplete (e.g. it will not recognize
+         --  variables with default initialization).
+         declare
+            Full_Type : constant Entity_Id :=
+              (if Is_Private_Type (Etype (E))
+               then Full_View (Etype (E))
+               else Etype (E));
+
+         begin
+            return (Is_Scalar_Type (Full_Type)
+                    or else Is_Access_Type (Full_Type))
+              and then Present (Expression (Parent (E)));
+         end;
+      else
+         return False;
+      end if;
+   end Is_Predefined_Initialized_Variable;
 
    -------------------------------------
    -- Is_Protected_Component_Or_Discr --

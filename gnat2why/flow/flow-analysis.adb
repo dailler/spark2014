@@ -38,11 +38,12 @@ with Stand;                       use Stand;
 
 with Common_Iterators;            use Common_Iterators;
 with Gnat2Why.Annotate;           use Gnat2Why.Annotate;
+with Gnat2Why_Args;               use Gnat2Why_Args;
 with SPARK_Definition;            use SPARK_Definition;
 with SPARK_Frame_Conditions;      use SPARK_Frame_Conditions;
-with SPARK_Util;                  use SPARK_Util;
 with SPARK_Util.Subprograms;      use SPARK_Util.Subprograms;
 with SPARK_Util.Types;            use SPARK_Util.Types;
+with SPARK_Util;                  use SPARK_Util;
 with VC_Kinds;                    use VC_Kinds;
 
 with Flow.Analysis.Antialiasing;
@@ -2163,13 +2164,21 @@ package body Flow.Analysis is
          if not Is_Final_Use then
             V_Goal    := V_Error;
             V_Allowed := Vertex;
-            N         := First_Variable_Use
-              (N        => Error_Location (FA.PDG, FA.Atr, V_Error),
-               FA       => FA,
-               Scope    => FA.B_Scope,
-               Var      => Var,
-               Precise  => True,
-               Targeted => True);
+            N         := Error_Location (FA.PDG, FA.Atr, V_Error);
+            --  When the message is a failed check we produce a more precise
+            --  location (but this can be very expensive, see the test for
+            --  Q824-007 for a good example). So, if the message is an info
+            --  message AND we use --report=fail (the default), we don't do
+            --  this refinement.
+            if not (Kind = Init and Gnat2Why_Args.Report_Mode = GPR_Fail) then
+               N := First_Variable_Use
+                 (N        => N,
+                  FA       => FA,
+                  Scope    => FA.B_Scope,
+                  Var      => Var,
+                  Precise  => True,
+                  Targeted => True);
+            end if;
          elsif Is_Global then
             V_Goal := FA.Helper_End_Vertex;
             N      := Find_Global (FA.Analyzed_Entity, Var);
@@ -3728,7 +3737,6 @@ package body Flow.Analysis is
    procedure Check_Consistent_AS_For_Private_Child
      (FA : in out Flow_Analysis_Graphs)
    is
-      Scop : constant Entity_Id := Scope (FA.Spec_Entity);
    begin
       if Is_Child_Unit (FA.Spec_Entity)
         and then Is_Private_Descendant (FA.Spec_Entity)
@@ -3737,26 +3745,22 @@ package body Flow.Analysis is
             declare
                Encapsulating : constant Entity_Id :=
                  Encapsulating_State (Child_State);
+
             begin
                if Present (Encapsulating) then
-                  for State of Iter (Abstract_States (Scop)) loop
-                     if State = Encapsulating then
-                        if Refinement_Exists (State)
-                          and then not Find_In_Refinement (State, Child_State)
-                        then
-                           Error_Msg_Flow
-                             (FA       => FA,
-                              Msg      => "Refinement of % shall mention %",
-                              Severity => Error_Kind,
-                              F1       => Direct_Mapping_Id (Encapsulating),
-                              F2       => Direct_Mapping_Id (Child_State),
-                              N        => Scop,
-                              SRM_Ref  => "7.2.6(6)");
-                        end if;
-                     else
-                        null;
-                     end if;
-                  end loop;
+                  if Refinement_Exists (Encapsulating)
+                    and then not Find_In_Refinement (Encapsulating,
+                                                     Child_State)
+                  then
+                     Error_Msg_Flow
+                       (FA       => FA,
+                        Msg      => "Refinement of % shall mention %",
+                        Severity => Error_Kind,
+                        F1       => Direct_Mapping_Id (Encapsulating),
+                        F2       => Direct_Mapping_Id (Child_State),
+                        N        => Scope (Encapsulating),
+                        SRM_Ref  => "7.2.6(6)");
+                  end if;
                end if;
             end;
          end loop;

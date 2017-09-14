@@ -393,7 +393,7 @@ package body Gnat2Why.Subprograms is
                end if;
             end;
          end if;
-         Context_Item := Next (Context_Item);
+         Next (Context_Item);
       end loop;
 
       return Assumption;
@@ -834,7 +834,6 @@ package body Gnat2Why.Subprograms is
                --  for the self reference.
 
                if Within_Protected_Type (E)
-                 and then Present (Get_Body (E))
                  and then Entity_Body_In_SPARK (E)
                then
                   Includes.Include (Containing_Protected_Type (E));
@@ -975,7 +974,7 @@ package body Gnat2Why.Subprograms is
                Entity : constant Entity_Id := Find_Entity (Name);
             begin
                if Present (Entity)
-                 and then not (Ekind (Entity) = E_Abstract_State)
+                 and then Ekind (Entity) /= E_Abstract_State
                  and then Entity_In_SPARK (Entity)
                then
 
@@ -1091,7 +1090,7 @@ package body Gnat2Why.Subprograms is
             then
                null;
             elsif Present (Entity)
-              and then not (Ekind (Entity) = E_Abstract_State)
+              and then Ekind (Entity) /= E_Abstract_State
               and then Entity_In_SPARK (Entity)
             then
                Effects_Append_Binder_To_Writes
@@ -1147,7 +1146,7 @@ package body Gnat2Why.Subprograms is
             then
                null;
             elsif Present (Entity)
-              and then not (Ekind (Entity) = E_Abstract_State)
+              and then Ekind (Entity) /= E_Abstract_State
               and then Entity_In_SPARK (Entity)
             then
                Effects_Append_Binder_To_Reads
@@ -2542,11 +2541,9 @@ package body Gnat2Why.Subprograms is
       --  Translate declarations and statements in the package body, if there
       --  is one and it is in SPARK.
 
-      if Present (Body_N) and then
-        Entity_Body_In_SPARK (E)
-      then
-         if Present (Handled_Statement_Sequence (Body_N)) and then
-           Body_Statements_In_SPARK (E)
+      if Entity_Body_In_SPARK (E) then
+         if Present (Handled_Statement_Sequence (Body_N))
+           and then Body_Statements_In_SPARK (E)
          then
             Why_Body :=
               Sequence
@@ -2992,8 +2989,7 @@ package body Gnat2Why.Subprograms is
 
       function Assume_For_Input return W_Prog_Id is
          Pred_Fun_Param : constant Entity_Id :=
-           (if Ekind (E) in E_Function | E_Procedure
-            and then Is_Predicate_Function (E)
+           (if Ekind (E) = E_Function and then Is_Predicate_Function (E)
             then
                Defining_Entity (First (Parameter_Specifications
               (Subprogram_Specification (E))))
@@ -3076,7 +3072,6 @@ package body Gnat2Why.Subprograms is
                  Kind     => EW_Assert);
          else
             if Is_Entry (E)
-              and then Present (Body_N)
               and then Entity_Body_In_SPARK (E)
             then
                declare
@@ -3202,7 +3197,7 @@ package body Gnat2Why.Subprograms is
 
       function Comp_Decl_At_Subp_Start return W_Prog_Id is
       begin
-         if Present (Body_N) and then Entity_Body_In_SPARK (E) then
+         if Entity_Body_In_SPARK (E) then
             return
            Sequence
              ((New_Comment
@@ -3285,7 +3280,7 @@ package body Gnat2Why.Subprograms is
          else
             Post_N := Empty;
          end if;
-         if Present (Body_N) and then Entity_Body_In_SPARK (E) then
+         if Entity_Body_In_SPARK (E) then
 
             --  Translate contract of E. A No_Return subprogram, from the
             --  inside, has postcondition true as non termination verification
@@ -3501,7 +3496,7 @@ package body Gnat2Why.Subprograms is
 
       Prog := Compute_Contract_Cases_Entry_Checks (E, Guard_Map);
 
-      if Present (Body_N) and then Entity_Body_In_SPARK (E) then
+      if Entity_Body_In_SPARK (E) then
 
          Get_Pre_Post_Pragmas
            (Get_Flat_Statement_And_Declaration_List
@@ -3668,17 +3663,21 @@ package body Gnat2Why.Subprograms is
       --  Translate declarations and statements in the task body, if there
       --  is one.
 
-      if Present (Body_N)
-        and then Entity_Body_In_SPARK (E)
-      then
-         if Present (Handled_Statement_Sequence (Body_N)) then
-            Why_Body :=
-              Transform_Statements_And_Declarations
-                (Statements (Handled_Statement_Sequence (Body_N)));
-         end if;
+      if Entity_Body_In_SPARK (E) then
+         Why_Body :=
+           Transform_Statements_And_Declarations
+             (Statements (Handled_Statement_Sequence (Body_N)));
 
          Why_Body :=
            Transform_Declarations_Block (Declarations (Body_N), Why_Body);
+
+         --  We check that the call graph starting from this task respects the
+         --  ceiling priority protocol.
+
+         Why_Body :=
+           Sequence
+             (Check_Ceiling_Protocol (Params, E),
+              Why_Body);
       else
          Why_Body := +Void;
       end if;
@@ -3697,14 +3696,6 @@ package body Gnat2Why.Subprograms is
       if Present (Vis_Decls) then
          Why_Body := Transform_Declarations_Block (Vis_Decls, Why_Body);
       end if;
-
-      --  We check that the call graph starting from this task respects the
-      --  ceiling priority protocol.
-
-      Why_Body :=
-        Sequence
-          (Check_Ceiling_Protocol (Params, E),
-           Why_Body);
 
       --  We assume that objects used in the program are in range, if
       --  they are of a dynamic type.
@@ -5466,8 +5457,8 @@ package body Gnat2Why.Subprograms is
                           else "")
                        & ", created in " & GNAT.Source_Info.Enclosing_Entity);
 
-      --  No logic function is created for volatile functions The function's
-      --  effects are model by an effect on the program function.
+      --  No logic function is created for volatile functions. The function's
+      --  effects are modelled by an effect on the program function.
 
       if Ekind (E) = E_Function
         and then (if Is_Volatile_Function (E)

@@ -292,7 +292,7 @@ package SPARK_Util is
 
    function Is_Package_State (E : Entity_Id) return Boolean;
    --  @param E any entity
-   --  @return True iff E is an abstract state or a package-level variable
+   --  @return True iff E can appear on the LHS of an Initializes contract
 
    function Is_Part_Of_Concurrent_Object (E : Entity_Id) return Boolean;
    --  @param E any entity
@@ -304,10 +304,14 @@ package SPARK_Util is
    --  @return True iff the object has a Part_Of pragma that makes it part of a
    --    protected object.
 
-   function Is_Quantified_Loop_Param (E : Entity_Id) return Boolean
-     with Pre => Ekind (E) in E_Loop_Parameter | E_Variable;
-   --  @param E loop parameter
-   --  @return True iff E has been introduced by a quantified expression
+   function Is_Predefined_Initialized_Variable (E : Entity_Id) return Boolean;
+   --  @param E any entity
+   --  @return True if E is predefined and initialized variable (see below)
+   --
+   --  Note: this function, as it is implemented now, may fail to recognize
+   --  some variables as initialized, but this is acceptable (i.e. this will
+   --  only cause false alarms and not missing checks). If this happens, then
+   --  the implementation should be improved to match the spec.
 
    function Is_Protected_Component_Or_Discr (E : Entity_Id) return Boolean;
    --  @param E an entity
@@ -321,6 +325,11 @@ package SPARK_Util is
    --  @param E an entity
    --  @return True iff E is logically part of a protected object, either being
    --    a discriminant of field of the object, or being a "part_of".
+
+   function Is_Quantified_Loop_Param (E : Entity_Id) return Boolean
+     with Pre => Ekind (E) in E_Loop_Parameter | E_Variable;
+   --  @param E loop parameter
+   --  @return True iff E has been introduced by a quantified expression
 
    function Is_Synchronized (E : Entity_Id) return Boolean
    with Pre => Ekind (E) in E_Abstract_State |
@@ -481,8 +490,8 @@ package SPARK_Util is
    --
    --  Note: calls to protected functions in preconditions and guards of the
    --  Contract_Cases are external, but this routine treats them as internal.
-   --  However, this only matters for marking where such a calls are rejected
-   --  anyway; for flow and proof this routine gives correct results.
+   --  However, the front end rejects these two cases. For the SPARK back end,
+   --  this routine gives correct results.
 
    function Is_Predicate_Function_Call (N : Node_Id) return Boolean;
    --  @param N any node

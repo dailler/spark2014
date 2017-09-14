@@ -226,18 +226,14 @@ package body Flow_Refinement is
    ------------------------------
 
    function Get_Enclosing_Flow_Scope (S : Flow_Scope) return Flow_Scope is
-      Enclosing_Scope : Flow_Scope;
-      Ptr             : Node_Id := S.Ent;
-   begin
-      while Nkind (Ptr) not in N_Package_Declaration
-                             | N_Generic_Package_Declaration
-                             | N_Protected_Type_Declaration
-                             | N_Task_Type_Declaration
-      loop
-         Ptr := Parent (Ptr);
-      end loop;
-      Enclosing_Scope := Get_Flow_Scope (Ptr);
+      Enclosing_Scope : Flow_Scope :=
+        Get_Flow_Scope (Unit_Declaration_Node (S.Ent));
+      --  Call to Get_Flow_Scope on a declaration node returns the scope where
+      --  S.Ent is declared, not the scope of the S.Ent itself.
 
+      Ptr : Node_Id;
+
+   begin
       if No (Enclosing_Scope)
         and then Scope (S.Ent) /= Standard_Standard
       then
@@ -245,8 +241,8 @@ package body Flow_Refinement is
          while Present (Ptr)
            and then Ekind (Ptr) not in E_Package
                                      | E_Generic_Package
-                                     | Protected_Kind
-                                     | Task_Kind
+                                     | E_Protected_Type
+                                     | E_Task_Type
          loop
             Ptr := Scope (Ptr);
          end loop;
@@ -323,85 +319,8 @@ package body Flow_Refinement is
 
    function Get_Flow_Scope (N : Node_Id) return Flow_Scope
    is
-      Context         : Node_Id := N;
-      Prev_Context    : Node_Id := Empty;
-      Comes_From_Body : Boolean := False;
-
-      function Generic_Parent_Or_Parent (Context : Node_Id) return Node_Id;
-      --  Returns the parent node for subprograms and packages. For generics
-      --  returns the generic parent.
-
-      ------------------------------
-      -- Generic_Parent_Or_Parent --
-      ------------------------------
-
-      function Generic_Parent_Or_Parent (Context : Node_Id) return Node_Id is
-         Parent_Context : constant Entity_Id := Parent (Context);
-
-      begin
-         case Nkind (Context) is
-            when N_Package_Body =>
-               declare
-                  Spec : constant Entity_Id := Corresponding_Spec (Context);
-                  Par  : constant Entity_Id := Parent (Spec);
-
-               begin
-                  return (if Is_Generic_Instance (Spec)
-                          and then Nkind (Par) = N_Package_Specification
-                          then Generic_Parent (Par)
-                          else Unique_Defining_Entity (Context));
-               end;
-
-            when N_Subprogram_Body =>
-               declare
-                  Spec : constant Entity_Id := Corresponding_Spec (Context);
-
-               begin
-                  return (if Present (Spec)
-                          and then Is_Generic_Instance (Spec)
-                          then Generic_Parent (Parent (Spec))
-                          else Parent_Context);
-               end;
-
-            when N_Package_Specification =>
-               declare
-                  Gen_Par : constant Entity_Id := Generic_Parent (Context);
-
-               begin
-                  return (if Present (Gen_Par)
-                          then Gen_Par
-                          else Unique_Defining_Entity (Parent_Context));
-               end;
-
-            when N_Protected_Body
-               | N_Task_Body
-            =>
-               return Unique_Defining_Entity (Context);
-
-            when N_Protected_Definition
-               | N_Task_Definition
-            =>
-               return Unique_Defining_Entity (Parent_Context);
-
-            when others =>
-               if Nkind (Parent_Context) in N_Function_Specification
-                                          | N_Procedure_Specification
-               then
-                  declare
-                     Gen_Par : constant Entity_Id :=
-                       Generic_Parent (Parent_Context);
-
-                  begin
-                     if Present (Gen_Par) then
-                        return Gen_Par;
-                     end if;
-                  end;
-               end if;
-               return Parent_Context;
-         end case;
-      end Generic_Parent_Or_Parent;
-
-   --  Start of processing for Get_Flow_Scope
+      Context      : Node_Id := N;
+      Prev_Context : Node_Id := Empty;
 
    begin
       loop
@@ -427,43 +346,102 @@ package body Flow_Refinement is
             =>
                raise Program_Error;
 
-            when N_Package_Body
-               | N_Protected_Body
-               | N_Task_Body
-            =>
-               return (Ent  => Generic_Parent_Or_Parent (Context),
-                       Part => Body_Part);
+            when N_Package_Body =>
+               --  For bodies of instances of generic packages we want the spec
+               --  of the corresponding generic; for ordinary bodies, we want
+               --  the original spec.
 
-            when N_Package_Specification
-               | N_Protected_Definition
-               | N_Task_Definition
-            =>
                declare
-                  Part : Declarative_Part;
+                  Context_Spec : constant Entity_Id :=
+                    Unique_Defining_Entity (Context);
+
+                  pragma Assert (Ekind (Context_Spec) = E_Package);
+
+                  Orig_Spec : Entity_Id;
 
                begin
-                  if Present (Prev_Context) then
-                     pragma Assert (Context = Parent (Prev_Context));
+                  if Is_Generic_Instance (Context_Spec) then
+                     Orig_Spec := Generic_Parent
+                       (Package_Specification (Context_Spec));
+                     pragma Assert (Ekind (Orig_Spec) = E_Generic_Package);
+                  else
+                     Orig_Spec := Context_Spec;
+                  end if;
 
-                     if Comes_From_Body then
-                        Part := Body_Part;
-                     elsif Nkind (Context) = N_Task_Definition then
-                        Part := Visible_Part;
-                     else
-                        if Is_List_Member (Prev_Context)
-                          and then List_Containing (Prev_Context) =
-                            Private_Declarations (Context)
-                        then
-                           Part := Private_Part;
-                        else
-                           Part := Visible_Part;
-                        end if;
-                     end if;
+                  return (Ent  => Orig_Spec,
+                          Part => Body_Part);
+               end;
+
+            when N_Protected_Body
+               | N_Task_Body
+            =>
+               return (Ent  => Unique_Defining_Entity (Context),
+                       Part => Body_Part);
+
+            when N_Protected_Definition
+               | N_Task_Definition
+            =>
+               --  Concurrent types have visible and private parts, but as
+               --  far as state refinement it concerned, this does not matter.
+               --
+               --  ??? shall we eliminate concurrent types from Flow_Scope
+               --  altogether?
+               --
+               --  ??? Defining_Entity doesn't work for concurrent definition;
+               --  we need to call Parent to get to their declarations (there
+               --  is no point in fixing this before the above ??? is decided).
+               return (Ent  => Defining_Entity (Parent (Context)),
+                       Part => Visible_Part);
+
+            when N_Package_Specification =>
+               declare
+                  Gen_Par : constant Entity_Id := Generic_Parent (Context);
+                  --  For checking if Context is an instance of generic package
+
+                  Ent  : Entity_Id;
+                  Part : Declarative_Part;
+                  --  Components of the result
+
+               begin
+                  --  For an instance of a generic package we want the generic;
+                  --  for an ordinary package, we want the package itself.
+                  if Present (Gen_Par) then
+                     Ent := Gen_Par;
+                     pragma Assert (Ekind (Ent) = E_Generic_Package);
+                  else
+                     Ent := Defining_Entity (Context);
+                     pragma Assert (Ekind (Ent) = E_Package);
+                  end if;
+
+                  --  We have to decide if we come from visible or private part
+                  pragma Assert (Present (Prev_Context)
+                                 and then Context = Parent (Prev_Context));
+
+                  --  For an expression function we want to get the same
+                  --  Flow_Scope we would get if it was a function with a body.
+                  --  For this we pretend that expression functions declared in
+                  --  package spec are in package body.
+
+                  if Nkind (Prev_Context) = N_Subprogram_Body
+                    and then Was_Expression_Function (Prev_Context)
+                  then
+                     Part := Body_Part;
+
+                  --  If we came from the package entity ifself, or from its
+                  --  contract, then the previous context is not a list member.
+                  --  Those cases are handled as the visible part, we only need
+                  --  a dedicated check for the private part.
+
+                  elsif Is_List_Member (Prev_Context)
+                    and then List_Containing (Prev_Context) =
+                             Private_Declarations (Context)
+                  then
+                     Part := Private_Part;
                   else
                      Part := Visible_Part;
                   end if;
 
-                  return (Ent  => Generic_Parent_Or_Parent (Context),
+                  return (Ent  => Ent,
                           Part => Part);
                end;
 
@@ -477,7 +455,7 @@ package body Flow_Refinement is
                pragma Assert
                  (Nkind (Parent (Context)) = N_Package_Declaration);
 
-               return (Ent  => Unique_Defining_Entity (Parent (Context)),
+               return (Ent  => Defining_Entity (Parent (Context)),
                        Part => Visible_Part);
 
             --  Front end rewrites aspects into pragmas with empty parents. In
@@ -495,38 +473,88 @@ package body Flow_Refinement is
                end if;
 
             when N_Subprogram_Body =>
-               Prev_Context := Context;
-               Context      := Generic_Parent_Or_Parent (Context);
+               --  For bodies that come from instances of generic subprograms
+               --  we divert the traversal to where the generic subprogram body
+               --  is defined.
 
-               --  In case we are in the body of a generic subprogram, we
-               --  remember this to get the correct scope for an instance of
-               --  it.
-               if Nkind (Context) in N_Entity
-                 and then Ekind (Context) in E_Generic_Function
-                                           | E_Generic_Procedure
-               then
-                  Comes_From_Body := True;
+               if Is_Generic_Instance (Unique_Defining_Entity (Context)) then
+                  declare
+                     Instance : constant Entity_Id :=
+                       Corresponding_Spec (Context);
+
+                     pragma Assert (Is_Subprogram (Instance));
+
+                     Generic_Spec : constant Entity_Id :=
+                       Generic_Parent (Subprogram_Specification (Instance));
+
+                     pragma Assert (Is_Generic_Subprogram (Generic_Spec));
+
+                     Generic_Decl : constant Node_Id :=
+                       Parent (Subprogram_Specification (Generic_Spec));
+
+                     pragma Assert (Nkind (Generic_Decl) =
+                                      N_Generic_Subprogram_Declaration);
+
+                     Generic_Body : constant Entity_Id :=
+                       Corresponding_Body (Generic_Decl);
+
+                     pragma Assert (Ekind (Generic_Body) = E_Subprogram_Body);
+
+                  begin
+                     Prev_Context := Subprogram_Body (Generic_Body);
+                     Context      := Parent (Prev_Context);
+                  end;
+
+               --  For bodies of ordinary subprograms we simply up-traverse
+
+               else
+                  Prev_Context := Context;
+                  Context      := Parent (Context);
                end if;
 
-                --  In case of an expression function we want to get the same
-                --  Flow_Scope we would get if it was a function with a body.
-                --  For this we pretend that expression functions declared in
-                --  package spec are in package body.
-               if Was_Expression_Function (Prev_Context) then
-                  if Present (Context) then
-                     if Nkind (Context) in N_Package_Specification
-                                         | N_Protected_Definition
-                                         | N_Task_Definition
-                     then
-                        return (Ent  => Generic_Parent_Or_Parent (Context),
-                                Part => Body_Part);
-                     end if;
-                  end if;
+               --  In both cases the previous context should point to the
+               --  subprogram body, either generic or ordinary.
+
+               pragma Assert (Nkind (Prev_Context) = N_Subprogram_Body);
+
+            when N_Subprogram_Declaration =>
+               --  For declarations that come from instances of generic
+               --  subprograms we divert the traversal to where the generic
+               --  subprogram is declared (similar to what we do for their
+               --  bodies).
+               if Is_Generic_Instance (Defining_Entity (Context)) then
+                  declare
+                     Instance : constant Entity_Id :=
+                       Defining_Entity (Context);
+
+                     pragma Assert (Is_Subprogram (Instance));
+
+                     Generic_Spec : constant Entity_Id :=
+                       Generic_Parent (Subprogram_Specification (Instance));
+
+                     pragma Assert (Is_Generic_Subprogram (Generic_Spec));
+
+                     Generic_Decl : constant Node_Id :=
+                       Parent (Subprogram_Specification (Generic_Spec));
+
+                     pragma Assert (Nkind (Generic_Decl) =
+                                      N_Generic_Subprogram_Declaration);
+
+                  begin
+                     Prev_Context := Generic_Decl;
+                     Context      := Parent (Prev_Context);
+                  end;
+
+               --  For ordinary subprograms we simply up-traverse
+
+               else
+                  Prev_Context := Context;
+                  Context      := Parent (Context);
                end if;
 
             when others =>
                Prev_Context := Context;
-               Context      := Generic_Parent_Or_Parent (Context);
+               Context      := Parent (Context);
          end case;
 
          exit when No (Context);
@@ -1177,9 +1205,12 @@ package body Flow_Refinement is
             declare
                F : Flow_Id renames Dependency_Maps.Key (Initialized_Var);
             begin
-               if F.Kind = Direct_Mapping
-                 and then Get_Direct_Mapping_Id (F) = Target_Ent
-               then
+               --  The package whose state variable E is known by an Entity_Id
+               --  must itself be known by an Entity_Id, and so the left-hand
+               --  sides of its Initializes aspect.
+               pragma Assert (F.Kind = Direct_Mapping);
+
+               if Get_Direct_Mapping_Id (F) = Target_Ent then
                   return Target_Ent;
                end if;
             end;
@@ -1332,32 +1363,12 @@ package body Flow_Refinement is
                   --  Variables that are Part_Of a concurrent type are always
                   --  fully default initialized.
                   return True;
-               elsif not Is_Package_State (Ent) then
-                  return False;
+               elsif Is_Predefined_Initialized_Variable (Ent) then
+                  --  We don't have many predefined units with an Initializes
+                  --  contract, but we still want to know if their variables
+                  --  are initialized.
+                  return True;
                end if;
-
-            when E_Protected_Type =>
-               --  Protected types are always fully default initialized in
-               --  SPARK.
-               return True;
-
-            when E_Task_Type      =>
-               --  Task types act as records whose flattened view includes
-               --  discriminants and Part_Of variables; both are always
-               --  initialized.
-               return True;
-
-            when Formal_Kind      =>
-               --  This is for the case of a package nested in a subprogram
-               --  that uses the subprogram's parameter.
-               --  In case these parameters have not been initialized yet, an
-               --  error would be raised somewhere else.
-               return True;
-
-            when E_Loop_Parameter =>
-               --  In case we use the loop parameter in a package nested within
-               --  a declare block.
-               return True;
 
             when others           =>
                raise Program_Error;
@@ -1495,25 +1506,7 @@ package body Flow_Refinement is
                                              Typ        : Type_Id)
                                              return Boolean
    is
-   begin
-      if Is_Globally_Visible (Subprogram) then
-         --  If the subprogram is visible, then it could be boundary subprogram
-         declare
-            S : constant Flow_Scope := Get_Flow_Scope (Subprogram);
-         begin
-            --  If it is visible, it is a boundary subprogram if it can see the
-            --  private part of the invariant bearing type.
-            --
-            --  It may be tempting here to check if the subprogram has a
-            --  parameter or global of the invariant bearing type, but remember
-            --  that it can still allocate object that with this invariant and
-            --  can break their invariant. See SRM 7.3.2(1).
-            return Is_Visible (Typ, S)
-              or else Is_Visible (Typ, Private_Scope (S));
-         end;
-      else
-         return False;
-      end if;
-   end Is_Boundary_Subprogram_For_Type;
+     (Scope_Within_Or_Same (Scope (Subprogram), Scope (Typ))
+      and then Is_Globally_Visible (Subprogram));
 
 end Flow_Refinement;

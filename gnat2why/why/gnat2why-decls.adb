@@ -28,7 +28,6 @@ with Gnat2Why.Expr;                use Gnat2Why.Expr;
 with Namet;                        use Namet;
 with Sinfo;                        use Sinfo;
 with Sinput;                       use Sinput;
-with SPARK_Definition;             use SPARK_Definition;
 with SPARK_Frame_Conditions;
 with SPARK_Util;                   use SPARK_Util;
 with SPARK_Util.External_Axioms;   use SPARK_Util.External_Axioms;
@@ -263,6 +262,9 @@ package body Gnat2Why.Decls is
    procedure Translate_External_Object (E : Entity_Name) is
       File : constant W_Section_Id := WF_Variables;
 
+      Object_Name : constant String := To_String (E);
+      Module_Name : constant String := Capitalize_First (Object_Name);
+
    begin
       --  Objects in axiomatized units should not be treated as external
       --  objects, since the axiomatization should define them. In particular,
@@ -283,34 +285,18 @@ package body Gnat2Why.Decls is
       Open_Theory
         (File,
          Module =>
-           New_Module (Name => NID (Capitalize_First (To_String (E))),
+           New_Module (Name => NID (Module_Name),
                        File => No_Name),
          Comment =>
-           "Module declaring the external object """ & To_String (E) &
+           "Module declaring the external object """ & Object_Name &
            ","" created in " & GNAT.Source_Info.Enclosing_Entity);
 
       Emit
         (File,
          New_Global_Ref_Declaration
-           (Name     => To_Why_Id (To_String (E), Local => True),
+           (Name     => To_Why_Id (Object_Name, Local => True),
             Labels   => Name_Id_Sets.Empty_Set,
             Ref_Type => EW_Private_Type));
-
-      Close_Theory (File,
-                    Kind => Standalone_Theory);
-
-      --  Also generate an empty axiom module
-
-      Open_Theory
-        (File,
-         New_Module (Name =>
-                       NID (Capitalize_First
-                         (To_String (E)) & To_String (WNE_Axiom_Suffix)),
-                     File => No_Name),
-         Comment =>
-           "Module giving an empty axiom for the entity "
-           & """" & To_String (E) & """"
-           & ", created in " & GNAT.Source_Info.Enclosing_Entity);
 
       Close_Theory (File,
                     Kind => Standalone_Theory);
@@ -368,19 +354,7 @@ package body Gnat2Why.Decls is
       --  If E is not in SPARK, only declare an object of type __private for
       --  use in effects of program functions in Why3.
 
-      if not Entity_In_SPARK (E) then
-         Emit
-           (File,
-            New_Global_Ref_Declaration
-              (Name     => To_Local (Var.Main.B_Name),
-               Labels   => Name_Id_Sets.Empty_Set,
-               Ref_Type => Get_Typ (Var.Main.B_Name)));
-
-      --  If E is in SPARK, declare various objects depending on its type and
-      --  on whether the decision has been made to split the object or not.
-
-      else
-         case Var.Kind is
+      case Var.Kind is
          when DRecord =>
             if Var.Fields.Present then
 
@@ -515,8 +489,7 @@ package body Gnat2Why.Decls is
 
          when Func | Concurrent_Self =>
             raise Program_Error;
-         end case;
-      end if;
+      end case;
 
       Emit (File,
             Why.Atree.Builders.New_Function_Decl

@@ -1093,7 +1093,7 @@ package body Gnat2Why.Expr is
 
       --  Assume value if constant
 
-      if (Is_Object (E) and then Ekind (E) = E_Constant)
+      if Ekind (E) = E_Constant
         or else Is_Named_Number (E)
       then
          declare
@@ -1157,7 +1157,7 @@ package body Gnat2Why.Expr is
       --  Assume the value of 'Constrained attribute for variables with
       --  Defaulted discriminants.
 
-      elsif Is_Object (E) and then Ekind (E) = E_Variable then
+      elsif Ekind (E) = E_Variable then
          declare
             B  : constant Item_Type :=
                   Ada_Ent_To_Why.Element (Symbol_Table, E);
@@ -8785,7 +8785,7 @@ package body Gnat2Why.Expr is
             Check : W_Pred_Id := True_Pred;
             Lval  : constant W_Expr_Id :=
               New_Temp_For_Expr
-                (Transform_Expr (Lvalue, EW_Pterm, Body_Params), True);
+                (Transform_Expr (Lvalue, EW_Prog, Body_Params), True);
             Dim   : constant Positive :=
               Positive (Number_Dimensions (Get_Ada_Node (+L_Type)));
          begin
