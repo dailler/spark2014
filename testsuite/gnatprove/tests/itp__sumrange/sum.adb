@@ -1,14 +1,13 @@
 
 package body Sum with SPARK_Mode is
 
-   function Sum (A : Arr; I, J : Index) return Integer is
-   begin
-      if J <= I then
-         return 0;
-      else
-         return (A (I) + Sum (A, I + 1, J));
-      end if;
-   end Sum;
+--   function Sum (A : Arr; I, J : Index) return Integer is
+--     if J <= I then
+--         return 0;
+ --     else
+--         return (A (I) + Sum (A, I + 1, J));
+--      end if;
+--   end Sum;
 
    function Simple_Sum (A : Arr; I, J : Index) return Integer is
       S : Integer := 0;
