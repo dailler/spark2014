@@ -1885,6 +1885,7 @@ package body SPARK_Definition is
 
          when N_At_Clause
             | N_Attribute_Definition_Clause
+            | N_Call_Marker
             | N_Character_Literal
             | N_Enumeration_Representation_Clause
             | N_Exception_Declaration
@@ -2075,7 +2076,8 @@ package body SPARK_Definition is
                      return False;
                   end if;
 
-               when N_Null_Statement
+               when N_Call_Marker
+                  | N_Null_Statement
                   | N_Freeze_Entity
                =>
                   null;
@@ -4469,11 +4471,13 @@ package body SPARK_Definition is
 
       Entity_Set.Insert (E);
 
-      --  If the entity is declared in the scope of SPARK_Mode => Off, then
-      --  do not consider whether it could be in SPARK or not. An exception to
-      --  this rule is abstract state, which has to be added to the Entity_List
-      --  regardless of SPARK status. Restore SPARK_Mode pragma before
-      --  returning.
+      --  If the entity is declared in the scope of SPARK_Mode => Off, then do
+      --  not consider whether it could be in SPARK or not. Restore SPARK_Mode
+      --  pragma before returning.
+      --
+      --  ??? We still want to reject unsupported abstract states that are
+      --  Part_Of of a single concurrent object. This exception was added here
+      --  for a different reason and it is not clear if it is still needed.
 
       if SPARK_Pragma_Is (Opt.Off)
         and then Ekind (E) /= E_Abstract_State
@@ -4552,24 +4556,35 @@ package body SPARK_Definition is
          --  specific mechanism and thus should not be translated.
          if not Entity_In_Ext_Axioms (E) then
 
-            --  Concurrent types go before their visible declarations (because
-            --  declarations reference them as implicit inputs).
-            if Ekind (E) in E_Protected_Type | E_Task_Type then
+            case Ekind (E) is
+               --  Concurrent types go before their visible declarations
+               --  (because declarations reference them as implicit inputs).
+               when E_Protected_Type | E_Task_Type =>
+                  pragma Assert
+                    (Current_Concurrent_Insert_Pos /= Node_Lists.No_Element);
 
-               pragma Assert
-                 (Current_Concurrent_Insert_Pos /= Node_Lists.No_Element);
+                  Node_Lists.Next (Current_Concurrent_Insert_Pos);
 
-               Node_Lists.Next (Current_Concurrent_Insert_Pos);
+                  --  If there were no entities defined within concurrent types
+                  --  then Next will advance the cursor to No_Element and
+                  --  Insert will be equivalent to Append. This is precisely
+                  --  what we need.
+                  Entity_List.Insert
+                    (Before   => Current_Concurrent_Insert_Pos,
+                     New_Item => E);
 
-               --  If there were no entities defined within concurrent types
-               --  then Next will advance the cursor to No_Element and Insert
-               --  will be equivalent to Append. This is precisely what we
-               --  need.
-               Entity_List.Insert (Before   => Current_Concurrent_Insert_Pos,
-                                   New_Item => E);
-            else
-               Entity_List.Append (E);
-            end if;
+               --  Abstract states are not translated like other entities; they
+               --  are either fully expanded into constituents (if their
+               --  refinement is not hidden behind a SPARK_Mode => Off) or
+               --  translated just to represent their hidden constituents.
+
+               when E_Abstract_State =>
+                  null;
+
+               when others =>
+                  Entity_List.Append (E);
+
+            end case;
          end if;
       end if;
 

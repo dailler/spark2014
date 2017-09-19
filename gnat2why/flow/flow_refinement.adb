@@ -28,7 +28,6 @@ with Nlists;                         use Nlists;
 with Output;                         use Output;
 with Sem_Aux;                        use Sem_Aux;
 with Sprint;                         use Sprint;
-with Stand;                          use Stand;
 
 with Common_Iterators;               use Common_Iterators;
 with SPARK_Frame_Conditions;         use SPARK_Frame_Conditions;
@@ -40,6 +39,12 @@ with Flow_Generated_Globals.Phase_2; use Flow_Generated_Globals.Phase_2;
 with Flow_Utility;                   use Flow_Utility;
 
 package body Flow_Refinement is
+
+   function Get_Enclosing_Body_Flow_Scope (S : Flow_Scope) return Flow_Scope
+   with Pre => S.Part = Body_Part;
+   --  Returns the flow scope of the enclosing package or concurrent object if
+   --  it exists and the null scope otherwise.
+   --  ??? this should be merged into Get_Enclosing_Body_Flow_Scope
 
    ----------------
    -- Is_Visible --
@@ -226,42 +231,16 @@ package body Flow_Refinement is
    ------------------------------
 
    function Get_Enclosing_Flow_Scope (S : Flow_Scope) return Flow_Scope is
-      Enclosing_Scope : Flow_Scope :=
-        Get_Flow_Scope (Unit_Declaration_Node (S.Ent));
+   begin
+      return
+        (if Is_Child_Unit (S.Ent)
+         then (Ent  => Scope (S.Ent),
+               Part => (if Is_Private_Descendant (S.Ent)
+                        then Private_Part
+                        else S.Part))
+         else Get_Flow_Scope (Unit_Declaration_Node (S.Ent)));
       --  Call to Get_Flow_Scope on a declaration node returns the scope where
       --  S.Ent is declared, not the scope of the S.Ent itself.
-
-      Ptr : Node_Id;
-
-   begin
-      if No (Enclosing_Scope)
-        and then Scope (S.Ent) /= Standard_Standard
-      then
-         Ptr := Scope (S.Ent);
-         while Present (Ptr)
-           and then Ekind (Ptr) not in E_Package
-                                     | E_Generic_Package
-                                     | E_Protected_Type
-                                     | E_Task_Type
-         loop
-            Ptr := Scope (Ptr);
-         end loop;
-         if Present (Ptr)
-           and then Ptr /= Standard_Standard
-         then
-            Enclosing_Scope := Flow_Scope'(Ptr, S.Part);
-         end if;
-      end if;
-
-      if Is_Private_Descendant (S.Ent)
-        and then Scope (S.Ent) /= Standard_Standard
-      then
-         --  The extra check for standard might seem pointless, but in
-         --  theory its possible to have a top-level private package.
-         Enclosing_Scope.Part := Private_Part;
-      end if;
-
-      return Enclosing_Scope;
    end Get_Enclosing_Flow_Scope;
 
    -----------------------------------

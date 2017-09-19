@@ -47,7 +47,7 @@ with SPARK_Util.Subprograms;          use SPARK_Util.Subprograms;
 with SPARK_Util.Types;                use SPARK_Util.Types;
 with Why;
 
-with Flow_Classwide;                  use Flow_Classwide;
+with Flow_Classwide;
 with Flow_Debug;                      use Flow_Debug;
 with Flow_Generated_Globals.Phase_2;  use Flow_Generated_Globals.Phase_2;
 with Flow_Refinement;                 use Flow_Refinement;
@@ -500,7 +500,7 @@ package body Flow_Utility is
    begin
       return Ekind (E) in Formal_Kind
         and then Is_Tagged_Type (T)
-        and then Ekind (T) not in Class_Wide_Kind
+        and then not Is_Class_Wide_Type (T)
         and then Has_Extensions_Visible (Sinfo.Scope (E));
    end Extensions_Visible;
 
@@ -2218,7 +2218,7 @@ package body Flow_Utility is
          Get_Globals (Subprogram          => Subprogram,
                       Scope               => Ctx.Scope,
                       Classwide           =>
-                        Is_Dispatching_Call (Callsite),
+                        Flow_Classwide.Is_Dispatching_Call (Callsite),
                       Globals             => Globals,
                       Use_Deduced_Globals => Ctx.Use_Computed_Globals);
 
@@ -2251,7 +2251,7 @@ package body Flow_Utility is
                Get_Depends (Subprogram           => Subprogram,
                             Scope                => Ctx.Scope,
                             Classwide            =>
-                              Is_Dispatching_Call (Callsite),
+                              Flow_Classwide.Is_Dispatching_Call (Callsite),
                             Depends              => Depends,
                             Use_Computed_Globals => Ctx.Use_Computed_Globals,
                             Callsite             => Callsite);

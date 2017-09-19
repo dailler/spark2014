@@ -1,4 +1,4 @@
-circle_demo.adb:14:14: medium: precondition might fail
+circle_demo.adb:14:14: medium: precondition might fail (e.g. when Wild_Man = -1)
 circle_demo.adb:14:54: info: initialization of "My_Circle" proved
 circle_demo.adb:15:18: warning: assuming "Put_Line" has no effect on global items
 circle_demo.adb:15:18: warning: no Global contract available for "Put_Line"
@@ -16,7 +16,7 @@ shapes5.adb:20:36: info: range check proved (Z3: 1 VC)
 shapes5.adb:22:10: info: initialization of "R" proved
 shapes5.adb:22:17: info: float overflow check proved (Interval)
 shapes5.adb:23:17: info: float overflow check proved (Interval)
-shapes5.adb:23:17: medium: range check might fail
+shapes5.adb:23:17: info: range check proved (Z3: 1 VC)
 shapes5.adb:25:10: info: initialization of "R" proved
 shapes5.adb:25:36: info: float overflow check proved (Interval)
 shapes5.adb:26:36: info: float overflow check proved (Interval)
@@ -41,4 +41,4 @@ shapes5.adb:54:29: info: float overflow check proved (Interval)
 shapes5.adb:55:29: info: float overflow check proved (Interval)
 shapes5.adb:56:29: info: float overflow check proved (Interval)
 shapes5.adb:57:29: info: float overflow check proved (Interval)
-shapes5.ads:13:18: medium: postcondition might fail, cannot prove In_Bounds (Make_Circle'result)
+shapes5.ads:13:18: medium: postcondition might fail, cannot prove In_Bounds (Make_Circle'result) (e.g. when Wild_Man = 0)

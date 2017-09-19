@@ -176,7 +176,7 @@ package body Gnat2Why.Subprograms is
      (E      : Entity_Id;
       Params : Transformation_Params) return W_Pred_Id
    with
-     Pre  => Ekind (E) = E_Package;
+     Pre => Ekind (E) = E_Package;
    --  @param E Entity of a package.
    --  @param Params the transformation parameters
    --  @result a predicate including the type invariants that should be checked
@@ -1098,7 +1098,7 @@ package body Gnat2Why.Subprograms is
             else
                Effects_Append_To_Writes
                  (Eff,
-                  To_Why_Id (Obj => To_String (Name), Local => False));
+                  To_Why_Id (Obj => Name, Local => False));
             end if;
          end;
       end loop;
@@ -1154,7 +1154,7 @@ package body Gnat2Why.Subprograms is
             else
                Effects_Append_To_Reads
                  (Eff,
-                  To_Why_Id (Obj => To_String (Name), Local => False));
+                  To_Why_Id (Obj => Name, Local => False));
             end if;
          end;
       end loop;
