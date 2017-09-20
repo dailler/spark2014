@@ -1,5 +1,5 @@
 [gerrit]
 host = git.adacore.com
 project = spark2014
-defaultbranch = itp_spark
+defaultbranch = master
 defaultremote = origin
