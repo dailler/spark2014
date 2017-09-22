@@ -13,7 +13,10 @@ package Sum with SPARK_Mode is
          0
       else
          (A (I) + Sum (A, I + 1, J)))
-   with Post => abs (Sum'Result) <= (J - I) * 3000;
+   With
+   Pre => I <= J,
+   Post => abs (Sum'Result) <= (J - I) * 3000;
+
 --      with Ghost,
 --     Pre => I <= J,
 --    Post => abs (Sum'Result) <= (J - I) * 3000 and then
