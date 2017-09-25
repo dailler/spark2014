@@ -376,9 +376,11 @@ Async_Writers aspect specification.
     volatile type, then the Effective_Reads aspect of any corresponding
     actual parameter shall be False.
     [This is because the parameter is passed by reference and the corresponding
-    aspect of the formal parameter is False. In the 11 other cases, the
-    volatility refining aspect of the formal parameter is True and so the
-    aspect of the corresponding actual parameter may be either True or False.]
+    aspect of the formal parameter is False. In the 11 other cases,
+    corresponding to the combination of a parameter mode and a volatility
+    refinement aspect, the volatility refinement aspect of the formal parameter
+    is True and so the aspect of the corresponding actual parameter may be
+    either True or False.]
 
 .. _tu-fe-nt-external_state_variables-11:
 
@@ -950,10 +952,10 @@ be a *Boolean_*\ ``expression``.
    expression defines properties (a predicate) of the state of the
    package which can be assumed to be true immediately following the
    elaboration of the package. [The expression of the
-   Initial_Condition cannot denote a state abstraction. This means
-   that to express properties of hidden state, functions declared in
-   the visible part acting on the state abstractions of the package
-   must be used.]
+   Initial_Condition cannot denote a state abstraction or hidden
+   state. This means that to express properties of hidden state,
+   functions declared in the visible part acting on the state
+   abstractions of the package must be used.]
 
 .. _etu-initial_condition_aspects-ss:
 
