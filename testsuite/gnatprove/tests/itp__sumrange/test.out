@@ -5,8 +5,9 @@ sum.adb:16:38: info: initialization of "S" proved
 sum.adb:16:46: info: overflow check proved (CVC4: 1 VC)
 sum.adb:17:33: info: initialization of "S" proved
 sum.adb:17:33: info: loop invariant initialization proved (CVC4: 1 VC)
-sum.adb:17:33: medium: loop invariant might fail after first iteration, cannot prove S = Sum (A, I, K) (e.g. when A = (others => 0) and I = 0 and K = 0 and S = 0)
+sum.adb:17:33: info: loop invariant preservation proved (CVC4: 2 VC; Z3: 2 VC)
 sum.adb:17:37: info: function contract not available for proof ("Sum" is recursive)
+sum.adb:17:37: info: precondition proved (CVC4: 1 VC)
 sum.adb:17:48: info: range check proved (CVC4: 1 VC)
 sum.adb:18:15: info: initialization of "S" proved
 sum.adb:18:17: info: overflow check proved (CVC4: 1 VC)
@@ -14,9 +15,11 @@ sum.adb:20:14: info: initialization of "S" proved
 sum.ads:11:13: medium: subprogram "Sum" might not terminate, terminating annotation could be incorrect
 sum.ads:15:17: info: overflow check proved (CVC4: 1 VC)
 sum.ads:15:19: info: function contract not available for proof ("Sum" is recursive)
+sum.ads:15:19: info: precondition proved (CVC4: 1 VC)
 sum.ads:15:29: info: range check proved (CVC4: 1 VC)
-sum.ads:16:17: info: overflow check proved (CVC4: 1 VC)
-sum.ads:16:17: medium: postcondition might fail, cannot prove abs (Sum'Result) <= (J - I) * 3000 (e.g. when I = 0 and J = 0 and Sum'Result = 0)
-sum.ads:16:45: info: overflow check proved (CVC4: 1 VC)
-sum.ads:33:14: medium: postcondition might fail, cannot prove Simple_Sum'Result = Sum (A, I, J) (e.g. when A = (others => 0) and I = 0 and J = 0 and Simple_Sum'Result = 0)
-sum.ads:33:34: info: function contract not available for proof ("Sum" is recursive)
+sum.ads:18:12: info: overflow check proved (CVC4: 1 VC)
+sum.ads:18:12: info: postcondition proved (CVC4: 1 VC)
+sum.ads:18:40: info: overflow check proved (CVC4: 1 VC)
+sum.ads:36:14: info: postcondition proved (CVC4: 2 VC; Z3: 1 VC; altergo: 1 VC)
+sum.ads:36:34: info: function contract not available for proof ("Sum" is recursive)
+sum.ads:36:34: info: precondition proved (CVC4: 1 VC)
