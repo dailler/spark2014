@@ -25,5 +25,6 @@ def launch_server(limit_line="", input_file=""):
     return s
 
 prove_all(counterexample=False, prover=["cvc4"])
+sleep(5)
 result = launch_server(limit_line="test.adb:11:16:VC_POSTCONDITION", input_file="test.in")
 print(result)
