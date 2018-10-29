@@ -541,7 +541,7 @@ package body VC_Kinds is
         Cntexample_Elt'(Kind        => From_JSON (Get (V, "kind")),
                         Name        => Get (Get (V, "name")),
                         Labels      =>
-                          From_JSON_Labels (Get (Get (V, "labels"))),
+                          From_JSON_Labels (Get (Get (V, "attrs"))),
                         Value       => Cnt_Value,
                         Val_Str     => Null_Unbounded_String);
    end From_JSON;

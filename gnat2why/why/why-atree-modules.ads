@@ -345,6 +345,8 @@ package Why.Atree.Modules is
       Rotate_Left    : W_Identifier_Id;
       Rotate_Right   : W_Identifier_Id;
       Two_Power_Size : W_Identifier_Id;
+      Prog_Eq        : W_Identifier_Id;
+      Prog_Neq       : W_Identifier_Id;
    end record;
 
    type M_BV_Conv_Type is record

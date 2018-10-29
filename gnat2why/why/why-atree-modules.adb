@@ -1171,14 +1171,24 @@ package body Why.Atree.Modules is
                            Typ    => M_BVs (BV).T);
          M_BVs (BV).To_Int :=
            New_Identifier (Domain => EW_Term,
-                           Symbol => NID ("t'int"),
+                           Symbol => NID ("t_int"),
                            Module => M_BVs (BV).Module,
                            Typ    => EW_Int_Type);
          M_BVs (BV).Two_Power_Size :=
            New_Identifier (Module => M_BVs (BV).Module,
                            Domain => EW_Term,
-                           Symbol => NID ("two_power_size"),
-                           Typ => EW_Int_Type);
+                           Symbol => NID ("_two_power_size"),
+                           Typ    => EW_Int_Type);
+         M_BVs (BV).Prog_Eq :=
+           New_Identifier (Module => M_BVs (BV).Module,
+                           Domain => EW_Term,
+                           Symbol => NID ("eq"),
+                           Typ    => EW_Bool_Type);
+         M_BVs (BV).Prog_Neq :=
+           New_Identifier (Module => M_BVs (BV).Module,
+                           Domain => EW_Term,
+                           Symbol => NID ("neq"),
+                           Typ    => EW_Bool_Type);
       end loop;
       EW_BitVector_8_Type  := M_BVs (BV8).T;
       EW_BitVector_16_Type := M_BVs (BV16).T;
@@ -1428,7 +1438,7 @@ package body Why.Atree.Modules is
          M_Floats (Fl).Plus_Zero :=
            New_Identifier (Module => M_Floats (Fl).Module,
                            Domain => EW_Term,
-                           Symbol => NID ("zeroF"),
+                           Symbol => NID ("_zeroF"),
                            Typ    => M_Floats (Fl).T);
          M_Floats (Fl).One :=
            New_Identifier (Module => M_Floats (Fl).Module,

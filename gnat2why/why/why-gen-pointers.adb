@@ -419,7 +419,7 @@ package body Why.Gen.Pointers is
 
          Emit (P,
                Why.Atree.Builders.New_Function_Decl
-                 (Domain      => EW_Term,
+                 (Domain      => EW_Pterm,
                   Name        => +To_Local (E_Symb (Ty, WNE_Null_Pointer)),
                   Binders     => (1 .. 0 => <>),
                   Location    => No_Location,
@@ -586,7 +586,7 @@ package body Why.Gen.Pointers is
          Emit
            (P,
             New_Function_Decl
-              (Domain      => EW_Term,
+              (Domain      => EW_Pterm,
                Name        => To_Local (E_Symb (E, WNE_Bool_Eq)),
                Binders     => A_Binder &
                  Binder_Array'(1 => Binder_Type'(B_Name => B_Ident,
@@ -607,7 +607,7 @@ package body Why.Gen.Pointers is
             Emit
               (P,
                New_Function_Decl
-                 (Domain      => EW_Term,
+                 (Domain      => EW_Pterm,
                   Name        => To_Local (E_Symb (E, WNE_Dispatch_Eq)),
                   Return_Type => EW_Bool_Type,
                   Location    => No_Location,
@@ -627,7 +627,7 @@ package body Why.Gen.Pointers is
       Emit
         (P,
          New_Function_Decl
-           (Domain      => EW_Term,
+           (Domain      => EW_Pterm,
             Name        => To_Local (E_Symb (E, WNE_To_Base)),
             Binders     => A_Binder,
             Labels      => Name_Id_Sets.Empty_Set,
@@ -637,7 +637,7 @@ package body Why.Gen.Pointers is
       Emit
         (P,
          New_Function_Decl
-           (Domain      => EW_Term,
+           (Domain      => EW_Pterm,
             Name        => To_Local (E_Symb (E, WNE_Of_Base)),
             Binders     => A_Binder,
             Labels      => Name_Id_Sets.Empty_Set,
