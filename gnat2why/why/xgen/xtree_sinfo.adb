@@ -434,6 +434,8 @@ package body Xtree_Sinfo is
                  "Field", "W_Identifier", Id_One);
       New_Field (W_Record_Access,
                  "Typ", "W_Type", Id_Lone);
+      New_Field (W_Record_Access,
+                 "Labels", "Name_Id_Set");
 
       ---------------------
       -- W_Record_Update --

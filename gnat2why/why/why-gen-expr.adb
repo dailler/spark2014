@@ -2715,16 +2715,20 @@ package body Why.Gen.Expr is
    begin
       return
         +Sequence
-          (New_Assignment (Ada_Node => If_Node,
-                           Name     =>
-                             +M_Main.Spark_CE_Branch,
-                           Labels   => Node_Label,
-                           Value    => +Condition,
-                           Typ      => EW_Bool_Type),
+        (+Insert_Cnt_Loc_Label
+           (Ada_Node => If_Node,
+            E        =>
+              New_Assignment (Ada_Node => If_Node,
+                              Name     =>
+                                +M_Main.Spark_CE_Branch,
+                              Value    => +Condition,
+                              Labels   => Name_Id_Sets.Empty_Set,
+                              Typ      => EW_Bool_Type)),
            New_Record_Access (Name  =>
                                 +M_Main.Spark_CE_Branch,
                               Field =>
                                 +New_Identifier (Name => "bool__content"),
+                              Labels   => Node_Label,
                               Typ   => EW_Bool_Type));
    end New_Counterexample_Assign;
 
@@ -3170,7 +3174,7 @@ package body Why.Gen.Expr is
       if Reason = VC_Postcondition then
          Set.Insert (Model_VC_Post);
       else
-         Set.Insert (Model_VC);
+         Set.Insert (VC_Annotation);
       end if;
       return Set;
    end New_VC_Labels;

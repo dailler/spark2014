@@ -753,9 +753,10 @@ package body Why.Gen.Pointers is
          else E_Symb (E, WNE_Pointer_Address));
 
    begin
-      return New_Record_Access (Name  => +Name,
-                                Field => Field,
-                                Typ   => EW_Int_Type);
+      return New_Record_Access (Name   => +Name,
+                                Field  => Field,
+                                Labels => Name_Id_Sets.Empty_Set,
+                                Typ    => EW_Int_Type);
    end New_Pointer_Address_Access;
 
    --------------------------------
@@ -776,6 +777,7 @@ package body Why.Gen.Pointers is
    begin
       return New_Record_Access (Name   => +Name,
                                 Field  => Field,
+                                Labels => Name_Id_Sets.Empty_Set,
                                 Typ    => EW_Bool_Type);
    end New_Pointer_Is_Null_Access;
 
@@ -807,9 +809,10 @@ package body Why.Gen.Pointers is
             Reason   => VC_Null_Pointer_Dereference,
             Typ      => EW_Abstract (Directly_Designated_Type (E)));
       else
-         return New_Record_Access (Name  => +Name,
-                                   Field => Field,
-                                   Typ   => EW_Abstract
+         return New_Record_Access (Name   => +Name,
+                                   Field  => Field,
+                                   Labels => Name_Id_Sets.Empty_Set,
+                                   Typ    => EW_Abstract
                                      (Directly_Designated_Type (E)));
       end if;
    end New_Pointer_Value_Access;

@@ -759,8 +759,9 @@ package body Why.Gen.Records is
         New_Identifier (Name => "a", Typ => Root_Abstr);
       Num_Discr  : constant Natural := Count_Discriminants (E);
       R_Access   : constant W_Expr_Id :=
-        New_Record_Access (Name  => +A_Ident,
-                           Field => E_Symb (Root, WNE_Rec_Split_Discrs));
+        New_Record_Access (Name   => +A_Ident,
+                           Field  => E_Symb (Root, WNE_Rec_Split_Discrs),
+                           Labels => Name_Id_Sets.Empty_Set);
       Discr      : Node_Id := First_Discriminant (E);
       Post       : constant W_Pred_Id :=
         New_Call
@@ -973,8 +974,9 @@ package body Why.Gen.Records is
                  Entity (Name (Info.Parent_Var_Part));
                R_Access  : constant W_Expr_Id :=
                  New_Record_Access
-                   (Name  => +A_Ident,
-                    Field => To_Ident (WNE_Rec_Split_Discrs));
+                   (Name   => +A_Ident,
+                    Field  => To_Ident (WNE_Rec_Split_Discrs),
+                    Labels => Name_Id_Sets.Empty_Set);
                Discr     : constant W_Term_Id :=
                  +Insert_Conversion_To_Rep_No_Bool
                    (Domain => EW_Term,
@@ -982,6 +984,7 @@ package body Why.Gen.Records is
                       (Name  => R_Access,
                        Field => To_Why_Id
                          (Ada_Discr, Local => Is_Root, Rec => Root),
+                       Labels => Name_Id_Sets.Empty_Set,
                        Typ   => EW_Abstract (Etype (Ada_Discr))));
                New_Cond  : constant W_Pred_Id :=
                  (if Is_Others_Choice (Discrete_Choices (Info.Parent_Variant))
@@ -1088,11 +1091,13 @@ package body Why.Gen.Records is
                Orig_D_Id      : constant W_Identifier_Id :=
                  E_Symb (Root, WNE_Rec_Split_Discrs);
                E_Discr_Access : constant W_Expr_Id :=
-                 New_Record_Access (Name  => +A_Ident,
-                                    Field => To_Ident (WNE_Rec_Split_Discrs));
+                 New_Record_Access (Name   => +A_Ident,
+                                    Field  => To_Ident (WNE_Rec_Split_Discrs),
+                                    Labels => Name_Id_Sets.Empty_Set);
                R_Discr_Access : constant W_Expr_Id :=
-                 New_Record_Access (Name  => +R_Ident,
-                                    Field => Orig_D_Id);
+                 New_Record_Access (Name   => +R_Ident,
+                                    Field  => Orig_D_Id,
+                                    Labels => Name_Id_Sets.Empty_Set);
             begin
 
                From_Index := From_Index + 1;
@@ -1122,11 +1127,13 @@ package body Why.Gen.Records is
                Orig_F_Id       : constant W_Identifier_Id :=
                  E_Symb (Root, WNE_Rec_Split_Fields);
                E_Field_Access  : constant W_Expr_Id :=
-                 New_Record_Access (Name  => +A_Ident,
-                                    Field => To_Ident (WNE_Rec_Split_Fields));
+                 New_Record_Access (Name   => +A_Ident,
+                                    Field  => To_Ident (WNE_Rec_Split_Fields),
+                                    Labels => Name_Id_Sets.Empty_Set);
                R_Field_Access  : constant W_Expr_Id :=
-                 New_Record_Access (Name  => +R_Ident,
-                                    Field => Orig_F_Id);
+                 New_Record_Access (Name   => +R_Ident,
+                                    Field  => Orig_F_Id,
+                                    Labels => Name_Id_Sets.Empty_Set);
 
                Field_From_Index : Natural := 0;
                Field_To_Index   : Natural := 0;
@@ -1167,6 +1174,7 @@ package body Why.Gen.Records is
                                     New_Record_Access
                                       (Name  => R_Field_Access,
                                        Field => Orig_Id,
+                                       Labels => Name_Id_Sets.Empty_Set,
                                        Typ   => W_Type_Of_Component (Orig, E)),
                                   Force_No_Slide => True));
 
@@ -1181,9 +1189,10 @@ package body Why.Gen.Records is
                                   To     => W_Type_Of_Component (Orig, E),
                                   Expr   =>
                                     New_Record_Access
-                                      (Name  => E_Field_Access,
-                                       Field => Field_Id,
-                                       Typ   =>
+                                      (Name   => E_Field_Access,
+                                       Field  => Field_Id,
+                                       Labels => Name_Id_Sets.Empty_Set,
+                                       Typ    =>
                                          W_Type_Of_Component (Field, E)),
                                   Force_No_Slide => True));
                      else
@@ -1199,10 +1208,11 @@ package body Why.Gen.Records is
                                   Extract_Fun (Field, Rec => E),
                                 Args =>
                                   (1 => New_Record_Access
-                                     (Name  => R_Field_Access,
-                                      Field =>
+                                     (Name   => R_Field_Access,
+                                      Field  =>
                                         +New_Extension_Component_Expr (Root),
-                                      Typ   => EW_Private_Type)))));
+                                      Labels => Name_Id_Sets.Empty_Set,
+                                      Typ    => EW_Private_Type)))));
                      end if;
                   end;
                end loop;
@@ -1225,11 +1235,12 @@ package body Why.Gen.Records is
                                      (Name => Extract_Extension_Fun,
                                       Args =>
                                         (1 => New_Record_Access
-                                           (Name  => R_Field_Access,
-                                            Field =>
+                                           (Name   => R_Field_Access,
+                                            Field  =>
                                               +New_Extension_Component_Expr
                                                 (Root),
-                                            Typ   => EW_Private_Type)))));
+                                            Labels => Name_Id_Sets.Empty_Set,
+                                            Typ    => EW_Private_Type)))));
 
                   declare
                      Num_Args : constant Natural :=
@@ -1243,19 +1254,21 @@ package body Why.Gen.Records is
                            Index := Index + 1;
                            Args (Index) :=
                              New_Record_Access
-                             (Name  => E_Field_Access,
-                              Field =>
+                             (Name   => E_Field_Access,
+                              Field  =>
                                 To_Why_Id (Field, Local => True, Rec => E),
-                              Typ   => W_Type_Of_Component (Field, E));
+                              Labels => Name_Id_Sets.Empty_Set,
+                              Typ    => W_Type_Of_Component (Field, E));
                         end if;
                      end loop;
 
                      Index := Index + 1;
                      Args (Index) :=
                        New_Record_Access
-                       (Name  => E_Field_Access,
-                        Field => To_Local (E_Symb (E, WNE_Rec_Extension)),
-                        Typ   => EW_Private_Type);
+                       (Name   => E_Field_Access,
+                        Field  => To_Local (E_Symb (E, WNE_Rec_Extension)),
+                        Labels => Name_Id_Sets.Empty_Set,
+                        Typ    => EW_Private_Type);
 
                      pragma Assert (Index = Num_Args);
 
@@ -1313,11 +1326,12 @@ package body Why.Gen.Records is
                  Field  => To_Ident (WNE_Attr_Constrained),
                  Value  =>
                    New_Record_Access
-                     (Name => +R_Ident,
-                      Field =>
+                     (Name   => +R_Ident,
+                      Field  =>
                         +New_Attribute_Expr
                         (Root, EW_Term, Attribute_Constrained),
-                      Typ   => EW_Bool_Type));
+                      Labels => Name_Id_Sets.Empty_Set,
+                      Typ    => EW_Bool_Type));
 
             To_Index := To_Index + 1;
             To_Root_Aggr (To_Index) :=
@@ -1327,9 +1341,10 @@ package body Why.Gen.Records is
                    +New_Attribute_Expr (Root, EW_Term, Attribute_Constrained),
                  Value  =>
                    New_Record_Access
-                     (Name  => +A_Ident,
-                      Field => To_Ident (WNE_Attr_Constrained),
-                      Typ   => EW_Bool_Type));
+                     (Name   => +A_Ident,
+                      Field  => To_Ident (WNE_Attr_Constrained),
+                      Labels => Name_Id_Sets.Empty_Set,
+                      Typ    => EW_Bool_Type));
          end if;
 
          --  Step 4. Copy the tag field of tagged types
@@ -1345,10 +1360,11 @@ package body Why.Gen.Records is
                  Field  => To_Local (E_Symb (E, WNE_Attr_Tag)),
                  Value  =>
                    New_Record_Access
-                     (Name  => +R_Ident,
-                      Field => +New_Attribute_Expr
+                     (Name   => +R_Ident,
+                      Field  => +New_Attribute_Expr
                         (Root, EW_Term, Attribute_Tag),
-                      Typ   => EW_Int_Type));
+                      Labels => Name_Id_Sets.Empty_Set,
+                      Typ    => EW_Int_Type));
 
             To_Index := To_Index + 1;
             To_Root_Aggr (To_Index) :=
@@ -1357,9 +1373,10 @@ package body Why.Gen.Records is
                  Field  => +New_Attribute_Expr (Root, EW_Term, Attribute_Tag),
                  Value  =>
                    New_Record_Access
-                     (Name  => +A_Ident,
-                      Field => To_Local (E_Symb (E, WNE_Attr_Tag)),
-                      Typ   => EW_Int_Type));
+                     (Name   => +A_Ident,
+                      Field  => To_Local (E_Symb (E, WNE_Attr_Tag)),
+                      Labels => Name_Id_Sets.Empty_Set,
+                      Typ    => EW_Int_Type));
          end if;
 
          pragma Assert (To_Root_Aggr'Last = To_Index);
@@ -1426,11 +1443,13 @@ package body Why.Gen.Records is
             return W_Pred_Id
          is
             A_Access : constant W_Expr_Id :=
-              New_Record_Access (Name  => +A_Ident,
-                                 Field => Enclosing_Id);
+              New_Record_Access (Name   => +A_Ident,
+                                 Field  => Enclosing_Id,
+                                 Labels => Name_Id_Sets.Empty_Set);
             B_Access : constant W_Expr_Id :=
-              New_Record_Access (Name  => +B_Ident,
-                                 Field => Enclosing_Id);
+              New_Record_Access (Name   => +B_Ident,
+                                 Field  => Enclosing_Id,
+                                 Labels => Name_Id_Sets.Empty_Set);
          begin
             if Is_Private then
                declare
@@ -1447,13 +1466,15 @@ package body Why.Gen.Records is
                                 else Priv_Name),
                        Typ  => EW_Bool_Type,
                        Args => (1 => New_Record_Access
-                                (Name  => A_Access,
-                                 Field => Field_Id,
-                                 Typ   => EW_Private_Type),
+                                (Name   => A_Access,
+                                 Field  => Field_Id,
+                                 Labels => Name_Id_Sets.Empty_Set,
+                                 Typ    => EW_Private_Type),
                                 2 => New_Record_Access
-                                  (Name  => B_Access,
-                                   Field => Field_Id,
-                                   Typ   => EW_Private_Type)));
+                                  (Name   => B_Access,
+                                   Field  => Field_Id,
+                                   Labels => Name_Id_Sets.Empty_Set,
+                                   Typ    => EW_Private_Type)));
                end;
             else
                return +New_Ada_Equality
@@ -1461,14 +1482,16 @@ package body Why.Gen.Records is
                   Domain => EW_Pred,
                   Left   =>
                     New_Record_Access
-                      (Name  => A_Access,
-                       Field => Field_Id,
-                       Typ   => EW_Abstract (Field_Type)),
+                      (Name   => A_Access,
+                       Field  => Field_Id,
+                       Labels => Name_Id_Sets.Empty_Set,
+                       Typ    => EW_Abstract (Field_Type)),
                   Right  =>
                     New_Record_Access
-                      (Name  => B_Access,
-                       Field => Field_Id,
-                       Typ   => EW_Abstract (Field_Type)));
+                      (Name   => B_Access,
+                       Field  => Field_Id,
+                       Labels => Name_Id_Sets.Empty_Set,
+                       Typ    => EW_Abstract (Field_Type)));
             end if;
          end New_Field_Equality;
 
@@ -1783,7 +1806,8 @@ package body Why.Gen.Records is
                    To_Ident
                      (if Ekind (Field) = E_Discriminant then
                              WNE_Rec_Split_Discrs
-                      else WNE_Rec_Split_Fields));
+                      else WNE_Rec_Split_Fields),
+                Labels => Name_Id_Sets.Empty_Set);
             Post      : constant W_Pred_Id :=
               New_Call
                 (Name => Why_Eq,
@@ -1792,8 +1816,9 @@ package body Why.Gen.Records is
                    (1 => +New_Result_Ident (Why_Empty),
                     2 =>
                       New_Record_Access
-                        (Name  => R_Access,
-                         Field => Why_Name)));
+                        (Name   => R_Access,
+                         Field  => Why_Name,
+                         Labels => Name_Id_Sets.Empty_Set)));
             Precond   : constant W_Pred_Id :=
               (if Ekind (Field) /= E_Component then True_Pred
                else Discriminant_Check_Pred_Call (Field, A_Ident));
@@ -2444,6 +2469,7 @@ package body Why.Gen.Records is
            New_Record_Access
              (Ada_Node => Ada_Node,
               Field    => Call_Id,
+              Labels   => Name_Id_Sets.Empty_Set,
               Name     => Top_Field,
               Typ      => Ret_Ty);
       end if;
@@ -2713,6 +2739,7 @@ package body Why.Gen.Records is
      (New_Record_Access
         (Ada_Node => Ada_Node,
          Field    => E_Symb (Ty, WNE_Rec_Split_Discrs),
+         Labels   => Name_Id_Sets.Empty_Set,
          Name     => Name));
 
    ------------------------------
@@ -2751,6 +2778,7 @@ package body Why.Gen.Records is
      (New_Record_Access
          (Ada_Node => Ada_Node,
           Field    => E_Symb (Ty, WNE_Rec_Split_Fields),
+          Labels   => Name_Id_Sets.Empty_Set,
           Name     => Name));
 
    -----------------------
