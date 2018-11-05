@@ -341,6 +341,7 @@ package VC_Kinds is
       Cnt_Unparsed,
       Cnt_Array,
       Cnt_Record,
+      Cnt_Projection,
       Cnt_Invalid);
    --  Counterexamples are typed.
    --  Matching on this types in the code should make debugging easier.
@@ -385,18 +386,20 @@ package VC_Kinds is
 
    type Cntexmp_Value (T : Cntexmp_Type := Cnt_Invalid) is record
       case T is
-         when Cnt_Integer   => I  : Unbounded_String;
-         when Cnt_Decimal   => D  : Unbounded_String;
-         when Cnt_Float     => F  : Float_Value_Ptr;
-         when Cnt_Boolean   => Bo : Boolean;
-         when Cnt_Bitvector => B  : Unbounded_String;
-         when Cnt_Unparsed  => U  : Unbounded_String;
-         when Cnt_Record    =>
-            Fi                    : Cntexmp_Value_Array.Map;
-         when Cnt_Array     =>
-            Array_Indices         : Cntexmp_Value_Array.Map;
-            Array_Others          : Cntexmp_Value_Ptr;
-         when Cnt_Invalid   => S  : Unbounded_String;
+         when Cnt_Integer    => I  : Unbounded_String;
+         when Cnt_Decimal    => D  : Unbounded_String;
+         when Cnt_Float      => F  : Float_Value_Ptr;
+         when Cnt_Boolean    => Bo : Boolean;
+         when Cnt_Bitvector  => B  : Unbounded_String;
+         when Cnt_Unparsed   => U  : Unbounded_String;
+         when Cnt_Record     =>
+            Fi                        : Cntexmp_Value_Array.Map;
+         when Cnt_Projection => Er : Unbounded_String;
+            --  Cnt_projection is an error case anywhere after vc_kinds
+         when Cnt_Array      =>
+            Array_Indices          : Cntexmp_Value_Array.Map;
+            Array_Others           : Cntexmp_Value_Ptr;
+         when Cnt_Invalid    => S  : Unbounded_String;
       end case;
    end record;
    --  Counterexample values

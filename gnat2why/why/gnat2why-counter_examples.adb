@@ -504,6 +504,12 @@ package body Gnat2Why.Counter_Examples is
             when Cnt_Invalid =>
                return Cnt_Value.S;
 
+            when Cnt_Projection =>
+               pragma Assert (False);
+               --  This case should never happen: we never built a
+               --  Cnt_Projection ever.
+               return Cnt_Value.Er;
+
             when Cnt_Array =>
                pragma Assert (Is_Array_Type (AST_Type));
                declare
