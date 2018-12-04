@@ -1,36 +1,62 @@
-tagged_component_check.ads:14:28: medium: range check might fail
-tagged_component_check.ads:17:28: medium: range check might fail
-tagged_component_check.ads:23:28: medium: range check might fail
-tagged_component_check.ads:28:28: medium: range check might fail
-tagged_component_check.ads:34:28: medium: range check might fail
-tagged_component_check.ads:39:28: medium: range check might fail
-tagged_component_check.ads:45:28: medium: range check might fail
-tagged_component_check.ads:68:25: medium: range check might fail
-tagged_component_check.ads:72:25: medium: range check might fail
-tagged_component_check.ads:76:25: medium: range check might fail
-tagged_component_check.ads:80:25: medium: range check might fail
-tagged_component_check.ads:84:25: medium: range check might fail
-tagged_component_check.ads:97:28: medium: range check might fail
-tagged_component_check.ads:100:28: medium: range check might fail
-tagged_component_check.ads:106:28: medium: range check might fail
-tagged_component_check.ads:111:28: medium: range check might fail
-tagged_component_check.ads:117:28: medium: range check might fail
-tagged_component_check.ads:122:28: medium: range check might fail
-tagged_component_check.ads:128:28: medium: range check might fail
-tagged_component_check.ads:163:25: medium: range check might fail
-tagged_component_check.ads:167:25: medium: range check might fail
-tagged_component_check.ads:171:25: medium: range check might fail
-tagged_component_check.ads:175:25: medium: range check might fail
-tagged_component_check.ads:179:25: medium: range check might fail
-tagged_component_check.ads:192:28: medium: range check might fail
-tagged_component_check.ads:195:28: medium: range check might fail
-tagged_component_check.ads:201:28: medium: range check might fail
-tagged_component_check.ads:206:28: medium: range check might fail
-tagged_component_check.ads:212:28: medium: range check might fail
-tagged_component_check.ads:217:28: medium: range check might fail
-tagged_component_check.ads:223:28: medium: range check might fail
-tagged_component_check.ads:258:25: medium: range check might fail
-tagged_component_check.ads:262:25: medium: range check might fail
-tagged_component_check.ads:266:25: medium: range check might fail
-tagged_component_check.ads:270:25: medium: range check might fail
-tagged_component_check.ads:274:25: medium: range check might fail
+SOUNDNESS BUG at tagged_component_check.ads:14: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:17: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:23: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:28: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:34: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:39: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:45: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:68: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:72: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:76: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:80: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:84: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:97: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:100: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:106: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:111: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:117: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:122: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:128: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:163: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:167: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:171: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:175: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:179: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:192: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:195: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:201: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:206: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:212: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:217: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:223: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:258: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:262: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:266: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:270: mark @RANGE_CHECK:FAIL not found
+SOUNDNESS BUG at tagged_component_check.ads:274: mark @RANGE_CHECK:FAIL not found
+<stream>:1:1: Nothing to read from stream
+
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+tagged_component_check.ads
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| No source file position information available                            |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 19.0w (19940713) (spark)                                             |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

@@ -1,5 +1,29 @@
+SOUNDNESS BUG at record_subty.adb:17: mark @ASSERT:FAIL not found
 record_subty.adb:17:19: info: initialization of "X.C.A" proved
 record_subty.adb:17:19: info: initialization of "X.C.B" proved
-record_subty.adb:17:19: medium: assertion might fail, cannot prove X /= Y (e.g. when X = (C => (A => 1, B => 1)) and Y = (C => (A => 1, B => 2)))
 record_subty.adb:17:24: info: initialization of "Y.C.A" proved
 record_subty.adb:17:24: info: initialization of "Y.C.B" proved
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+record_subty.adb
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Error detected at record_subty.adb:6:53                                  |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 19.0w (19940713) (spark) Constraint_Error Gnat2Why.Tables.Component_Visibility_Maps.Constant_Reference: key not in map|
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

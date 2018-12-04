@@ -26,7 +26,7 @@ input.adb:270:56: info: initialization of "S" proved
 input.adb:270:59: info: index check proved (CVC4: 2 VC)
 input.adb:273:12: info: length check proved (CVC4: 4 VC)
 input.adb:273:15: info: initialization of "S" proved
-input.adb:273:17: low: range check might fail (e.g. when S'First = 1023 and S'Last = 1024 and V = (others => '!')) [possible explanation: loop at line 269 should mention S in a loop invariant]
+input.adb:273:17: low: range check might fail [possible explanation: loop at line 269 should mention S in a loop invariant]
 input.adb:273:22: info: range check proved (CVC4: 2 VC)
 input.adb:273:26: info: range check proved (CVC4: 1 VC)
 input.adb:273:34: info: overflow check proved (CVC4: 1 VC)
@@ -84,7 +84,7 @@ screen_output.adb:82:07: warning: no Global contract available for "Put"
 screen_output.adb:83:07: warning: assuming "Put" has no effect on global items
 screen_output.adb:83:07: warning: no Global contract available for "Put"
 screen_output.adb:83:46: info: range check proved (CVC4: 1 VC)
-screen_output.adb:83:53: low: range check might fail (e.g. when S = (1 => ':', others => ' ') and S'First = 1 and S'Last = 2147483645) [possible explanation: subprogram at line 65 should mention S and Input.Line_Num in a precondition]
+screen_output.adb:83:53: low: range check might fail [possible explanation: subprogram at line 65 should mention S and Input.Line_Num in a precondition]
 screen_output.adb:84:07: warning: assuming "New_Line" has no effect on global items
 screen_output.adb:84:07: warning: no Global contract available for "New_Line"
 screen_output.adb:93:07: warning: assuming "Put" has no effect on global items
@@ -118,16 +118,11 @@ stack.adb:37:12: info: index check proved (CVC4: 2 VC)
 stack.adb:47:10: info: raise statement proved unreachable (CVC4: 1 VC)
 stack.adb:50:17: info: index check proved (CVC4: 2 VC)
 stack.adb:51:20: info: range check proved (CVC4: 1 VC)
-stack.adb:53:46: low: range check might fail
 stack.adb:53:66: info: initialization of "V.E" proved
-stack.adb:63:10: info: raise statement proved unreachable (CVC4: 1 VC)
-stack.adb:66:19: info: index check proved (CVC4: 2 VC)
 stack.adb:75:34: info: cannot unroll loop (too many loop iterations)
 stack.ads:20:14: info: postcondition proved (CVC4: 1 VC)
 stack.ads:20:30: info: overflow check proved (CVC4: 1 VC)
 stack.ads:24:19: info: initialization of "V.E" proved
-stack.ads:26:14: info: postcondition proved (CVC4: 1 VC)
-stack.ads:26:30: info: overflow check proved (CVC4: 1 VC)
 stack.ads:35:14: info: initialization of "Last" proved
 stack.ads:43:14: warning: subprogram "View" has no effect
 tokens.adb:21:15: info: precondition proved (CVC4: 1 VC)
@@ -148,7 +143,7 @@ tokens.adb:55:65: info: initialization of "Word" proved
 tokens.adb:59:19: medium: exception might be raised
 tokens.adb:74:19: info: precondition proved (CVC4: 1 VC)
 tokens.adb:74:30: info: discriminant check proved (CVC4: 1 VC)
-tokens.adb:77:30: medium: precondition might fail (e.g. when Last = 0)
+tokens.adb:77:30: medium: precondition might fail (e.g. when Last = 1)
 tokens.adb:77:41: info: discriminant check proved (CVC4: 1 VC)
 tokens.adb:80:36: info: discriminant check proved (CVC4: 1 VC)
 tokens.ads:19:20: info: initialization of "V.Instr" proved
@@ -166,18 +161,72 @@ values-operations.adb:63:28: info: overflow check proved (CVC4: 1 VC)
 values-operations.adb:63:30: info: initialization of "V2.E" proved
 values-operations.adb:66:23: info: initialization of "V1.E" proved
 values-operations.adb:66:28: info: division check proved (CVC4: 1 VC)
-values-operations.adb:66:28: medium: overflow check might fail (e.g. when Result = 0 and V1 = (E => Integer'First) and V2 = (E => -1))
 values-operations.adb:66:30: info: initialization of "V2.E" proved
 values-operations.adb:69:23: info: initialization of "V1.E" proved
-values-operations.adb:69:28: medium: overflow check might fail (e.g. when Result = 0 and V1 = (E => 3) and V2 = (E => -3))
 values-operations.adb:69:30: info: initialization of "V2.E" proved
 values-operations.adb:72:23: info: initialization of "V1.E" proved
-values-operations.adb:72:28: info: overflow check proved (CVC4: 1 VC)
 values-operations.adb:72:30: info: initialization of "V2.E" proved
-values-operations.adb:78:12: info: precondition proved (CVC4: 1 VC)
 values-operations.adb:78:31: info: initialization of "Result" proved
 values.adb:14:12: info: precondition proved (CVC4: 1 VC)
 values.adb:27:41: warning: unused assignment to "Real_Val"
 values.adb:29:10: info: initialization of "Kind" proved
 values.adb:30:10: medium: exception might be raised
 values.adb:33:26: info: initialization of "Int_Val" proved
+
+
+
+
+
+
++==========================================================================+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
++===========================GNAT BUG DETECTED==============================+
+except.ads
+except.ads
+screen_output.ads
+screen_output.ads
+stack.adb
+stack.ads
+stack.ads
+types.ads
+types.ads
+values-operations.adb
+values-operations.ads
+values.ads
+values.ads
+Consider also -gnatd.n switch (see debug.adb).
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+Please include these source files with error report
+be reproduced with the set of files listed.
+be reproduced with the set of files listed.
+compilation abandoned
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Also include sources listed below.                                       |
+| Error detected at stack.adb:79:20                                        |
+| Error detected at values-operations.adb:78:12                            |
+| Include the entire contents of this bug box in the report.               |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| Include the exact command that you entered.                              |
+| Please submit a bug report using GNAT Tracker:                           |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 19.0w (19940713) (spark) Assert_Failure gnat2why-counter_examples.adb:409|
+| Pro 19.0w (19940713) (spark) Assert_Failure gnat2why-counter_examples.adb:409|
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |
+| including your customer number #nnn in the subject line.                 |

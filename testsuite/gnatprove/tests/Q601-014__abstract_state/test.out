@@ -8,9 +8,6 @@ achiever.ads:31:27: warning: unused variable "Before"
 achiever.ads:32:27: warning: unused variable "After"
 achiever.ads:35:06: info: complete contract cases proved (CVC4: 1 VC)
 achiever.ads:35:06: info: disjoint contract cases proved (CVC4: 1 VC)
-achiever.ads:36:49: medium: contract case might fail (e.g. when State_Item = (Sc_State => (Prime => False, Shadow => False)))
-achiever.ads:44:45: info: contract case proved (CVC4: 2 VC)
-achiever.ads:47:08: info: postcondition proved (CVC4: 1 VC)
 achiever.ads:52:15: info: initialization of "State_Item" proved
 fault_manager.ads:3:14: warning: subprogram "Log_Direct_Failure" has no effect
 main.adb:3:11: medium: "My_Internal_State" might not be initialized after elaboration of main program "Main"
@@ -18,3 +15,29 @@ main.adb:3:11: medium: "achiever.state_item" might not be initialized after elab
 sc_status_type.adb:35:14: info: initialization of "Result" proved
 sc_status_type.ads:48:22: info: initialization of "This.Sc_State.Prime" proved
 sc_status_type.ads:48:22: info: initialization of "This.Sc_State.Shadow" proved
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+achiever.adb
+achiever.ads
+sc_status_type.ads
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Error detected at achiever.adb:106:12                                    |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 19.0w (19940713) (spark) Constraint_Error Gnat2Why.Tables.Component_Visibility_Maps.Constant_Reference: key not in map|
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

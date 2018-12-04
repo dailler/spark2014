@@ -1,9 +1,34 @@
+SOUNDNESS BUG at volatiles_legal.adb:17: mark @ASSERT:FAIL not found
 volatiles_legal.adb:7:04: warning: analyzing unreferenced procedure "P1"
 volatiles_legal.adb:17:22: info: initialization of "Tmp1" proved
-volatiles_legal.adb:17:22: medium: assertion might fail, cannot prove Tmp1 = Tmp2 (e.g. when Tmp1 = -1 and Tmp2 = 0)
 volatiles_legal.adb:17:29: info: initialization of "Tmp2" proved
 volatiles_legal.adb:23:10: info: initialization of "Temp" proved
 volatiles_legal.adb:29:22: info: assertion proved (CVC4: 2 VC)
 volatiles_legal.adb:29:25: info: initialization of "Temp" proved
 volatiles_legal.adb:34:14: warning: unused assignment
 volatiles_legal.ads:53:32: info: initialization of "Vol2.X" proved
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+volatiles_legal.adb
+volatiles_legal.ads
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Error detected at volatiles_legal.adb:17:27                              |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 19.0w (19940713) (spark) Assert_Failure gnat2why-counter_examples.adb:409|
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

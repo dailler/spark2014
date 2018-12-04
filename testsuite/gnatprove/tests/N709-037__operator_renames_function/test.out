@@ -1,3 +1,25 @@
-main.adb:4:16: medium: postcondition might fail, cannot prove A = B (e.g. when A = (X => -1) and B = (X => -1)) [possible explanation: subprogram at line 3 should mention A and B in a precondition]
-main.adb:7:16: medium: overflow check might fail (e.g. when A = (X => Integer'First) and B = (X => -1)) [possible explanation: subprogram at line 3 should mention A and B in a precondition]
-main.adb:7:23: info: division check proved (CVC4: 1 VC)
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+main.adb
+test.ads
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Error detected at main.adb:8:11                                          |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 19.0w (19940713) (spark) Assert_Failure gnat2why-counter_examples.adb:409|
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |
