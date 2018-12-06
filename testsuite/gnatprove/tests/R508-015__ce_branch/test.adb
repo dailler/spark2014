@@ -2,7 +2,7 @@ package body Test with SPARK_Mode
 is
 
    function Test_If (A : Integer) return Integer
-     with Post => Test_If'Result = 522 --  @COUNTEREXAMPLE
+     with Post => Test_If'Result = 522
    is
       B : Integer;
    begin
@@ -13,6 +13,7 @@ is
       else
          B := 82;
       end if;
+      pragma Assert (B = 0); -- @COUNTEREXAMPLE
       return B;
    end Test_If;
 

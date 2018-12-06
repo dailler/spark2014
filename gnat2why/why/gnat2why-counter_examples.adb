@@ -2156,7 +2156,7 @@ package body Gnat2Why.Counter_Examples is
             begin
 
                if Str'Length > 10 and then
-                 Str (Str'First .. Str'First + 9) = "branch_id:"
+                 Str (Str'First .. Str'First + 9) = "branch_id="
                then
 
                   declare

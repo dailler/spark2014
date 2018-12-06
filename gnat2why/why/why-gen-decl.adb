@@ -198,8 +198,9 @@ package body Why.Gen.Decl is
       --  The access to the field to that the record is projected
       Field_Access : constant W_Expr_Id :=
         Why.Atree.Builders.New_Record_Access
-          (Name  => +Param_Ident,
-           Field => Field_Id);
+          (Name   => +Param_Ident,
+           Field  => Field_Id,
+           Labels => Name_Id_Sets.Empty_Set);
 
    begin
       --  Update number of declarations of projection with name Proj_Name

@@ -1900,10 +1900,20 @@ package body Why.Atree.Sprint is
    -------------------------
 
    procedure Print_Record_Access (Node : W_Record_Access_Id) is
+      Labels : constant Name_Id_Set := Get_Labels (Node);
    begin
-      Print_Node (+Get_Name (Node));
-      P (O, ".");
-      Print_Node (+Get_Field (Node));
+      if Name_Id_Sets.Is_Empty (Labels) then
+         Print_Node (+Get_Name (Node));
+         P (O, ".");
+         Print_Node (+Get_Field (Node));
+      else
+         P (O, "(");
+         P (O, Labels, As_Labels => True);
+         Print_Node (+Get_Name (Node));
+         P (O, ")");
+         P (O, ".");
+         Print_Node (+Get_Field (Node));
+      end if;
    end Print_Record_Access;
 
    ----------------------------

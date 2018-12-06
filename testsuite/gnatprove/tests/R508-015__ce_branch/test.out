@@ -1,20 +1,23 @@
-test.adb:5:19: medium: postcondition might fail, cannot prove Test_If'Result = 522 (e.g. when Test_If'Result = 5)
-test.adb:16:14: info: initialization of "B" proved
-test.adb:20:19: medium: postcondition might fail, cannot prove Test_Case'Result = 522 (e.g. when Test_Case'Result = 5)
-test.adb:34:14: info: initialization of "B" proved
-test.adb:39:19: medium: postcondition might fail, cannot prove Test_If_2'Result = 1 (e.g. when Test_If_2'Result = -1)
-test.adb:44:18: info: overflow check proved (CVC4: 1 VC)
-test.adb:46:16: info: initialization of "B" proved
-test.adb:46:18: info: overflow check proved (CVC4: 1 VC)
-test.adb:47:14: info: initialization of "B" proved
-counterexample expected for check at test.adb:5
+test.adb:5:19: info: postcondition proved (CVC4: 1 VC)
+test.adb:16:22: info: initialization of "B" proved
+test.adb:16:22: medium: assertion might fail, cannot prove B = 0 (e.g. when B = 5)
+test.adb:17:14: info: initialization of "B" proved
+test.adb:21:19: medium: postcondition might fail, cannot prove Test_Case'Result = 522 (e.g. when Test_Case'Result = 5)
+test.adb:35:14: info: initialization of "B" proved
+test.adb:40:19: medium: postcondition might fail, cannot prove Test_If_2'Result = 1 (e.g. when Test_If_2'Result = -1)
+test.adb:45:18: info: overflow check proved (CVC4: 1 VC)
+test.adb:47:16: info: initialization of "B" proved
+test.adb:47:18: info: overflow check proved (CVC4: 1 VC)
+test.adb:48:14: info: initialization of "B" proved
+counterexample expected for check at test.adb:16
   trace at test.adb:4 --> A = 4
-  trace at test.adb:5 --> Test_If'Result = 5
-counterexample expected for check at test.adb:20
-  trace at test.adb:19 --> A = 3
-  trace at test.adb:20 --> Test_Case'Result = 5
-counterexample expected for check at test.adb:39
-  trace at test.adb:38 --> A = 0
-  trace at test.adb:39 --> Test_If_2'Result = -1
-  trace at test.adb:41 --> B = 0
-  trace at test.adb:43 --> B = -1
+  trace at test.adb:10 --> B = 5
+  trace at test.adb:16 --> B = 5
+counterexample expected for check at test.adb:21
+  trace at test.adb:20 --> A = 3
+  trace at test.adb:21 --> Test_Case'Result = 5
+counterexample expected for check at test.adb:40
+  trace at test.adb:39 --> A = 0
+  trace at test.adb:40 --> Test_If_2'Result = -1
+  trace at test.adb:42 --> B = 0
+  trace at test.adb:44 --> B = -1

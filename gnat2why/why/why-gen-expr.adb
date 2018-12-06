@@ -2718,13 +2718,14 @@ package body Why.Gen.Expr is
           (New_Assignment (Ada_Node => If_Node,
                            Name     =>
                              +M_Main.Spark_CE_Branch,
-                           Labels   => Node_Label,
                            Value    => +Condition,
+                           Labels   => Name_Id_Sets.Empty_Set,
                            Typ      => EW_Bool_Type),
            New_Record_Access (Name  =>
                                 +M_Main.Spark_CE_Branch,
                               Field =>
                                 +New_Identifier (Name => "bool__content"),
+                              Labels   => Node_Label,
                               Typ   => EW_Bool_Type));
    end New_Counterexample_Assign;
 
