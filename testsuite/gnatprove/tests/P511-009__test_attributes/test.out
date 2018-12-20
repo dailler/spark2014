@@ -77,57 +77,49 @@ storage_place_attributes.adb:21:23: info: range check proved (CVC4: 1 VC)
 storage_place_attributes.adb:27:22: info: range check proved (CVC4: 1 VC)
 storage_place_attributes.adb:28:22: info: range check proved (CVC4: 1 VC)
 storage_place_attributes.adb:39:19: info: initialization of "O2a.D3" proved
+storage_place_attributes.adb:39:19: medium: assertion might fail, cannot prove O2a.D3'First_bit = O2b.D3'first_bit
 storage_place_attributes.adb:39:38: info: initialization of "O2b.D3" proved
+storage_place_attributes.adb:40:19: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:40:19: info: initialization of "O2a.D3" proved
 storage_place_attributes.adb:40:38: info: initialization of "R2a_arr" proved
+storage_place_attributes.adb:41:19: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:41:19: info: initialization of "O2a.D3" proved
 storage_place_attributes.adb:45:19: info: initialization of "O2.D3" proved
+storage_place_attributes.adb:45:19: medium: assertion might fail, cannot prove O2.D3'First_Bit = O2a.D3'first_bit
 storage_place_attributes.adb:45:37: info: initialization of "O2a.D3" proved
 storage_place_attributes.adb:49:04: warning: analyzing unreferenced procedure "First1"
 storage_place_attributes.adb:49:14: warning: subprogram "First1" has no effect
+storage_place_attributes.adb:51:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:54:04: warning: analyzing unreferenced procedure "First2"
 storage_place_attributes.adb:54:14: warning: subprogram "First2" has no effect
+storage_place_attributes.adb:56:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:59:04: warning: analyzing unreferenced procedure "First3"
 storage_place_attributes.adb:59:14: warning: subprogram "First3" has no effect
+storage_place_attributes.adb:61:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:64:04: warning: analyzing unreferenced procedure "First4"
 storage_place_attributes.adb:64:14: warning: subprogram "First4" has no effect
+storage_place_attributes.adb:66:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:71:04: warning: analyzing unreferenced procedure "Last1"
 storage_place_attributes.adb:71:14: warning: subprogram "Last1" has no effect
+storage_place_attributes.adb:73:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:76:04: warning: analyzing unreferenced procedure "Last2"
 storage_place_attributes.adb:76:14: warning: subprogram "Last2" has no effect
+storage_place_attributes.adb:78:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:81:04: warning: analyzing unreferenced procedure "Last3"
 storage_place_attributes.adb:81:14: warning: subprogram "Last3" has no effect
+storage_place_attributes.adb:83:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:86:04: warning: analyzing unreferenced procedure "Last4"
 storage_place_attributes.adb:86:14: warning: subprogram "Last4" has no effect
+storage_place_attributes.adb:88:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:93:04: warning: analyzing unreferenced procedure "Position1"
 storage_place_attributes.adb:93:14: warning: subprogram "Position1" has no effect
+storage_place_attributes.adb:95:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:98:04: warning: analyzing unreferenced procedure "Position2"
 storage_place_attributes.adb:98:14: warning: subprogram "Position2" has no effect
+storage_place_attributes.adb:100:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:103:04: warning: analyzing unreferenced procedure "Position3"
 storage_place_attributes.adb:103:14: warning: subprogram "Position3" has no effect
+storage_place_attributes.adb:105:22: info: assertion proved (CVC4: 1 VC)
 storage_place_attributes.adb:108:04: warning: analyzing unreferenced procedure "Position4"
 storage_place_attributes.adb:108:14: warning: subprogram "Position4" has no effect
-
-
-
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-storage_place_attributes.adb
-Consider also -gnatd.n switch (see debug.adb).
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-be reproduced with the set of files listed.
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-| Also include sources listed below.                                       |
-| Error detected at storage_place_attributes.adb:111:4                     |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 19.0w (19940713) (spark) Assert_Failure failed precondition from gnat2why-tables.ads:125|
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |
+storage_place_attributes.adb:110:22: info: assertion proved (CVC4: 1 VC)

@@ -1,30 +1,7 @@
-SOUNDNESS BUG at main.adb:28: mark @ASSERT:FAIL not found
 main.adb:1:11: high: all paths in "Main" raise exceptions or do not terminate normally
 main.adb:21:14: high: all paths in "Create_Empty_Branch" raise exceptions or do not terminate normally
 main.adb:22:07: warning: "Branch" is not modified, could be IN
+main.adb:25:17: info: postcondition proved (CVC4: 1 VC)
+main.adb:28:07: medium: assertion might fail
 main.adb:38:04: info: precondition proved (CVC4: 1 VC)
 main.adb:41:04: info: assertion proved (CVC4: 1 VC)
-
-
-
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-main.adb
-Consider also -gnatd.n switch (see debug.adb).
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-be reproduced with the set of files listed.
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-| Also include sources listed below.                                       |
-| Error detected at main.adb:29:7                                          |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 19.0w (19940713) (spark) Constraint_Error Gnat2Why.Tables.Component_Visibility_Maps.Constant_Reference: key not in map|
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |

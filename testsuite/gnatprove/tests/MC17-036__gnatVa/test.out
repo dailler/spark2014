@@ -1,6 +1,6 @@
 protectedfloat.adb:14:29: info: division check proved (CVC4: 1 VC)
 protectedfloat.adb:14:29: info: float overflow check proved (Interval)
 protectedfloat.adb:17:24: info: division check proved (CVC4: 1 VC)
-protectedfloat.adb:17:24: medium: float overflow check might fail (e.g. when left = 1.3599111E+0 and right = 3.9964191E-39)
+protectedfloat.adb:17:24: medium: float overflow check might fail
 protectedfloat.adb:20:21: info: division check proved (CVC4: 1 VC)
 protectedfloat.adb:20:21: info: float overflow check proved (CVC4: 1 VC)

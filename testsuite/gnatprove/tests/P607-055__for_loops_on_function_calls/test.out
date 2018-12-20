@@ -1,6 +1,3 @@
-SOUNDNESS BUG at for_loop_iterable.adb:33: mark @ASSERT:FAIL not found
-SOUNDNESS BUG at for_loop_iterable.adb:44: mark @ASSERT:FAIL not found
-SOUNDNESS BUG at for_loop_iterable.adb:53: mark @ASSERT:FAIL not found
 declare_iterable.adb:5:18: info: index check proved (CVC4: 2 VC)
 declare_iterable.ads:13:26: warning: unused variable "X"
 declare_iterable.ads:16:20: warning: unused variable "X"
@@ -18,45 +15,26 @@ for_loop_iterable.adb:23:25: info: initialization of "A" proved
 for_loop_iterable.adb:23:25: medium: assertion might fail, cannot prove E = 0 (e.g. when A = (2 => 1, others => 0)) [possible explanation: loop at line 21 should mention A in a loop invariant]
 for_loop_iterable.adb:27:14: warning: subprogram "P3" has no effect
 for_loop_iterable.adb:29:40: info: initialization of "A" proved
+for_loop_iterable.adb:31:11: info: precondition proved (CVC4: 1 VC)
 for_loop_iterable.adb:31:16: info: initialization of "G" proved
 for_loop_iterable.adb:32:10: info: precondition proved (CVC4: 1 VC)
 for_loop_iterable.adb:32:15: info: initialization of "G" proved
+for_loop_iterable.adb:33:25: medium: assertion might fail, cannot prove E = 0 (e.g. when E = 1)
 for_loop_iterable.adb:37:14: warning: subprogram "P4" has no effect
 for_loop_iterable.adb:39:40: info: initialization of "A" proved
 for_loop_iterable.adb:40:43: info: initialization of "G" proved
+for_loop_iterable.adb:42:11: info: precondition proved (CVC4: 1 VC)
 for_loop_iterable.adb:42:16: info: initialization of "H.Content" proved
+for_loop_iterable.adb:43:10: info: precondition proved (CVC4: 1 VC)
 for_loop_iterable.adb:43:15: info: initialization of "H.Content" proved
+for_loop_iterable.adb:44:25: medium: assertion might fail, cannot prove E = 0 (e.g. when E = 1)
 for_loop_iterable.adb:48:14: warning: subprogram "P5" has no effect
 for_loop_iterable.adb:51:37: info: initialization of "A" proved
 for_loop_iterable.adb:51:44: info: cannot unroll loop (too many loop iterations)
 for_loop_iterable.adb:52:16: info: initialization of "A" proved
+for_loop_iterable.adb:53:25: medium: assertion might fail, cannot prove E = 1
 for_loop_iterable.adb:58:04: info: precondition proved (CVC4: 1 VC)
 for_loop_iterable.adb:59:04: info: precondition proved (CVC4: 1 VC)
 for_loop_iterable.adb:60:04: info: precondition proved (CVC4: 1 VC)
 for_loop_iterable.adb:61:04: info: precondition proved (CVC4: 1 VC)
 for_loop_iterable.adb:62:04: info: precondition proved (CVC4: 1 VC)
-
-
-
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-declare_iterable.ads
-for_loop_iterable.adb
-Consider also -gnatd.n switch (see debug.adb).
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-be reproduced with the set of files listed.
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-| Also include sources listed below.                                       |
-| Error detected at for_loop_iterable.adb:53:25                            |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 19.0w (19940713) (spark) Assert_Failure gnat2why-counter_examples.adb:514|
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |

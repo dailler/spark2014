@@ -10,8 +10,7 @@ a-cfdlli.ads:1347:20: info: precondition proved (CVC4: 1 VC), in instantiation a
 a-cfdlli.ads:1362:20: info: precondition proved (CVC4: 1 VC), in instantiation at p.ads:15
 a-cfdlli.ads:1377:20: info: precondition proved (CVC4: 1 VC), in instantiation at p.ads:15
 a-cfdlli.ads:1392:20: info: precondition proved (CVC4: 1 VC), in instantiation at p.ads:15
-a-cfdlli.ads:1414:14: info: precondition proved (CVC4: 1 VC), in instantiation at p.ads:15
-a-cfdlli.ads:1420:23: info: precondition proved (CVC4: 1 VC), in instantiation at p.ads:15
+a-cfdlli.ads:1414:14: info: precondition proved (CVC4: 2 VC), in instantiation at p.ads:15
 a-cfdlli.ads:1469:14: info: precondition proved (CVC4: 1 VC), in instantiation at p.ads:15
 a-cfdlli.ads:1476:23: info: precondition proved (CVC4: 1 VC), in instantiation at p.ads:15
 a-cofuve.ads:230:54: info: overflow check proved (CVC4: 1 VC), in instantiation at a-cfdlli.ads:68, in instantiation at p.ads:15
@@ -22,32 +21,10 @@ a-cofuve.ads:237:30: info: range check proved (CVC4: 1 VC), in instantiation at 
 a-cofuve.ads:298:52: info: overflow check proved (CVC4: 1 VC), in instantiation at a-cfdlli.ads:68, in instantiation at p.ads:15
 p.adb:26:14: info: initialization of "C.Node" proved
 p.adb:27:18: info: initialization of "Sum" proved
+p.adb:27:22: medium: overflow check might fail (e.g. when Sum = 0) [possible explanation: loop at line 26 should mention Sum in a loop invariant]
+p.adb:27:32: medium: precondition might fail (e.g. when C = (Node => 2) and Sum = 0)
 p.adb:27:44: info: initialization of "C.Node" proved
+p.adb:28:19: medium: precondition might fail (e.g. when C = (Node => 2) and No_Element = (Node => 0))
 p.adb:28:29: info: initialization of "C.Node" proved
 p.ads:18:14: warning: subprogram "Iter_Over_Lists" has no effect
 p.ads:20:14: warning: subprogram "Quant_Over_Lists" has no effect
-
-
-
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-p.adb
-p.ads
-Consider also -gnatd.n switch (see debug.adb).
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-be reproduced with the set of files listed.
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-| Also include sources listed below.                                       |
-| Error detected at p.adb:34:8                                             |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 19.0w (19940713) (spark) Assert_Failure gnat2why-counter_examples.adb:409|
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |

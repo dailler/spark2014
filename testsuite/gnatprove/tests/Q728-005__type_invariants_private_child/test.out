@@ -1,35 +1,11 @@
-SOUNDNESS BUG at test_type-test.ads:8: mark @ASSERT:FAIL not found
 test_type-test.ads:1:27: info: invariant check proved (CVC4: 1 VC)
 test_type-test.ads:2:04: info: invariant check proved (CVC4: 1 VC)
+test_type-test.ads:5:16: info: overflow check proved (CVC4: 1 VC)
 test_type-test.ads:7:04: info: initialization of "Test.Y.F" constituent of "Test_Type.A_State" proved
 test_type-test.ads:7:13: info: precondition proved (CVC4: 1 VC)
+test_type-test.ads:8:19: medium: assertion might fail, cannot prove X = Y (e.g. when X = (F => 0) and Y = (F => -1))
 test_type-test.ads:8:23: info: initialization of "Test.Y.F" constituent of "Test_Type.A_State" proved
 test_type.ads:3:13: info: invariant check proved (CVC4: 1 VC)
 test_type.ads:6:09: info: invariant check proved on default value (CVC4: 1 VC)
 test_type.ads:12:16: info: overflow check proved (CVC4: 1 VC)
 test_type.ads:19:17: info: precondition proved (CVC4: 1 VC)
-
-
-
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-test_type-test.ads
-test_type.ads
-Consider also -gnatd.n switch (see debug.adb).
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-be reproduced with the set of files listed.
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-| Also include sources listed below.                                       |
-| Error detected at test_type-test.ads:6:16                                |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 19.0w (19940713) (spark) Assert_Failure gnat2why-counter_examples.adb:409|
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |

@@ -1,29 +1,11 @@
+pointers.adb:4:20: info: pointer dereference check proved (CVC4: 1 VC)
+pointers.adb:6:09: info: pointer dereference check proved (CVC4: 1 VC)
+pointers.adb:6:18: info: pointer dereference check proved (CVC4: 1 VC)
+pointers.adb:7:09: info: pointer dereference check proved (CVC4: 1 VC)
 pointers.adb:7:16: info: initialization of "Tmp" proved
 pointers.ads:7:14: warning: subprogram "Swap" has no effect
-
-
-
-                                                                           |
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-pointers.adb
-pointers.ads
-Consider also -gnatd.n switch (see debug.adb).
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-be reproduced with the set of files listed.
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-| Also include sources listed below.                                       |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| No source file position information available                            |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 19.0w (19940713) (spark) GCC error:                                  |
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |
-| unknown VC reason: VC_NULL_POINTER_DEREFERENCE
+pointers.ads:8:14: info: postcondition proved (CVC4: 2 VC)
+pointers.ads:8:16: info: pointer dereference check proved (CVC4: 1 VC)
+pointers.ads:8:24: info: pointer dereference check proved (CVC4: 1 VC)
+pointers.ads:8:38: info: pointer dereference check proved (CVC4: 1 VC)
+pointers.ads:8:46: info: pointer dereference check proved (CVC4: 1 VC)
