@@ -1,4 +1,28 @@
+<stream>:1:1: Nothing to read from stream
 unproved_checks.ads:3:19: high: "X1" is not initialized
-unproved_checks.ads:3:19: medium: assertion might fail, cannot prove X1 = 0 (e.g. when X1 = -1)
 unproved_checks.ads:5:19: high: "X2" is not initialized
-unproved_checks.ads:5:19: medium: assertion might fail, cannot prove X2 = 0 (e.g. when X2 = -1)
+
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+unproved_checks.ads
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| No source file position information available                            |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 20.0w (19940713) (spark)                                             |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

@@ -3,20 +3,11 @@ lat_long.adb:8:51: info: float overflow check proved (Interval)
 lat_long.adb:8:55: info: float overflow check proved (Interval)
 lat_long.adb:9:39: info: float overflow check proved (Interval)
 lat_long.adb:9:54: info: float overflow check proved (Interval)
-lat_long.adb:9:58: info: division check proved (CVC4: 1 VC)
-lat_long.adb:9:58: info: float overflow check proved (CVC4: 1 VC)
 lat_long.adb:10:19: info: initialization of "Delta_Lat" proved
-lat_long.adb:10:29: info: float overflow check proved (CVC4: 1 VC)
-lat_long.adb:10:41: medium: float overflow check might fail (e.g. when Distance'Result = 0.0)
 lat_long.adb:10:43: info: initialization of "Delta_Long" proved
-lat_long.adb:10:54: info: float overflow check proved (CVC4: 1 VC)
 lat_long.ads:8:34: info: float overflow check proved (CVC4: 1 VC)
-lat_long.ads:15:40: medium: postcondition might fail, cannot prove Cos'Result >= 0.1 (e.g. when Cos'Result = -1.0 and X = 1.1718751E+0)
+lat_long.ads:15:40: medium: postcondition might fail, cannot prove Cos'Result >= 0.1 (e.g. when Cos'Result = -1.0)
 lat_long.ads:18:26: medium: precondition might fail (e.g. when X = -1.0000001E+0) [possible explanation: subprogram at line 17 should mention X in a precondition]
-lat_long.ads:29:14: info: postcondition proved (altergo: 1 VC)
-lat_long.ads:30:57: info: float overflow check proved (CVC4: 1 VC)
-lat_long.ads:30:101: info: float overflow check proved (CVC4: 1 VC)
-lat_long.ads:31:58: info: float overflow check proved (CVC4: 1 VC)
 lat_long.ads:34:25: info: float overflow check proved (Interval)
 lat_long.ads:34:39: info: float overflow check proved (Interval)
 lat_long.ads:34:43: info: float overflow check proved (Interval)
@@ -25,4 +16,28 @@ lat_long.ads:39:26: info: float overflow check proved (Interval)
 lat_long.ads:39:41: info: float overflow check proved (Interval)
 lat_long.ads:39:45: info: division check proved (CVC4: 1 VC)
 lat_long.ads:39:45: info: float overflow check proved (CVC4: 1 VC)
-lat_long.ads:41:14: medium: postcondition might fail, cannot prove abs(Delta_Long_In_Meters'Result) < (2.0 * Pi * R) (e.g. when Delta_Long_In_Meters'Result = 4.6974768E+8)
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+lat_long.adb
+lat_long.ads
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Error detected at lat_long.adb:10:7                                      |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 20.0w (19940713) (spark) Assert_Failure gnat2why-counter_examples.adb:898|
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

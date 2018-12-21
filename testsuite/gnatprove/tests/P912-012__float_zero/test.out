@@ -1,18 +1,47 @@
+PROOF REGRESSION at run.ads:14: mark @POSTCONDITION:PASS not found
+PROOF REGRESSION at run.ads:19: mark @POSTCONDITION:PASS not found
+PROOF REGRESSION at run.ads:24: mark @POSTCONDITION:PASS not found
+PROOF REGRESSION at run.ads:29: mark @POSTCONDITION:PASS not found
 run.adb:8:15: info: float overflow check proved (Interval)
 run.adb:14:15: info: float overflow check proved (Interval)
 run.adb:20:15: info: float overflow check proved (Interval)
 run.adb:26:15: info: float overflow check proved (Interval)
 run.ads:12:34: info: initialization of "Y" proved
 run.ads:14:19: info: initialization of "Y" proved
-run.ads:14:19: info: postcondition proved (CVC4: 1 VC)
 run.ads:17:34: info: initialization of "Y" proved
 run.ads:18:21: info: float overflow check proved (Interval)
 run.ads:19:19: info: initialization of "Y" proved
-run.ads:19:19: info: postcondition proved (CVC4: 1 VC)
 run.ads:22:36: info: initialization of "Y" proved
 run.ads:24:19: info: initialization of "Y" proved
-run.ads:24:19: info: postcondition proved (CVC4: 1 VC)
 run.ads:27:37: info: initialization of "Y" proved
 run.ads:28:21: info: float overflow check proved (Interval)
 run.ads:29:19: info: initialization of "Y" proved
-run.ads:29:19: info: postcondition proved (CVC4: 1 VC)
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+run.adb
+run.ads
+Consider also -gnatd.n switch (see debug.adb).
+File "gnatprove/run.mlw", line 3044, characters 42-53:
+Logical symbol neq is used in a non-ghost context                          |
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+|    ove/run.mlw to the session:
+| Also include sources listed below.                                       |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| No source file position information available                            |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 20.0w (19940713) (spark) GCC error:                                  |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| could not add file gnatpr   |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

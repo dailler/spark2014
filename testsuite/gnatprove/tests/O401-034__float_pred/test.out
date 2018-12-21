@@ -1,27 +1,38 @@
 safety_pack.adb:16:14: info: initialization of "Res" proved
 safety_pack.adb:30:14: info: initialization of "Res" proved
 safety_pack.adb:41:17: info: initialization of "Res" proved
-safety_pack.adb:41:21: info: float overflow check proved (CVC4: 1 VC)
 safety_pack.adb:43:17: info: initialization of "Res" proved
-safety_pack.adb:43:21: info: float overflow check proved (CVC4: 1 VC)
 safety_pack.adb:46:14: info: initialization of "Res" proved
-safety_pack.adb:57:26: info: range check proved (CVC4: 1 VC)
 safety_pack.adb:60:14: info: initialization of "Res" proved
-safety_pack.adb:67:17: info: predicate check proved (CVC4: 1 VC)
-safety_pack.adb:69:17: info: predicate check proved (CVC4: 1 VC)
-safety_pack.adb:71:17: info: predicate check proved (CVC4: 1 VC)
-safety_pack.adb:73:17: info: predicate check proved (CVC4: 1 VC)
 safety_pack.adb:76:14: info: initialization of "Res" proved
-safety_pack.ads:15:08: info: complete contract cases proved (CVC4: 1 VC)
-safety_pack.ads:15:08: info: disjoint contract cases proved (CVC4: 1 VC)
-safety_pack.ads:15:62: info: contract case proved (CVC4: 2 VC)
-safety_pack.ads:17:62: medium: contract case might fail (e.g. when Dead_Band'Result = 0.0 and Threshold = 0.0 and Value = 0.0)
-safety_pack.ads:18:54: info: float overflow check proved (CVC4: 1 VC)
-safety_pack.ads:19:62: medium: contract case might fail (e.g. when Dead_Band'Result = 0.0 and Threshold = 0.0 and Value = 0.0)
-safety_pack.ads:20:54: info: float overflow check proved (CVC4: 1 VC)
-safety_pack.ads:29:16: info: postcondition proved (CVC4: 3 VC)
-safety_pack.ads:44:17: info: postcondition proved (CVC4: 3 VC)
-safety_pack.ads:59:11: info: complete contract cases proved (CVC4: 1 VC)
-safety_pack.ads:59:11: info: disjoint contract cases proved (CVC4: 1 VC)
-safety_pack.ads:59:38: info: contract case proved (CVC4: 2 VC)
-safety_pack.ads:60:39: info: contract case proved (CVC4: 2 VC)
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+imu_pack.ads
+safety_pack.adb
+safety_pack.ads
+types.ads
+Consider also -gnatd.n switch (see debug.adb).
+File "safety_pack.ads", line 58, characters 0-0:
+Logical symbol neq is used in a non-ghost context                          |
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+|    ove/safety_pack.mlw to the session:
+| Also include sources listed below.                                       |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| No source file position information available                            |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 20.0w (19940713) (spark) GCC error:                                  |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| could not add file gnatpr   |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

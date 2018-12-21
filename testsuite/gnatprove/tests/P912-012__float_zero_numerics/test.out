@@ -1,38 +1,79 @@
-numerics.ads:10:100: info: postcondition proved (CVC4: 1 VC)
-numerics.ads:10:142: info: float overflow check proved (CVC4: 1 VC)
+SOUNDNESS BUG at run.adb:8: mark @PRECONDITION:FAIL not found
+PROOF REGRESSION at run.ads:15: mark @POSTCONDITION:PASS not found
+PROOF REGRESSION at run.ads:20: mark @POSTCONDITION:PASS not found
+PROOF REGRESSION at run.ads:25: mark @POSTCONDITION:PASS not found
+PROOF REGRESSION at run.ads:30: mark @POSTCONDITION:PASS not found
 numerics.ads:10:142: info: range check proved (Interval)
-numerics.ads:13:100: info: postcondition proved (CVC4: 1 VC)
-numerics.ads:13:142: info: float overflow check proved (CVC4: 1 VC)
 numerics.ads:13:142: info: range check proved (Interval)
-numerics.ads:16:100: info: postcondition proved (CVC4: 1 VC)
-numerics.ads:16:142: info: float overflow check proved (CVC4: 1 VC)
 numerics.ads:16:142: info: range check proved (Interval)
-numerics.ads:19:108: info: postcondition proved (CVC4: 1 VC)
-numerics.ads:19:150: info: division check proved (CVC4: 1 VC)
-numerics.ads:19:150: info: float overflow check proved (CVC4: 1 VC)
 numerics.ads:19:150: info: range check proved (Interval)
 numerics.ads:23:99: info: range check proved (Interval)
 numerics.ads:26:99: info: range check proved (Interval)
 numerics.ads:29:99: info: range check proved (Interval)
-numerics.ads:32:99: info: division check proved (CVC4: 1 VC)
 numerics.ads:32:99: info: range check proved (Interval)
-run.adb:8:15: medium: precondition might fail (e.g. when X1 = 0.0) [possible explanation: subprogram at line 5 should mention X1 and X2 in a precondition]
-run.adb:14:15: info: precondition proved (CVC4: 1 VC)
-run.adb:20:15: info: precondition proved (CVC4: 1 VC)
-run.adb:26:15: info: precondition proved (CVC4: 1 VC)
-run.adb:32:15: info: precondition proved (CVC4: 1 VC)
 run.ads:10:24: info: initialization of "Y" proved
 run.ads:13:34: info: initialization of "Y" proved
 run.ads:15:19: info: initialization of "Y" proved
-run.ads:15:19: info: postcondition proved (CVC4: 1 VC)
 run.ads:18:34: info: initialization of "Y" proved
-run.ads:19:21: info: precondition proved (CVC4: 1 VC)
 run.ads:20:19: info: initialization of "Y" proved
-run.ads:20:19: info: postcondition proved (CVC4: 1 VC)
 run.ads:23:36: info: initialization of "Y" proved
 run.ads:25:19: info: initialization of "Y" proved
-run.ads:25:19: info: postcondition proved (CVC4: 1 VC)
 run.ads:28:37: info: initialization of "Y" proved
-run.ads:29:21: info: precondition proved (CVC4: 1 VC)
 run.ads:30:19: info: initialization of "Y" proved
-run.ads:30:19: info: postcondition proved (CVC4: 1 VC)
+
+
+
+
+
+
++==========================================================================+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
++===========================GNAT BUG DETECTED==============================+
+numerics.ads
+numerics.ads
+run.adb
+run.ads
+Consider also -gnatd.n switch (see debug.adb).
+Consider also -gnatd.n switch (see debug.adb).
+File "gnatprove/numerics.mlw", line 3210, characters 42-53:
+File "gnatprove/run.mlw", line 3483, characters 42-53:
+Logical symbol neq is used in a non-ghost context                          |
+Logical symbol neq is used in a non-ghost context                          |
+Note that list may not be accurate in some cases,
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+Please include these source files with error report
+be reproduced with the set of files listed.
+be reproduced with the set of files listed.
+compilation abandoned
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+so please double check that the problem can still
+|    rc/gnatprove/numerics.mlw to the session:
+|    rc/gnatprove/run.mlw to the session:
+| Also include sources listed below.                                       |
+| Also include sources listed below.                                       |
+| Include the entire contents of this bug box in the report.               |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| Include the exact command that you entered.                              |
+| No source file position information available                            |
+| No source file position information available                            |
+| Please submit a bug report using GNAT Tracker:                           |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 20.0w (19940713) (spark) GCC error:                                  |
+| Pro 20.0w (19940713) (spark) GCC error:                                  |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| could not add file /tmp/tmp-test-P912-012__float_zero_numerics-16614/s   |
+| could not add file /tmp/tmp-test-P912-012__float_zero_numerics-16614/s   |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |
+| including your customer number #nnn in the subject line.                 |

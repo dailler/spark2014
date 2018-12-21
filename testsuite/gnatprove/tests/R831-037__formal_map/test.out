@@ -17,5 +17,4 @@ go.adb:16:07: warning: assuming "Put_Line" has no effect on global items
 go.adb:16:07: warning: no Global contract available for "Put_Line"
 p.adb:6:22: medium: private part of "Map.X" is not set
 p.ads:12:21: info: initialization of private part of "Map.X" proved
-p.ads:31:19: info: range check proved (CVC4: 1 VC)
 p.ads:32:19: info: range check proved (CVC4: 1 VC)
