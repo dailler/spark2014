@@ -38,11 +38,17 @@ original_sample.adb:17:34: info: range check proved (Interval)
 original_sample.adb:17:44: info: float overflow check proved (Interval)
 original_sample.adb:27:19: info: float overflow check proved (CodePeer)
 original_sample.adb:27:25: info: float overflow check proved (Interval)
+original_sample.ads:15:128: medium: float overflow check might fail [possible explanation: subprogram at line 15 should mention Float_Ref and Float_Tested in a precondition]
+original_sample.ads:15:140: info: division check proved (CVC4: 1 VC)
+original_sample.ads:15:140: medium: float overflow check might fail [possible explanation: subprogram at line 15 should mention Float_Ref and Float_Tested in a precondition]
 original_sample.ads:37:29: info: float overflow check proved (Interval)
 original_sample.ads:37:47: info: range check proved (Interval)
 original_sample.ads:37:59: info: float overflow check proved (Interval)
+original_sample.ads:38:35: info: float overflow check proved (CVC4: 1 VC)
 original_sample.ads:38:53: info: range check proved (Interval)
 original_sample.ads:38:65: info: float overflow check proved (Interval)
+original_sample.ads:39:39: medium: postcondition might fail, cannot prove Time >= Time'old
+original_sample.ads:59:17: info: postcondition proved (CVC4: 1 VC)
 sample.adb:16:30: info: range check proved (Interval)
 sample.adb:16:42: info: float overflow check proved (Interval)
 sample.adb:16:42: info: range check proved (Interval)
@@ -68,63 +74,11 @@ sample.adb:29:43: info: float overflow check proved (Interval)
 sample.adb:29:43: info: range check proved (Interval)
 sample.adb:32:19: info: float overflow check proved (CodePeer)
 sample.adb:32:21: info: initialization of "Tmp" proved
+sample.ads:13:128: medium: float overflow check might fail [possible explanation: subprogram at line 13 should mention Float_Ref and Float_Tested in a precondition]
+sample.ads:13:140: info: division check proved (CVC4: 1 VC)
+sample.ads:13:140: medium: float overflow check might fail [possible explanation: subprogram at line 13 should mention Float_Ref and Float_Tested in a precondition]
 sample.ads:35:29: info: float overflow check proved (Interval)
 sample.ads:35:47: info: range check proved (Interval)
 sample.ads:35:59: info: float overflow check proved (Interval)
-
-
-
-
-
-
-+==========================================================================+
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-+===========================GNAT BUG DETECTED==============================+
-original_sample.adb
-original_sample.ads
-sample.adb
-sample.ads
-Consider also -gnatd.n switch (see debug.adb).
-Consider also -gnatd.n switch (see debug.adb).
-File "original_sample.ads", line 15, characters 0-0:
-File "sample.ads", line 13, characters 0-0:
-Logical symbol neq is used in a non-ghost context                          |
-Logical symbol neq is used in a non-ghost context                          |
-Note that list may not be accurate in some cases,
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-Please include these source files with error report
-be reproduced with the set of files listed.
-be reproduced with the set of files listed.
-compilation abandoned
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-so please double check that the problem can still
-|    iginal_sample.mlw to the session:
-|    mple.mlw to the session:
-| Also include sources listed below.                                       |
-| Also include sources listed below.                                       |
-| Include the entire contents of this bug box in the report.               |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| Include the exact command that you entered.                              |
-| No source file position information available                            |
-| No source file position information available                            |
-| Please submit a bug report using GNAT Tracker:                           |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 20.0w (19940713) (spark) GCC error:                                  |
-| Pro 20.0w (19940713) (spark) GCC error:                                  |
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| could not add file gnatprove/or   |
-| could not add file gnatprove/sa   |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |
-| including your customer number #nnn in the subject line.                 |
+sample.ads:37:39: medium: postcondition might fail, cannot prove Time >= Time'old
+sample.ads:57:17: info: postcondition proved (CVC4: 1 VC)

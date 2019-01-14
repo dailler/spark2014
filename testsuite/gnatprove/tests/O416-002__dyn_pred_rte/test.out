@@ -1,34 +1,11 @@
-PROOF REGRESSION at pred.adb:14: mark @PRECONDITION:PASS not found
-PROOF REGRESSION at pred.adb:27: mark @PRECONDITION:PASS not found
-PROOF REGRESSION at pred.adb:29: mark @DISCRIMINANT_CHECK:PASS not found
-PROOF REGRESSION at pred.adb:30: mark @DISCRIMINANT_CHECK:PASS not found
-PROOF REGRESSION at pred.adb:31: mark @DISCRIMINANT_CHECK:PASS not found
 pred.adb:1:11: warning: subprogram "Pred" has no effect
-
-
-
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-pred.adb
-Consider also -gnatd.n switch (see debug.adb).
-File "pred.adb", line 16, characters 0-0:
-Logical symbol neq is used in a non-ghost context                          |
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-be reproduced with the set of files listed.
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-|    prove/pred.mlw to the session:
-| Also include sources listed below.                                       |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| No source file position information available                            |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 20.0w (19940713) (spark) GCC error:                                  |
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| could not add file gnat   |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |
+pred.adb:5:54: info: division check proved (CVC4: 1 VC)
+pred.adb:8:09: info: range check proved (CVC4: 2 VC)
+pred.adb:10:08: info: precondition proved (CVC4: 1 VC)
+pred.adb:14:33: info: precondition proved (CVC4: 1 VC)
+pred.adb:27:08: info: precondition proved (CVC4: 1 VC)
+pred.adb:29:21: warning: unreachable branch (CVC4: 1 VC)
+pred.adb:29:22: info: discriminant check proved (CVC4: 1 VC)
+pred.adb:30:21: warning: unreachable branch (CVC4: 1 VC)
+pred.adb:30:22: info: discriminant check proved (CVC4: 1 VC)
+pred.adb:31:27: info: discriminant check proved (CVC4: 1 VC)

@@ -1,1 +1,1 @@
-foo.adb:3:14: medium: postcondition might fail, cannot prove X = Y'old [possible explanation: subprogram at line 1 should mention X and Y in a precondition]
+foo.adb:3:14: info: postcondition proved (CVC4_Alt: 4 VC)

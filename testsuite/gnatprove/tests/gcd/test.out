@@ -33,13 +33,13 @@ math_euclid.adb:71:13: info: loop invariant preservation proved (Z3: 4 VC)
 math_euclid.adb:74:28: info: initialization of "An" proved
 math_euclid.adb:74:37: info: initialization of "Bn" proved
 math_euclid.adb:74:64: info: range check proved (Z3: 2 VC)
-math_euclid.adb:77:22: info: assertion proved (altergo: 1 VC)
+math_euclid.adb:77:22: info: assertion proved (Z3: 1 VC)
 math_euclid.adb:77:35: info: initialization of "An" proved
 math_euclid.adb:78:22: info: assertion proved (Z3: 1 VC)
 math_euclid.adb:78:31: info: initialization of "An" proved
 math_euclid.adb:79:22: info: assertion proved (Z3: 1 VC)
 math_euclid.adb:79:31: info: initialization of "An" proved
-math_euclid.adb:81:22: info: assertion proved (Z3: 1 VC)
+math_euclid.adb:81:22: info: assertion proved (CVC4: 1 VC)
 math_euclid.adb:81:35: info: initialization of "An" proved
 math_euclid.adb:82:38: info: range check proved (Z3: 1 VC)
 math_euclid.adb:82:57: info: range check proved (Z3: 1 VC)
@@ -59,7 +59,7 @@ math_simple.adb:8:46: info: initialization of "C" proved
 math_simple.adb:9:49: info: range check proved (Z3: 2 VC)
 math_simple.adb:9:68: info: range check proved (Z3: 2 VC)
 math_simple.adb:10:15: info: initialization of "C" proved
-math_simple.adb:10:17: medium: range check might fail
+math_simple.adb:10:17: info: range check proved (Z3: 1 VC)
 math_simple.adb:13:14: info: initialization of "C" proved
 math_simple.ads:3:63: info: division check proved (Z3: 1 VC)
 math_simple.ads:6:14: info: postcondition proved (Z3: 3 VC)
@@ -68,12 +68,12 @@ math_simple.ads:9:53: info: range check proved (Z3: 1 VC)
 math_simple_abstract.adb:6:14: info: postcondition proved (altergo: 1 VC)
 math_simple_abstract.adb:6:28: info: division check proved (Z3: 1 VC)
 math_simple_abstract.adb:15:19: info: division check proved (Z3: 1 VC)
-math_simple_abstract.adb:16:14: info: postcondition proved (Z3: 1 VC)
-math_simple_abstract.adb:21:25: info: assertion proved (Z3: 2 VC)
+math_simple_abstract.adb:16:14: info: postcondition proved (altergo: 1 VC)
+math_simple_abstract.adb:21:25: info: assertion proved (CVC4: 1 VC; Z3: 1 VC)
 math_simple_abstract.adb:22:33: info: loop invariant initialization proved (Z3: 1 VC)
-math_simple_abstract.adb:22:33: info: loop invariant preservation proved (Z3: 1 VC)
+math_simple_abstract.adb:22:33: info: loop invariant preservation proved (altergo: 1 VC)
 math_simple_abstract.adb:29:19: info: division check proved (Z3: 1 VC)
-math_simple_abstract.adb:30:14: info: postcondition proved (altergo: 1 VC)
+math_simple_abstract.adb:30:14: info: postcondition proved (Z3: 1 VC)
 math_simple_abstract.adb:37:30: info: range check proved (Z3: 1 VC)
 math_simple_abstract.adb:39:13: info: initialization of "C" proved
 math_simple_abstract.adb:40:22: info: division check proved (Z3: 2 VC)

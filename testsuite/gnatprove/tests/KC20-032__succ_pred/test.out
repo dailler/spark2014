@@ -1,28 +1,18 @@
-
-
-
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-p.adb
-Consider also -gnatd.n switch (see debug.adb).
-File "gnatprove/p.mlw", line 3730, characters 42-53:
-Logical symbol neq is used in a non-ghost context                          |
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-be reproduced with the set of files listed.
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-|    ve/p.mlw to the session:
-| Also include sources listed below.                                       |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| No source file position information available                            |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 20.0w (19940713) (spark) GCC error:                                  |
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| could not add file gnatpro   |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |
+p.adb:10:14: info: postcondition proved (CVC4: 1 VC)
+p.adb:14:21: info: range check proved (CVC4: 1 VC)
+p.adb:14:35: info: overflow check proved (CVC4: 1 VC)
+p.adb:14:42: info: overflow check proved (CVC4: 1 VC)
+p.adb:19:14: info: postcondition proved (CVC4: 1 VC)
+p.adb:23:31: info: range check proved (CVC4: 1 VC)
+p.adb:23:38: info: range check proved (CVC4: 1 VC)
+p.adb:28:14: info: postcondition proved (CVC4: 1 VC)
+p.adb:32:18: info: range check proved (CVC4: 1 VC)
+p.adb:32:29: info: overflow check proved (CVC4: 1 VC)
+p.adb:32:36: info: overflow check proved (CVC4: 1 VC)
+p.adb:37:14: info: postcondition proved (CVC4: 1 VC)
+p.adb:41:19: info: range check proved (CVC4: 1 VC)
+p.adb:41:31: info: overflow check proved (CVC4: 1 VC)
+p.adb:41:38: info: overflow check proved (CVC4: 1 VC)
+p.adb:46:14: medium: postcondition might fail, cannot prove Ident'Result = F (e.g. when F = 1.3258719E+0 and Ident'Result = 1.1020565E+0)
+p.adb:50:31: info: overflow check proved (CVC4: 1 VC)
+p.adb:50:38: info: overflow check proved (CVC4: 1 VC)

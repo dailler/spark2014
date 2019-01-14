@@ -1,59 +1,10 @@
+dynamic_float.adb:6:18: info: range check proved (CVC4: 2 VC)
 dynamic_float.adb:6:40: info: range check proved (Interval)
+dynamic_float.adb:7:19: info: range check proved (CVC4: 1 VC)
+dynamic_float.adb:9:25: info: assertion proved (CVC4: 1 VC)
+dynamic_float.adb:9:35: info: range check proved (CVC4: 1 VC)
+dynamic_float.adb:10:25: info: assertion proved (CVC4: 1 VC)
 zero_and_min.adb:7:14: warning: subprogram "Crash" has no effect
+zero_and_min.adb:14:25: medium: assertion might fail, cannot prove Float'Min (A, B) /= Float'min, in call inlined at zero_and_min.adb:26
 zero_and_unchecked.adb:7:14: warning: subprogram "Crash" has no effect
 zero_and_unchecked.adb:14:22: medium: divide by zero might fail, in call inlined at zero_and_unchecked.adb:27
-
-
-
-
-
-
-+==========================================================================+
-+==========================================================================+
-+===========================GNAT BUG DETECTED==============================+
-+===========================GNAT BUG DETECTED==============================+
-dynamic_float.adb
-zero_and_min.adb
-Consider also -gnatd.n switch (see debug.adb).
-Consider also -gnatd.n switch (see debug.adb).
-File "dynamic_float.adb", line 10, characters 0-0:
-File "zero_and_min.adb", line 14, characters 0-0:
-Logical symbol neq is used in a non-ghost context                          |
-Logical symbol neq is used in a non-ghost context                          |
-Note that list may not be accurate in some cases,
-Note that list may not be accurate in some cases,
-Please include these source files with error report
-Please include these source files with error report
-be reproduced with the set of files listed.
-be reproduced with the set of files listed.
-compilation abandoned
-compilation abandoned
-gnatprove: error during flow analysis and proof
-so please double check that the problem can still
-so please double check that the problem can still
-|    tprove/dynamic_float.mlw to the session:
-|    tprove/zero_and_min.mlw to the session:
-| Also include sources listed below.                                       |
-| Also include sources listed below.                                       |
-| Include the entire contents of this bug box in the report.               |
-| Include the entire contents of this bug box in the report.               |
-| Include the exact command that you entered.                              |
-| Include the exact command that you entered.                              |
-| No source file position information available                            |
-| No source file position information available                            |
-| Please submit a bug report using GNAT Tracker:                           |
-| Please submit a bug report using GNAT Tracker:                           |
-| Pro 20.0w (19940713) (spark) GCC error:                                  |
-| Pro 20.0w (19940713) (spark) GCC error:                                  |
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use a subject line meaningful to you and us to track the bug.            |
-| Use plain ASCII or MIME attachment(s).                                   |
-| Use plain ASCII or MIME attachment(s).                                   |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| alternatively submit a bug report by email to report@adacore.com,        |
-| could not add file gna   |
-| could not add file gna   |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| http://www.adacore.com/gnattracker/ section 'send a report'.             |
-| including your customer number #nnn in the subject line.                 |
-| including your customer number #nnn in the subject line.                 |
