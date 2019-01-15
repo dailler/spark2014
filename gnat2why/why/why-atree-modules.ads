@@ -531,7 +531,7 @@ package Why.Atree.Modules is
 
    Model_Trace       : Name_Id;
    Model_Projected   : Name_Id;
-   Model_VC          : Name_Id;
+   VC_Annotation     : Name_Id;
    Model_VC_Post     : Name_Id;
    GP_Already_Proved : Name_Id;
    Keep_On_Simp      : Name_Id;

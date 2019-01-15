@@ -3171,7 +3171,7 @@ package body Why.Gen.Expr is
       if Reason = VC_Postcondition then
          Set.Insert (Model_VC_Post);
       else
-         Set.Insert (Model_VC);
+         Set.Insert (VC_Annotation);
       end if;
       return Set;
    end New_VC_Labels;

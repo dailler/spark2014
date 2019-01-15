@@ -293,7 +293,7 @@ package VC_Kinds is
 
    Model_Trace_Label   : constant String := "model_trace:";
    Model_Proj_Label    : constant String := "model_projected";
-   Model_VC_Label      : constant String := "vc:annotation";
+   VC_Annotation_Label : constant String := "vc:annotation";
    Model_VC_Post_Label : constant String := "model_vc_post";
    Branch_Id_Label     : constant String := "branch_id=";
 
