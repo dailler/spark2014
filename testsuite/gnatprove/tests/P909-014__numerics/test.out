@@ -37,5 +37,32 @@ numerics-algo.ads:10:20: info: initialization of "X5" proved
 numerics.ads:20:99: info: range check proved (Interval)
 numerics.ads:23:99: info: range check proved (Interval)
 numerics.ads:26:99: info: range check proved (Interval)
-numerics.ads:29:99: info: division check proved (CVC4: 1 VC)
 numerics.ads:29:99: info: range check proved (Interval)
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+numerics.ads
+Consider also -gnatd.n switch (see debug.adb).
+File "numerics.ads", line 14, characters 0-0:
+Logical symbol neq is used in a non-ghost context                          |
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+|    /numerics.mlw to the session:
+| Also include sources listed below.                                       |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| No source file position information available                            |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 20.0w (19940713) (spark) GCC error:                                  |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| could not add file gnatprove   |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |
