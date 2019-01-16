@@ -69,7 +69,7 @@ array_arith.adb:58:18: info: initialization of "One" proved, in call inlined at 
 array_arith.adb:59:16: info: initialization of "X" proved, in call inlined at array_arith.adb:66
 array_arith.adb:59:19: info: initialization of "One" proved, in call inlined at array_arith.adb:66
 array_arith.adb:63:19: medium: overflow check might fail (e.g. when One = Integer'Last and Y = 1) [possible explanation: subprogram at line 61 should mention Y and One in a precondition]
-array_arith.adb:63:19: medium: range check might fail [possible explanation: subprogram at line 61 should mention Y and One in a precondition]
+array_arith.adb:63:19: medium: range check might fail (e.g. when One = -1 and Y = 0) [possible explanation: subprogram at line 61 should mention Y and One in a precondition]
 array_arith.adb:70:29: info: initialization of "Y" proved
 array_arith.adb:73:12: info: initialization of "X" proved, in call inlined at array_arith.adb:77
 array_arith.adb:73:12: info: initialization of "X" proved, in call inlined at array_arith.adb:78
@@ -89,7 +89,7 @@ array_arith.ads:12:14: info: postcondition proved (CVC4: 1 VC)
 array_arith.ads:12:35: info: initialization of "X" proved
 array_arith.ads:14:21: info: initialization of "X" proved
 array_arith.ads:15:35: info: initialization of "X" proved
-array_arith.ads:15:35: medium: postcondition might fail, cannot prove X(J) = Natural(J) + 1 (e.g. when J = 10 and X = (others => 0))
+array_arith.ads:15:35: medium: postcondition might fail, cannot prove X(J) = Natural(J) + 1 (e.g. when J = 2 and X = (others => 0))
 array_arith.ads:17:20: info: initialization of "X" proved
 array_arith.ads:18:14: info: postcondition proved (CVC4: 1 VC)
 array_arith.ads:18:35: info: initialization of "X" proved

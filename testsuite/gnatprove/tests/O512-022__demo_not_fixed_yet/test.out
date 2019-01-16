@@ -1,5 +1,5 @@
 adt_stack-child.adb:18:30: medium: array index check might fail [possible explanation: call at line 17 should mention S (for argument S) in a postcondition]
-adt_stack-child.adb:19:36: medium: overflow check might fail [possible explanation: call at line 17 should mention S (for argument S) in a postcondition]
+adt_stack-child.adb:19:36: medium: overflow check might fail (e.g. when S = (STack_Vector => (others => Integer'Last), STack_Top => 1, Child_Stack_Vector => (others => Integer'Last), Next_Value => Integer'Last)) [possible explanation: call at line 17 should mention S (for argument S) in a postcondition]
 adt_stack-child.adb:29:52: medium: array index check might fail [possible explanation: subprogram at line 22 should mention S in a precondition]
 adt_stack-child.adb:31:14: info: initialization of "Result" proved
 adt_stack-child.ads:7:20: info: initialization of "S.Child_Stack_Vector" proved
@@ -7,7 +7,7 @@ adt_stack-child.ads:7:20: info: initialization of "S.Next_Value" proved
 adt_stack-child.ads:7:20: info: initialization of "S.STack_Top" proved
 adt_stack-child.ads:7:20: info: initialization of "S.STack_Vector" proved
 adt_stack.adb:28:10: medium: exception might be raised
-adt_stack.adb:30:33: medium: range check might fail [possible explanation: subprogram at line 24 should mention S in a precondition]
+adt_stack.adb:30:33: medium: range check might fail (e.g. when S = (STack_Vector => (others => 0), STack_Top => Stack_Range'Last)) [possible explanation: subprogram at line 24 should mention S in a precondition]
 adt_stack.adb:31:23: info: index check proved (CVC4: 2 VC)
 adt_stack.adb:38:10: medium: exception might be raised
 adt_stack.adb:40:28: medium: array index check might fail [possible explanation: subprogram at line 34 should mention S in a precondition]

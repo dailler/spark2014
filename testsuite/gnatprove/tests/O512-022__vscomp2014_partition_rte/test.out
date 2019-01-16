@@ -49,11 +49,6 @@ a-cofuve.ads:298:52: info: overflow check proved (CVC4: 1 VC), in instantiation 
 a-cofuve.ads:298:52: info: overflow check proved (CVC4: 1 VC), in instantiation at a-cforma.ads:111, in instantiation at partition_refinement.ads:20
 a-cofuve.ads:298:52: info: overflow check proved (CVC4: 1 VC), in instantiation at a-cofove.ads:96, in instantiation at partition_refinement.ads:32
 partition_refinement.adb:14:14: info: postcondition proved (CVC4: 1 VC)
-partition_refinement.adb:25:17: info: precondition proved (CVC4: 2 VC)
-partition_refinement.adb:27:16: info: precondition proved (CVC4: 1 VC)
-partition_refinement.adb:27:37: info: precondition proved (CVC4: 1 VC)
-partition_refinement.adb:27:55: info: precondition proved (CVC4: 1 VC)
-partition_refinement.adb:28:15: info: postcondition proved (CVC4: 6 VC)
 partition_refinement.adb:29:26: info: precondition proved (CVC4: 1 VC)
 partition_refinement.adb:30:27: info: precondition proved (CVC4: 2 VC)
 partition_refinement.adb:30:41: info: precondition proved (CVC4: 1 VC)
@@ -62,14 +57,12 @@ partition_refinement.adb:30:75: info: precondition proved (CVC4: 2 VC)
 partition_refinement.adb:30:89: info: precondition proved (CVC4: 1 VC)
 partition_refinement.adb:31:36: info: precondition proved (CVC4: 2 VC)
 partition_refinement.adb:31:50: info: precondition proved (CVC4: 1 VC)
-partition_refinement.adb:31:78: medium: range check might fail
 partition_refinement.adb:31:80: info: precondition proved (CVC4: 2 VC)
 partition_refinement.adb:31:94: info: precondition proved (CVC4: 1 VC)
 partition_refinement.adb:32:23: info: precondition proved (CVC4: 1 VC)
 partition_refinement.adb:42:18: info: precondition proved (CVC4: 1 VC)
 partition_refinement.adb:42:39: info: precondition proved (CVC4: 1 VC)
 partition_refinement.adb:42:57: info: precondition proved (CVC4: 1 VC)
-partition_refinement.adb:49:17: info: overflow check proved (CVC4: 1 VC)
 partition_refinement.adb:77:29: info: precondition proved (CVC4: 1 VC)
 partition_refinement.adb:78:28: info: precondition proved (CVC4: 2 VC)
 partition_refinement.adb:83:22: info: initialization of "P_Elem.First" proved
@@ -127,27 +120,17 @@ partition_refinement.adb:111:33: info: initialization of "P_Elem.Count" proved
 partition_refinement.adb:111:33: info: initialization of "P_Elem.First" proved
 partition_refinement.adb:111:33: info: initialization of "P_Elem.Last" proved
 partition_refinement.adb:113:22: info: assertion proved (CVC4: 1 VC)
-partition_refinement.adb:134:33: info: loop invariant initialization proved (CVC4: 1 VC)
-partition_refinement.adb:134:33: info: loop invariant preservation proved (CVC4: 1 VC)
-partition_refinement.adb:135:33: info: loop invariant initialization proved (CVC4: 2 VC)
-partition_refinement.adb:135:33: info: loop invariant preservation proved (CVC4: 2 VC)
-partition_refinement.adb:137:20: info: precondition proved (CVC4: 2 VC)
 partition_refinement.adb:138:13: info: initialization of "P_Elem.Count" proved
 partition_refinement.adb:138:34: info: initialization of "P_Elem.Last" proved
 partition_refinement.adb:138:48: info: initialization of "P_Elem.First" proved
 partition_refinement.adb:139:43: info: initialization of "P_Elem.First" proved
-partition_refinement.adb:139:56: info: range check proved (CVC4: 1 VC)
 partition_refinement.adb:139:58: info: initialization of "P_Elem.Count" proved
 partition_refinement.adb:140:43: info: initialization of "P_Elem.Last" proved
 partition_refinement.adb:142:28: info: initialization of "P_Elem.First" proved
 partition_refinement.adb:142:43: info: initialization of "P_Elem.Count" proved
-partition_refinement.adb:142:56: info: range check proved (CVC4: 1 VC)
-partition_refinement.adb:145:13: info: precondition proved (CVC4: 2 VC)
 partition_refinement.adb:145:36: info: initialization of "P_Elem.Count" proved
 partition_refinement.adb:145:36: info: initialization of "P_Elem.First" proved
 partition_refinement.adb:145:36: info: initialization of "P_Elem.Last" proved
-partition_refinement.adb:146:47: info: range check proved (CVC4: 1 VC)
-partition_refinement.adb:147:13: info: precondition proved (CVC4: 1 VC)
 partition_refinement.adb:147:24: info: initialization of "P_Prime.Count" proved
 partition_refinement.adb:147:24: info: initialization of "P_Prime.First" proved
 partition_refinement.adb:147:24: info: initialization of "P_Prime.Last" proved
@@ -193,3 +176,28 @@ partition_refinement.ads:58:70: info: precondition proved (CVC4: 2 VC)
 partition_refinement.ads:60:50: info: range check proved (CVC4: 1 VC)
 partition_refinement.ads:60:69: info: precondition proved (CVC4: 2 VC)
 partition_refinement.ads:60:81: info: range check proved (CVC4: 1 VC)
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+partition_refinement.adb
+partition_refinement.ads
+Consider also -gnatd.n switch (see debug.adb).
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+| Also include sources listed below.                                       |
+| Error detected at partition_refinement.adb:135:46                        |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 20.0w (19940713) (spark) Assert_Failure failed precondition from gnat2why-tables.ads:125|
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

@@ -4,11 +4,11 @@ above_call_unknown.adb:5:19: medium: assertion might fail, cannot prove X /= 10 
 assign.adb:1:19: info: initialization of "X" proved
 assign.adb:3:11: medium: overflow check might fail [CWE 190] (e.g. when Y = Integer'Last) [possible explanation: subprogram at line 1 should mention Y in a precondition]
 assign_all_arr.adb:4:21: info: unrolling loop
-assign_all_arr.adb:5:22: medium: overflow check might fail [CWE 190] [possible explanation: subprogram at line 2 should mention X in a precondition]
+assign_all_arr.adb:5:22: medium: overflow check might fail [CWE 190] (e.g. when J = 1 and X = (others => Integer'Last)) [possible explanation: subprogram at line 2 should mention X in a precondition]
 assign_all_arr_incr.adb:4:21: info: unrolling loop
-assign_all_arr_incr.adb:5:22: medium: overflow check might fail [CWE 190] (e.g. when J = 1) [possible explanation: subprogram at line 2 should mention X in a precondition]
+assign_all_arr_incr.adb:5:22: medium: overflow check might fail [CWE 190] (e.g. when J = 1 and X = (others => Integer'Last)) [possible explanation: subprogram at line 2 should mention X in a precondition]
 assign_all_arr_incr_unk.adb:4:21: info: cannot unroll loop (too many loop iterations)
-assign_all_arr_incr_unk.adb:5:22: medium: overflow check might fail [CWE 190] (e.g. when J = -1) [possible explanation: loop at line 4 should mention X in a loop invariant]
+assign_all_arr_incr_unk.adb:5:22: medium: overflow check might fail [CWE 190] (e.g. when J = -1 and X = (-1 => Integer'First, others => -1)) [possible explanation: loop at line 4 should mention X in a loop invariant]
 assign_arr.adb:4:13: medium: "X" might not be initialized [CWE 457]
 assign_arr.adb:4:18: medium: overflow check might fail [CWE 190] (e.g. when Y = Integer'Last) [possible explanation: subprogram at line 2 should mention Y in a precondition]
 assign_arr.adb:5:13: info: initialization of "X" proved
@@ -30,7 +30,7 @@ assign_rec.ads:9:22: info: initialization of "X.C" proved
 assign_rec.ads:9:22: info: initialization of "X.D.B" proved
 assign_to_pos.adb:1:26: info: initialization of "X" proved
 assign_to_pos.adb:3:11: medium: overflow check might fail [CWE 190] (e.g. when Y = Integer'Last) [possible explanation: subprogram at line 1 should mention Y in a precondition]
-assign_to_pos.adb:3:11: medium: range check might fail [CWE 682] [possible explanation: subprogram at line 1 should mention Y in a precondition]
+assign_to_pos.adb:3:11: medium: range check might fail [CWE 682] (e.g. when Y = -1) [possible explanation: subprogram at line 1 should mention Y in a precondition]
 bad_assign.adb:1:23: info: initialization of "X" proved
 bad_assign.adb:1:40: warning: unused variable "Y" [CWE 563]
 bad_assign.adb:3:09: high: "X" is not initialized [CWE 457]
@@ -38,13 +38,13 @@ bad_assign.adb:3:11: medium: overflow check might fail [CWE 190] (e.g. when X = 
 bad_assign_all_arr.adb:4:21: info: unrolling loop
 bad_assign_all_arr.adb:5:21: medium: array index check might fail [CWE 120] (e.g. when J = 10 and X = (others => 0))
 bad_assign_all_arr_unk.adb:4:21: info: cannot unroll loop (too many loop iterations)
-bad_assign_all_arr_unk.adb:5:21: medium: array index check might fail [CWE 120] (e.g. when X'Last = 0)
+bad_assign_all_arr_unk.adb:5:21: medium: array index check might fail [CWE 120] (e.g. when J = 0 and X'Last = 0)
 bad_assign_all_arr_unk.adb:5:21: medium: overflow check might fail [CWE 190] (e.g. when J = 2147483647)
 bad_assign_arr.adb:2:27: info: initialization of "X" proved
 bad_assign_arr.adb:4:07: medium: array index check might fail [CWE 120] (e.g. when Y = 0) [possible explanation: subprogram at line 2 should mention Y in a precondition]
 bad_assign_arr.adb:4:10: medium: "X" might not be initialized [CWE 457]
 bad_assign_arr.adb:5:09: info: overflow check proved (CVC4: 1 VC)
-bad_assign_arr.adb:5:09: medium: array index check might fail [CWE 120] [possible explanation: subprogram at line 2 should mention Y in a precondition]
+bad_assign_arr.adb:5:09: medium: array index check might fail [CWE 120] (e.g. when Y = 1) [possible explanation: subprogram at line 2 should mention Y in a precondition]
 bad_assign_arr.adb:5:15: info: initialization of "X" proved
 bad_assign_rec.adb:2:27: high: "X.D.A" is not initialized in "Bad_Assign_Rec" [CWE 457]
 bad_assign_rec.adb:2:27: info: initialization of "X.C" proved
@@ -128,7 +128,7 @@ induction.adb:5:14: info: overflow check proved (CVC4: 10 VC)
 map.adb:2:44: info: initialization of "Z" proved
 map.adb:4:21: info: unrolling loop
 map.adb:5:13: info: initialization of "Z" proved
-map.adb:5:22: medium: overflow check might fail [CWE 190] (e.g. when Y = -1) [possible explanation: subprogram at line 2 should mention X and Y in a precondition]
+map.adb:5:22: medium: overflow check might fail [CWE 190] (e.g. when J = 1 and X = (others => Integer'First) and Y = -1) [possible explanation: subprogram at line 2 should mention X and Y in a precondition]
 multi_cond_assign.adb:1:30: info: initialization of "X" proved
 multi_cond_assign.adb:4:14: medium: overflow check might fail [CWE 190] (e.g. when Y = Integer'Last) [possible explanation: subprogram at line 1 should mention Y in a precondition]
 multi_cond_assign.adb:7:17: medium: overflow check might fail [CWE 190] (e.g. when Y = Integer'First) [possible explanation: subprogram at line 1 should mention Y in a precondition]
@@ -157,7 +157,7 @@ search_while.adb:9:14: info: overflow check proved (CVC4: 1 VC)
 self_assign.adb:3:11: medium: overflow check might fail [CWE 190] (e.g. when X = Integer'Last) [possible explanation: subprogram at line 1 should mention X in a precondition]
 sum_all_arr.adb:5:21: info: unrolling loop
 sum_all_arr.adb:6:14: info: initialization of "Sum" proved
-sum_all_arr.adb:6:18: medium: overflow check might fail [CWE 190] (e.g. when J = 1 and Sum = -1) [possible explanation: subprogram at line 2 should mention X in a precondition]
+sum_all_arr.adb:6:18: medium: overflow check might fail [CWE 190] (e.g. when J = 2 and Sum = -1 and X = (1 => -1, others => Integer'First)) [possible explanation: subprogram at line 2 should mention X in a precondition]
 sum_all_arr.adb:8:11: info: initialization of "Sum" proved
 top_down.adb:2:21: info: initialization of "Y" proved
 top_down.adb:6:13: medium: array index check might fail [CWE 120] (e.g. when X = 0) [possible explanation: subprogram at line 4 should mention X in a precondition]

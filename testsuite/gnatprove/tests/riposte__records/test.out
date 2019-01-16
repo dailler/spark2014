@@ -100,7 +100,7 @@ records.adb:436:22: medium: assertion might fail, cannot prove not X.Exists (e.g
 records.adb:436:26: info: initialization of "X.Exists" proved
 records.adb:446:04: warning: analyzing unreferenced function "Apply_Command"
 records.adb:453:20: info: initialization of "R.A" proved
-records.adb:453:24: medium: range check might fail
+records.adb:453:24: medium: range check might fail (e.g. when R = (A => Unsigned_Byte'Last, B => Unsigned_Byte'Last))
 records.adb:460:14: info: initialization of "R.A" proved
 records.adb:460:14: info: initialization of "R.B" proved
 records.adb:466:22: info: postcondition proved (CVC4: 1 VC)
@@ -183,6 +183,7 @@ counterexample expected for check at records.adb:436
 counterexample expected for check at records.adb:453
   trace at records.adb:446 --> P = (Data => (A => Unsigned_Byte'Last, B => Unsigned_Byte'Last), Command => Increment_A)
   trace at records.adb:452 --> R = (A => Unsigned_Byte'Last, B => Unsigned_Byte'Last)
+  trace at records.adb:453 --> R = (A => Unsigned_Byte'Last, B => Unsigned_Byte'Last)
 counterexample expected for check at records.adb:483
   trace at records.adb:480 --> R = (Exists => False, The_Pair => (A => 1, B => 0))
   trace at records.adb:481 --> X = 1

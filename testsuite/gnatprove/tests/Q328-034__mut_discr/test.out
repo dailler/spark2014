@@ -26,7 +26,7 @@ input.adb:270:56: info: initialization of "S" proved
 input.adb:270:59: info: index check proved (CVC4: 2 VC)
 input.adb:273:12: info: length check proved (CVC4: 4 VC)
 input.adb:273:15: info: initialization of "S" proved
-input.adb:273:17: low: range check might fail [possible explanation: loop at line 269 should mention S in a loop invariant]
+input.adb:273:17: low: range check might fail (e.g. when S'First = 1023) [possible explanation: loop at line 269 should mention S in a loop invariant]
 input.adb:273:22: info: range check proved (CVC4: 2 VC)
 input.adb:273:26: info: range check proved (CVC4: 1 VC)
 input.adb:273:34: info: overflow check proved (CVC4: 1 VC)
@@ -166,10 +166,10 @@ values-operations.adb:63:28: info: overflow check proved (CVC4: 1 VC)
 values-operations.adb:63:30: info: initialization of "V2.E" proved
 values-operations.adb:66:23: info: initialization of "V1.E" proved
 values-operations.adb:66:28: info: division check proved (CVC4: 1 VC)
-values-operations.adb:66:28: medium: overflow check might fail
+values-operations.adb:66:28: medium: overflow check might fail (e.g. when V1 = (E => Integer'First) and V2 = (E => -1))
 values-operations.adb:66:30: info: initialization of "V2.E" proved
 values-operations.adb:69:23: info: initialization of "V1.E" proved
-values-operations.adb:69:28: medium: overflow check might fail
+values-operations.adb:69:28: medium: overflow check might fail (e.g. when V1 = (E => 2) and V2 = (E => -2))
 values-operations.adb:69:30: info: initialization of "V2.E" proved
 values-operations.adb:72:23: info: initialization of "V1.E" proved
 values-operations.adb:72:28: info: overflow check proved (CVC4: 1 VC)

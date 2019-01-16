@@ -1,5 +1,5 @@
 SOUNDNESS BUG at test_pack.adb:7: mark @OVERFLOW_CHECK:FAIL not found
-wibble.adb:11:03: medium: precondition might fail (e.g. when X = (Desired => -1.0265503E+0, Error => 0.0))
+wibble.adb:11:03: medium: precondition might fail (e.g. when X = (Desired => -1.2498740E+0, Error => 0.0))
 wibble.adb:11:15: info: initialization of "X.Desired" proved
 wibble.adb:11:15: info: initialization of "X.Error" proved
 

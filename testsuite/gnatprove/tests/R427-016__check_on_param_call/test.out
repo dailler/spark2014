@@ -180,7 +180,7 @@ formals_arr_split_pred.adb:40:04: info: precondition proved (CVC4: 1 VC)
 formals_arr_split_pred.adb:40:19: info: initialization of "X" proved
 formals_arr_split_pred.adb:40:19: info: predicate check proved (CVC4: 1 VC)
 formals_arr_split_pred.adb:40:19: info: range check proved (CVC4: 1 VC)
-formals_arr_split_pred.adb:40:19: medium: predicate check might fail (e.g. when X = (3 => 0, others => 1)) [possible explanation: call at line 39 should mention A (for argument X) in a postcondition]
+formals_arr_split_pred.adb:40:19: medium: predicate check might fail (e.g. when X = (3 => 0, others => 1) and X'First = 1 and X'Last = 10) [possible explanation: call at line 39 should mention A (for argument X) in a postcondition]
 formals_arr_split_pred.adb:41:04: info: precondition proved (CVC4: 1 VC)
 formals_arr_split_pred.adb:41:07: info: initialization of "Y" proved
 formals_arr_split_pred.adb:41:07: info: predicate check proved (CVC4: 3 VC)
