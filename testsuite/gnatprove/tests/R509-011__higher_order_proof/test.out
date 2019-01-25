@@ -781,12 +781,12 @@ spark-higher_order-fold.adb:389:39: medium: precondition might fail, in instanti
 spark-higher_order-fold.adb:389:45: medium: array index check might fail, in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:339, in instantiation at test_higher_order.ads:106
 spark-higher_order-fold.adb:389:45: medium: array index check might fail, in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:391, in instantiation at test_higher_order.ads:117
 spark-higher_order-fold.adb:389:45: medium: array index check might fail, in instantiation at spark-higher_order-fold.ads:104, in instantiation at test_higher_order.ads:52
+spark-higher_order-fold.adb:389:54: info: index check proved (CVC4: 3 VC; altergo: 1 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:391, in instantiation at test_higher_order.ads:117
 spark-higher_order-fold.adb:389:54: info: index check proved (CVC4: 3 VC; altergo: 1 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at test_higher_order.ads:52
 spark-higher_order-fold.adb:389:54: info: index check proved (CVC4: 4 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:339, in instantiation at test_higher_order.ads:106
 spark-higher_order-fold.adb:389:54: info: overflow check proved (CVC4: 2 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:339, in instantiation at test_higher_order.ads:106
 spark-higher_order-fold.adb:389:54: info: overflow check proved (CVC4: 2 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:391, in instantiation at test_higher_order.ads:117
 spark-higher_order-fold.adb:389:54: info: overflow check proved (CVC4: 2 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at test_higher_order.ads:52
-spark-higher_order-fold.adb:389:54: medium: array index check might fail, in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:391, in instantiation at test_higher_order.ads:117
 spark-higher_order-fold.adb:391:22: info: loop invariant initialization proved (CVC4: 2 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:339, in instantiation at test_higher_order.ads:106
 spark-higher_order-fold.adb:391:22: info: loop invariant initialization proved (CVC4: 2 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at spark-higher_order-fold.ads:391, in instantiation at test_higher_order.ads:117
 spark-higher_order-fold.adb:391:22: info: loop invariant initialization proved (CVC4: 2 VC), in instantiation at spark-higher_order-fold.ads:104, in instantiation at test_higher_order.ads:52
@@ -1178,8 +1178,8 @@ spark-higher_order-fold.adb:861:65: medium: overflow check might fail, in instan
 spark-higher_order-fold.adb:862:35: medium: array index check might fail, in instantiation at test_higher_order.ads:125
 spark-higher_order-fold.adb:862:38: info: index check proved (CVC4: 3 VC; Z3: 1 VC), in instantiation at test_higher_order.ads:125
 spark-higher_order-fold.adb:864:39: info: loop invariant initialization proved (CVC4: 1 VC), in instantiation at test_higher_order.ads:125
+spark-higher_order-fold.adb:864:39: info: loop invariant preservation proved (altergo: 1 VC), in instantiation at test_higher_order.ads:125
 spark-higher_order-fold.adb:864:39: info: precondition proved (CVC4: 16 VC), in instantiation at test_higher_order.ads:125
-spark-higher_order-fold.adb:864:39: medium: loop invariant might fail after first iteration, cannot prove In_Range (A1, K, L), in instantiation at test_higher_order.ads:125
 spark-higher_order-fold.adb:864:53: medium: range check might fail, in instantiation at test_higher_order.ads:125
 spark-higher_order-fold.adb:864:56: info: range check proved (CVC4: 2 VC), in instantiation at test_higher_order.ads:125
 spark-higher_order-fold.adb:865:39: info: loop invariant preservation proved (CVC4: 1 VC), in instantiation at test_higher_order.ads:125

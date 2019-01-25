@@ -9,10 +9,10 @@ flight_manager.adb:42:56: medium: overflow check might fail (e.g. when Position_
 flight_manager.adb:43:56: medium: overflow check might fail (e.g. when Position_Y = -2 and Target_Y = Integer'Last) [possible explanation: subprogram at line 3 should mention Position_Y and Target_Y in a precondition]
 flight_manager.adb:45:14: medium: "Result.X_Speed" might not be initialized
 flight_manager.adb:45:14: medium: "Result.Y_Speed" might not be initialized
-flight_manager.ads:11:14: medium: postcondition might fail, cannot prove ((Position_X + Set_Engine_Speed'Result.X_Speed) - Target_X) < (Position_X + Set_Engine_Speed'Result.X_Speed) (e.g. when Position_X = 1 and Target_X = 0)
+flight_manager.ads:11:14: medium: postcondition might fail, cannot prove ((Position_X + Set_Engine_Speed'Result.X_Speed) - Target_X) < (Position_X + Set_Engine_Speed'Result.X_Speed) (e.g. when Position_X = 1 and Set_Engine_Speed'Result = (X_Speed => -10, Y_Speed => -10) and Target_X = 0)
 flight_manager.ads:11:27: info: overflow check proved (CVC4: 1 VC)
-flight_manager.ads:11:62: medium: overflow check might fail (e.g. when Position_X = -2147483638 and Target_X = 1)
+flight_manager.ads:11:62: medium: overflow check might fail (e.g. when Position_X = -2147483638 and Set_Engine_Speed'Result = (X_Speed => -10, Y_Speed => -10) and Target_X = 1)
 flight_manager.ads:12:18: info: overflow check proved (CodePeer)
 flight_manager.ads:13:23: info: overflow check proved (CVC4: 1 VC)
-flight_manager.ads:13:58: medium: overflow check might fail (e.g. when Position_Y = -2147483638 and Target_Y = 1)
+flight_manager.ads:13:58: medium: overflow check might fail (e.g. when Position_Y = -2147483638 and Set_Engine_Speed'Result = (X_Speed => -10, Y_Speed => -10) and Target_Y = 1)
 flight_manager.ads:14:18: info: overflow check proved (CodePeer)
