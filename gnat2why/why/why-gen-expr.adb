@@ -2715,12 +2715,15 @@ package body Why.Gen.Expr is
    begin
       return
         +Sequence
-          (New_Assignment (Ada_Node => If_Node,
-                           Name     =>
-                             +M_Main.Spark_CE_Branch,
-                           Value    => +Condition,
-                           Labels   => Name_Id_Sets.Empty_Set,
-                           Typ      => EW_Bool_Type),
+        (+Insert_Cnt_Loc_Label
+           (Ada_Node => If_Node,
+            E        =>
+              New_Assignment (Ada_Node => If_Node,
+                              Name     =>
+                                +M_Main.Spark_CE_Branch,
+                              Value    => +Condition,
+                              Labels   => Name_Id_Sets.Empty_Set,
+                              Typ      => EW_Bool_Type)),
            New_Record_Access (Name  =>
                                 +M_Main.Spark_CE_Branch,
                               Field =>
