@@ -18,7 +18,7 @@ records.adb:65:19: info: postcondition proved (CVC4: 2 VC)
 records.adb:75:15: info: precondition proved (CVC4: 2 VC)
 records.adb:80:14: info: initialization of "R.A" proved
 records.adb:80:14: info: initialization of "R.B" proved
-records.adb:86:25: medium: postcondition might fail, cannot prove Safe_Add_Pair_B'Result = Pair'(A.A + B.A,  A.B + B.B) (e.g. when A = (A => Unsigned_Byte'Last, B => 0) and B = (A => 0, B => Unsigned_Byte'Last)) [possible explanation: subprogram at line 83 should mention A and B in a precondition]
+records.adb:86:25: medium: postcondition might fail, cannot prove Safe_Add_Pair_B'Result = Pair'(A.A + B.A,  A.B + B.B) (e.g. when A = (A => Unsigned_Byte'Last, B => 0) and B = (A => 0, B => Unsigned_Byte'Last) and Safe_Add_Pair_B'Result = (A => 0, B => 0)) [possible explanation: subprogram at line 83 should mention A and B in a precondition]
 records.adb:94:15: info: precondition proved (CVC4: 2 VC)
 records.adb:99:14: info: initialization of "R.A" proved
 records.adb:99:14: info: initialization of "R.B" proved
@@ -69,7 +69,7 @@ records.adb:309:19: info: postcondition proved (CVC4: 1 VC)
 records.adb:316:14: info: initialization of "Tmp.Exists" proved
 records.adb:316:14: info: initialization of "Tmp.The_Pair.A" proved
 records.adb:316:14: info: initialization of "Tmp.The_Pair.B" proved
-records.adb:323:19: medium: postcondition might fail, cannot prove Update_B'Result = X'update (e.g. when N = Unsigned_Byte'Last-1 and X = (Exists => False, The_Pair => (A => 0, B => 0))) [possible explanation: precondition of subprogram at line 319 should mention X]
+records.adb:323:19: medium: postcondition might fail, cannot prove Update_B'Result = X'update (e.g. when N = Unsigned_Byte'Last-1 and Update_B'Result = (Exists => False, The_Pair => (A => Unsigned_Byte'Last, B => 0)) and X = (Exists => False, The_Pair => (A => 0, B => 0))) [possible explanation: precondition of subprogram at line 319 should mention X]
 records.adb:329:27: info: range check proved (CVC4: 1 VC)
 records.adb:330:14: info: initialization of "Tmp.Exists" proved
 records.adb:330:14: info: initialization of "Tmp.The_Pair.A" proved
@@ -82,7 +82,7 @@ records.adb:366:19: info: postcondition proved (CVC4: 1 VC)
 records.adb:376:14: info: initialization of "R.Exists" proved
 records.adb:376:14: info: initialization of "R.The_Pair.A" proved
 records.adb:376:14: info: initialization of "R.The_Pair.B" proved
-records.adb:380:19: medium: postcondition might fail, cannot prove Make_Optional_Pair_A_2'Result =  Optional_Pair'(Exists => False, The_Pair => X) (e.g. when X = (A => 0, B => 0)) [possible explanation: subprogram at line 379 should mention X in a precondition]
+records.adb:380:19: medium: postcondition might fail, cannot prove Make_Optional_Pair_A_2'Result =  Optional_Pair'(Exists => False, The_Pair => X) (e.g. when Make_Optional_Pair_A_2'Result = (Exists => True, The_Pair => (A => 0, B => 0)) and X = (A => 0, B => 0)) [possible explanation: subprogram at line 379 should mention X in a precondition]
 records.adb:390:14: info: initialization of "R.Exists" proved
 records.adb:390:14: info: initialization of "R.The_Pair.A" proved
 records.adb:390:14: info: initialization of "R.The_Pair.B" proved
@@ -114,9 +114,9 @@ records.adb:523:19: info: postcondition proved (CVC4: 2 VC)
 records.adb:534:22: medium: assertion might fail, cannot prove F_Of_Pair (Pair'(5, 5))
 counterexample expected for check at records.adb:86
   trace at records.adb:83 --> A = (A => Unsigned_Byte'Last, B => 0) and B = (A => 0, B => Unsigned_Byte'Last)
-  trace at records.adb:86 --> A = (A => Unsigned_Byte'Last, B => 0) and B = (A => 0, B => Unsigned_Byte'Last)
+  trace at records.adb:86 --> A = (A => Unsigned_Byte'Last, B => 0) and B = (A => 0, B => Unsigned_Byte'Last) and Safe_Add_Pair_B'Result = (A => 0, B => 0)
   trace at records.adb:96 --> R = (A => 0, B => 0)
-  trace at records.adb:99 --> R = (A => 0, B => 0)
+  trace at records.adb:99 --> R = (A => 0, B => 0) and Safe_Add_Pair_B'Result = (A => 0, B => 0)
 counterexample expected for check at records.adb:119
   trace at records.adb:118 --> A = (Exists => False, The_Pair => (A => 1, B => 0))
   trace at records.adb:119 --> A = (Exists => False, The_Pair => (A => 1, B => 0))
@@ -157,14 +157,16 @@ counterexample expected for check at records.adb:300
 counterexample expected for check at records.adb:323
   trace at records.adb:319 --> X = (Exists => False, The_Pair => (A => 0, B => 0))
   trace at records.adb:320 --> N = Unsigned_Byte'Last-1
-  trace at records.adb:323 --> N = Unsigned_Byte'Last-1 and X = (Exists => False, The_Pair => (A => 0, B => 0))
+  trace at records.adb:323 --> N = Unsigned_Byte'Last-1 and Update_B'Result = (Exists => False, The_Pair => (A => Unsigned_Byte'Last, B => 0)) and X = (Exists => False, The_Pair => (A => 0, B => 0))
   trace at records.adb:328 --> Tmp = (Exists => False, The_Pair => (A => 0, B => 0))
   trace at records.adb:329 --> Tmp = (Exists => False, The_Pair => (A => Unsigned_Byte'Last, B => 0))
+  trace at records.adb:330 --> Update_B'Result = (Exists => False, The_Pair => (A => Unsigned_Byte'Last, B => 0))
 counterexample expected for check at records.adb:380
   trace at records.adb:379 --> X = (A => 0, B => 0)
-  trace at records.adb:380 --> X = (A => 0, B => 0)
+  trace at records.adb:380 --> Make_Optional_Pair_A_2'Result = (Exists => True, The_Pair => (A => 0, B => 0)) and X = (A => 0, B => 0)
   trace at records.adb:386 --> R = (Exists => True, The_Pair => (A => 0, B => 0))
   trace at records.adb:389 --> R = (Exists => True, The_Pair => (A => 0, B => 0))
+  trace at records.adb:390 --> Make_Optional_Pair_A_2'Result = (Exists => True, The_Pair => (A => 0, B => 0))
 counterexample expected for check at records.adb:410
   trace at records.adb:405 --> X = (Exists => False, The_Pair => (A => 1, B => 1))
   trace at records.adb:409 --> X = (Exists => False, The_Pair => (A => 1, B => 1))
