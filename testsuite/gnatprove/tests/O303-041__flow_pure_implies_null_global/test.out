@@ -1,10 +1,35 @@
-a-ngelfu.ads:117:36: info: division check proved (CVC4: 1 VC), in instantiation at ff.ads:3
 a-ngelfu.ads:117:66: info: float overflow check proved (Interval), in instantiation at ff.ads:3
-a-ngelfu.ads:126:32: info: division check proved (CVC4: 1 VC), in instantiation at ff.ads:3
-a-ngelfu.ads:127:36: medium: divide by zero might fail, in instantiation at ff.ads:3
 a-ngelfu.ads:127:64: info: float overflow check proved (Interval), in instantiation at ff.ads:3
 a.adb:12:32: warning: assuming "Unit_Vector" has no effect on global items
 a.adb:12:32: warning: no Global contract available for "Unit_Vector"
 foo.adb:5:09: medium: precondition might fail [possible explanation: subprogram at line 3 should mention N in a precondition]
 foo.adb:5:09: warning: assuming "Log" has no effect on global items
 foo.adb:5:09: warning: no Global contract available for "Log"
+
+
+
++==========================================================================+
++===========================GNAT BUG DETECTED==============================+
+ff.ads
+Consider also -gnatd.n switch (see debug.adb).
+File "a-ngelfu.ads", line 79, characters 0-0:
+Logical symbol neq is used in a non-ghost context                          |
+Note that list may not be accurate in some cases,
+Please include these source files with error report
+be reproduced with the set of files listed.
+compilation abandoned
+gnatprove: error during flow analysis and proof
+so please double check that the problem can still
+|    al-16470/src/gnatprove/ff.mlw to the session:
+| Also include sources listed below.                                       |
+| Include the entire contents of this bug box in the report.               |
+| Include the exact command that you entered.                              |
+| No source file position information available                            |
+| Please submit a bug report using GNAT Tracker:                           |
+| Pro 20.0w (19940713) (spark) GCC error:                                  |
+| Use a subject line meaningful to you and us to track the bug.            |
+| Use plain ASCII or MIME attachment(s).                                   |
+| alternatively submit a bug report by email to report@adacore.com,        |
+| could not add file /tmp/tmp-test-O303-041__flow_pure_implies_null_glob   |
+| http://www.adacore.com/gnattracker/ section 'send a report'.             |
+| including your customer number #nnn in the subject line.                 |

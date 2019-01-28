@@ -11,7 +11,6 @@ client1.ads:3:04: high: with task "client3.t3"
 t.ads:2:14: info: initialization of "X" proved
 t.ads:2:14: info: nontermination of task proved (CVC4: 1 VC)
 pt.ads:2:09: info: nontermination of task proved (CVC4: 1 VC)
-pt.ads:2:09: info: nontermination of task proved (CVC4: 1 VC)
 original_main_func.ads:1:10: high: possible data race when accessing variable "p.x"
 original_main_func.ads:1:10: high: with task "original_main_func"
 original_main_func.ads:1:10: high: with task "pt.t"
