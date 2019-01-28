@@ -9,7 +9,7 @@ rectangle.adb:8:20: info: precondition proved (CVC4: 1 VC)
 rectangle.ads:6:14: info: postcondition proved (CVC4: 2 VC)
 rectangle.ads:6:40: info: initialization of "Result" proved
 window.adb:5:32: info: overflow check proved (CVC4: 1 VC)
-window.adb:5:32: medium: range check might fail (e.g. when Total_Area = 0) [possible explanation: precondition of subprogram at line 3 should mention Total_Area]
+window.adb:5:32: medium: range check might fail (e.g. when Obj = (Area => 0, Max_Width => 0, Max_Height => 0) and Total_Area = 0) [possible explanation: precondition of subprogram at line 3 should mention Total_Area]
 window.adb:5:37: info: precondition proved (CVC4: 1 VC)
 window.adb:18:07: high: "Rec" is not initialized
 window.adb:19:07: info: initialization of "Rec" proved
@@ -20,4 +20,4 @@ window.ads:11:16: info: postcondition proved (CVC4: 1 VC)
 window.ads:11:44: info: overflow check proved (CVC4: 1 VC)
 window.ads:11:49: info: precondition proved (CVC4: 1 VC)
 window.ads:15:16: info: postcondition proved (CVC4: 1 VC)
-window.ads:19:14: medium: postcondition might fail, cannot prove Total_Area = Total_Area'Old - 100 (e.g. when Total_Area = Natural'Last)
+window.ads:19:14: medium: postcondition might fail, cannot prove Total_Area = Total_Area'Old - 100 (e.g. when Total_Area = 101)
